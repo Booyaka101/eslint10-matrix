@@ -1,25 +1,26 @@
 import type { CrashingRule, PluginRunResult, ProbeResult } from './types.js';
 
-/**
- * Matches `Error while loading rule 'react/display-name': ...` and the plain
- * `<ns>/<rule>` form that ESLint puts in the message of a rethrown rule error.
- */
-const RULE_IN_MESSAGE = /(?:rule\s+['"`]([^'"`]+)['"`])|(?:\b([\w@][\w.-]*(?:\/[\w.-]+)+)\b)/;
+/** `Error while loading rule 'react/display-name': ...` */
+const QUOTED_RULE = /rule\s+['"`]([^'"`]+)['"`]/;
 
-/** ESLint surfaces a broken rule from inside the linter; these frames prove it. */
-const RULE_FRAME = /node_modules[\\/](?:@[^\\/]+[\\/])?eslint-plugin[^\\/]*[\\/].*\.(?:js|cjs|mjs)/i;
+/** A bare `ns/rule` or `@scope/ns/rule` mentioned in a rethrown rule error. */
+const RULE_TOKEN = /\b([\w@][\w.-]*(?:\/[\w.-]+)+)\b/;
+
+/** Distinguishes a rule id from a module path, which matches RULE_TOKEN just as well. */
+const MODULE_FILE = /\.(?:[cm]?js|[cm]?ts)$/i;
+
+/** Last resort: the plugin's own rule file, named in a stack frame. */
+const RULE_FILE_IN_STACK =
+  /node_modules[\\/](?:@[^\\/]+[\\/])?eslint-plugin[^\\/]*[\\/](?:.*[\\/])?rules[\\/]([\w-]+)\.[cm]?js/i;
 
 export function ruleIdFromError(message: string, stack = ''): string | null {
-  const quoted = /rule\s+['"`]([^'"`]+)['"`]/.exec(message);
-  if (quoted?.[1]) return quoted[1];
-  const bare = RULE_IN_MESSAGE.exec(message);
-  if (bare?.[1]) return bare[1];
-  if (bare?.[2] && !bare[2].includes('\\') && !bare[2].includes('.js')) return bare[2];
-  if (RULE_FRAME.test(stack)) {
-    const file = /rules[\\/]([\w-]+)\.(?:js|cjs|mjs)/.exec(stack);
-    if (file?.[1]) return file[1];
-  }
-  return null;
+  const quoted = QUOTED_RULE.exec(message)?.[1];
+  if (quoted) return quoted;
+
+  const token = RULE_TOKEN.exec(message)?.[1];
+  if (token && !token.includes('\\') && !MODULE_FILE.test(token)) return token;
+
+  return RULE_FILE_IN_STACK.exec(stack)?.[1] ?? null;
 }
 
 function stripNamespace(ruleId: string): string {

@@ -194,7 +194,7 @@ async function main() {
   }
 
   result.phase = 'lint';
-  let fastPathClean = false;
+  let fastPathClean;
   try {
     const reports = await eslint.lintFiles(usableFiles);
     result.lintedFiles = reports.length;

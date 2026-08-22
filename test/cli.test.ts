@@ -183,7 +183,7 @@ describe('report', () => {
     expect(text).toContain('CLEAN (1)');
     expect(text).toContain('eslint-plugin-react@7.37.5');
     expect(text).toContain('"eslint": "$eslint"');
-    expect(text).not.toMatch(/\[/);
+    expect(text).not.toContain(String.fromCharCode(27)); // no ANSI escapes when colour is off
   });
 
   it('does not blame the upgrade for a failure that reproduces on ESLint 9', () => {

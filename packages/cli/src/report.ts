@@ -185,11 +185,11 @@ export function renderOverrides(overrides: Record<string, { eslint: string }>): 
 
 export function renderReport(report: Report, options: { color?: boolean } = {}): string {
   const c = options.color ?? false;
-  const dim = (s: string) => (c ? `[2m${s}[0m` : s);
-  const bold = (s: string) => (c ? `[1m${s}[0m` : s);
-  const red = (s: string) => (c ? `[31m${s}[0m` : s);
-  const yellow = (s: string) => (c ? `[33m${s}[0m` : s);
-  const green = (s: string) => (c ? `[32m${s}[0m` : s);
+  const dim = (s: string) => (c ? `\u001B[2m${s}\u001B[0m` : s);
+  const bold = (s: string) => (c ? `\u001B[1m${s}\u001B[0m` : s);
+  const red = (s: string) => (c ? `\u001B[31m${s}\u001B[0m` : s);
+  const yellow = (s: string) => (c ? `\u001B[33m${s}\u001B[0m` : s);
+  const green = (s: string) => (c ? `\u001B[32m${s}\u001B[0m` : s);
 
   const total = report.blocked.length + report.safeToForce.length + report.clean.length + report.untested.length;
   const out: string[] = [];

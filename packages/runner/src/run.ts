@@ -240,7 +240,8 @@ async function main(): Promise<void> {
   console.log(`[matrix] wrote ${opts.outFile} (${rows.length} plugins) in ${elapsed}s`);
 }
 
-const invokedDirectly = process.argv[1] && resolve(process.argv[1]).endsWith(join('dist', 'run.js'));
+const invokedDirectly =
+  process.argv[1] !== undefined && resolve(process.argv[1]) === resolve(fileURLToPath(import.meta.url));
 if (invokedDirectly) {
   main().catch((err: unknown) => {
     console.error(`[matrix] fatal: ${err instanceof Error ? err.message : String(err)}`);
@@ -248,4 +249,4 @@ if (invokedDirectly) {
   });
 }
 
-export { probePair, classify };
+export { probePair };

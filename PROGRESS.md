@@ -37,7 +37,7 @@ Status at 2026-08-22: **v1.0.0 complete and verified locally. Not published** (p
 | (b) reproduces the react `display-name` crash on 10.9.0 | **yes**. `Error while loading rule 'react/display-name': contextOrFilename.getFilename is not a function`, 38 of 101 rules |
 | (c) `check` in a scratch repo prints all three buckets + valid JSON overrides | **yes**. 7 real plugins resolved from a real `eslint.config.js` |
 | (d) `--ci` exits 1 with a blocked plugin, 0 without | **yes**. 1 and 0 |
-| (e) whole test suite passes | **32 tests, 3 files, pass** |
+| (e) whole test suite passes | **38 tests, 3 files, pass** |
 | (f) site renders to one static HTML file, no console errors | **yes**. driven in Chrome over CDP in a dedicated tab, hard reload with the recorder armed: `CONSOLE ERRORS/WARNINGS: NONE` |
 
 ## Also verified
@@ -62,6 +62,16 @@ Run before the first commit, with tools rather than by eye.
 - **Proof the extraction changed nothing.** Built the site from `HEAD`'s `build.mjs` and from the new one over the committed `matrix.json`: the rendered HTML is **byte-for-byte identical**. The behaviour change is confined to the bug, demonstrated separately with a synthetic `>=9 <10` row (old "ready", new "safe to force").
 - **Where the extraction stopped.** The remaining pairs at or above 55% are `fixtures/types.ts:worker` vs `run.ts:mapWithConcurrency` and `fixtures/esm-imports.mjs:fetchJson` vs `registry.ts:getJson`. Both sides of each pair are the lint corpus, which exists to be realistic source for plugins to lint, not product code to share. Deduplicating them would make the fixtures less idiomatic for no gain. The `readVersion`/`writeCache`/`readDependencies` pairs at 47 to 50% are the ordinary "try a file operation, fall back" shape over genuinely different workflows.
 - **Comment density.** Two rationale essays trimmed to the constraint they document (the `CONFIG_ERROR` block in `probe.mjs` and the `--legacy-peer-deps` note in `run.ts`).
+
+## Maintainability pass
+
+- **The repo now lints itself**, on ESLint 10 with `typescript-eslint`, which for this project is dogfooding rather than housekeeping. It was the most obvious gap: a tool that measures ESLint readiness had no `eslint.config.js`. `npm run lint` is wired into CI. Typed rules are off deliberately, since they need `parserOptions.project`, the same prerequisite the matrix classifies separately.
+- **`ruleIdFromError` had an unreachable branch and a real hole.** Its second regex repeated the first as an alternative, so `bare[1]` could never be reached. The guard against mistaking a module path for a rule id tested `includes('.js')`, which does not match `.cjs` or `.mjs`, so a path ending in either was returned as a rule id. Rewritten around named regexes with an anchored extension test, plus four tests covering bare ids, every module extension, stack-frame fallback, and the null case.
+- **Dead code removed.** `pad(part, fill)` in `semver-lite.ts` was always called with a no-op ternary (`? 0 : 0`), so the parameter was removed. `run.ts` re-exported `classify` although nothing imports `run.ts` as a module.
+- **Entrypoint guards unified.** `run.ts` compared `process.argv[1]` against a `dist/run.js` suffix, which breaks on rename; it now uses the same `import.meta.url` comparison as the CLI.
+- **Schema drift pinned by a test.** The CLI redeclares the matrix shape because it ships standalone with no dependency on the private runner package. Two tests now push a runner-built matrix through the CLI loader and check both agree on every status.
+- **10 raw ESC bytes** sat invisibly in the colour helpers in `report.ts`, now written as unicode escapes, with runtime colour output verified byte-identical afterwards. The `no-control-regex` error the linter raised was a separate matter: a test regex that matched ESC, now asserted with `toContain`.
+- **Known gaps, deliberately not closed for v1.** `scripts/merge-shards.mjs` and the site's inline browser script have no unit tests; both are exercised end to end instead (the nightly workflow and the CDP render check). `probe.mjs` is the longest file at 271 lines and its `main()` carries the phase machine; splitting it would spread the phase transitions across files for no clear gain at this size.
 
 ## Left for the owner (cannot be done by an agent)
 

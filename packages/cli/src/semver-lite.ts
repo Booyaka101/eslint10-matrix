@@ -32,8 +32,8 @@ function compare(a: Parsed, b: Parsed): number {
   return a.prerelease < b.prerelease ? -1 : 1;
 }
 
-/** Fills a partial version like "9" or "9.7" so it can be compared. */
-function pad(part: string, fill: number): Parsed | null {
+/** Expands a partial version like "9" or "9.7" to a comparable triple. */
+function pad(part: string): Parsed | null {
   const cleaned = part.replace(/^[v=]+/, '').replace(/\.[xX*]/g, '').trim();
   if (cleaned === '' || cleaned === '*') return null;
   const bits = cleaned.split('-')[0]!.split('.');
@@ -41,8 +41,8 @@ function pad(part: string, fill: number): Parsed | null {
   if (nums.length === 0 || Number.isNaN(nums[0])) return null;
   return {
     major: nums[0]!,
-    minor: Number.isNaN(nums[1]!) || nums[1] === undefined ? fill : nums[1]!,
-    patch: Number.isNaN(nums[2]!) || nums[2] === undefined ? fill : nums[2]!,
+    minor: Number.isNaN(nums[1]!) || nums[1] === undefined ? 0 : nums[1]!,
+    patch: Number.isNaN(nums[2]!) || nums[2] === undefined ? 0 : nums[2]!,
     prerelease: cleaned.includes('-') ? cleaned.slice(cleaned.indexOf('-') + 1) : '',
   };
 }
@@ -56,8 +56,7 @@ function satisfiesComparator(target: Parsed, raw: string): boolean {
   const operator = operatorMatch[1] ?? '=';
   const operand = operatorMatch[2]!.trim();
 
-  const lowerFill = operator === '<' || operator === '<=' ? 0 : 0;
-  const base = pad(operand, lowerFill);
+  const base = pad(operand);
   if (!base) return true; // "^*" and friends admit anything
 
   switch (operator) {

@@ -50,7 +50,7 @@ async function probeFixturePlugin(
   );
 
   const { stderr } = await runNode(dir);
-  let probe: ProbeResult | null = null;
+  let probe: ProbeResult | null;
   try {
     probe = JSON.parse(await readFile(join(dir, 'probe-result.json'), 'utf8')) as ProbeResult;
   } catch {

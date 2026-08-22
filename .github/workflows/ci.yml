@@ -20,6 +20,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build
+      - run: npm run lint
       - run: npm test
       - name: Site build renders the committed matrix
         run: node site/build.mjs --in matrix.json --out site/dist

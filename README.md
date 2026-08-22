@@ -141,7 +141,8 @@ Each entry may carry `settings`, `parser` and `extraDeps`, the same configuratio
 ```
 npm ci
 npm run build                                    # both packages
-npm test                                         # 28 tests, vitest
+npm run lint                                     # this repo lints itself, on ESLint 10
+npm test                                         # 38 tests, vitest
 node packages/runner/dist/run.js --only eslint-plugin-react   # one plugin
 node packages/runner/dist/run.js                 # full pass, ~7 minutes
 node site/build.mjs --in matrix.json --out site/dist

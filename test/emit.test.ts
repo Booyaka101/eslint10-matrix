@@ -4,7 +4,9 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { buildMatrix, validateMatrix, writeMatrix } from '../packages/runner/src/emit.js';
 import { classify, ruleIdFromError } from '../packages/runner/src/classify.js';
-import { namespaceFor, type PluginRow } from '../packages/runner/src/types.js';
+import { namespaceFor, type PluginRow, type Status } from '../packages/runner/src/types.js';
+import { assertMatrixShape, loadMatrix } from '../packages/cli/src/matrix.js';
+import { verdictFor } from '../packages/cli/src/report.js';
 
 const ROWS: PluginRow[] = [
   {
@@ -74,11 +76,67 @@ describe('emit', () => {
   });
 });
 
+describe('schema agreement between the runner and the published CLI', () => {
+  // The CLI ships standalone with no dependency on the private runner package, so
+  // it redeclares the matrix shape. Nothing but this test stops the two drifting.
+  it('accepts a runner-built matrix through the CLI loader', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'e10m-schema-'));
+    try {
+      const file = join(dir, 'matrix.json');
+      await writeMatrix(file, buildMatrix({ v9: '9.39.5', v10: '10.9.0' }, structuredClone(ROWS), new Date().toISOString()));
+      const load = await loadMatrix({ file });
+      expect(load.matrix.plugins.map((p) => p.name)).toEqual(['eslint-plugin-big', 'eslint-plugin-small']);
+      const row = load.matrix.plugins[0]!;
+      expect(verdictFor(row, load.matrix.eslintVersions).verdict).toBe('blocked');
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('agrees on the set of statuses', () => {
+    const runnerStatuses: Status[] = ['clean', 'rule-crash', 'load-fail', 'install-fail'];
+    for (const status of runnerStatuses) {
+      const matrix = buildMatrix(
+        { v9: '9.39.5', v10: '10.9.0' },
+        [{ ...ROWS[0]!, results: { '10.9.0': { status, crashingRules: [], totalRules: 1 } } }],
+        '2026-08-22T00:00:00.000Z'
+      );
+      expect(validateMatrix(matrix)).toEqual([]);
+      expect(() => assertMatrixShape(JSON.parse(JSON.stringify(matrix)))).not.toThrow();
+    }
+  });
+});
+
 describe('classify edge cases', () => {
   it('pulls a rule id out of an ESLint rule-loading error', () => {
     expect(ruleIdFromError("Error while loading rule 'react/display-name': x is not a function")).toBe(
       'react/display-name'
     );
+  });
+
+  it('reads a bare namespaced rule id out of a rethrown error', () => {
+    expect(ruleIdFromError('sourceCode.isSpaceBetweenTokens is not a function in react/jsx-tag-spacing')).toBe(
+      'react/jsx-tag-spacing'
+    );
+  });
+
+  it('does not mistake a module path for a rule id, whatever the extension', () => {
+    for (const ext of ['js', 'cjs', 'mjs', 'ts']) {
+      expect(ruleIdFromError(`Cannot find module 'node_modules/foo/rules/bar.${ext}'`)).not.toBe(
+        `node_modules/foo/rules/bar.${ext}`
+      );
+    }
+    expect(ruleIdFromError('failed at C:\\tmp\\node_modules\\foo\\index.js')).toBeNull();
+  });
+
+  it('falls back to the rule file named in a stack frame', () => {
+    const stack = 'at Object.create (/tmp/x/node_modules/eslint-plugin-react/lib/rules/display-name.js:60:32)';
+    expect(ruleIdFromError('boom', stack)).toBe('display-name');
+  });
+
+  it('returns null rather than guessing when nothing names a rule', () => {
+    expect(ruleIdFromError('npm ERR! code ERESOLVE')).toBeNull();
+    expect(ruleIdFromError('', '')).toBeNull();
   });
 
   it('treats install failure as its own status, not a crash', () => {
