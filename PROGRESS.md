@@ -1,6 +1,6 @@
 # PROGRESS
 
-Status at 2026-08-22: **v1.0.0 complete and verified locally. Not published** (publishing is owner-operated).
+Status at 2026-08-22: **v1.0.0 shipped.** Published to npm, repo public, Pages live, nightly workflow green.
 
 ## Phase 0 verification (all re-fetched live on 2026-08-22)
 
@@ -73,11 +73,36 @@ Run before the first commit, with tools rather than by eye.
 - **10 raw ESC bytes** sat invisibly in the colour helpers in `report.ts`, now written as unicode escapes, with runtime colour output verified byte-identical afterwards. The `no-control-regex` error the linter raised was a separate matter: a test regex that matched ESC, now asserted with `toContain`.
 - **Known gaps, deliberately not closed for v1.** `scripts/merge-shards.mjs` and the site's inline browser script have no unit tests; both are exercised end to end instead (the nightly workflow and the CDP render check). `probe.mjs` is the longest file at 271 lines and its `main()` carries the phase machine; splitting it would spread the phase transitions across files for no clear gain at this size.
 
-## Left for the owner (cannot be done by an agent)
+## Shipped
 
-Per `LESSONS.md` 2026-08-20 and 2026-08-05, both of these are behind 2FA walls an agent cannot pass:
+| artifact | where |
+| --- | --- |
+| npm | https://www.npmjs.com/package/eslint10-matrix (1.0.0, MIT, zero runtime deps) |
+| repo | https://github.com/Booyaka101/eslint10-matrix |
+| release | https://github.com/Booyaka101/eslint10-matrix/releases/tag/v1.0.0 (tag v1.0.0 on b5431f4) |
+| live matrix | https://booyaka101.github.io/eslint10-matrix/ |
+| matrix.json | https://booyaka101.github.io/eslint10-matrix/matrix.json |
 
-1. `npm publish` from `packages/cli` (decide on provenance *before* the first publish, because npm forbids adding an attestation to an already-published version).
-2. `gh repo create --public --source=.`, push, then enable Pages from the Actions workflow.
+Release order was deliberate: CI green on the exact commit, then the nightly run to populate Pages,
+then npm, so the published CLI resolved its matrix on the first install rather than erroring.
 
-After the repo exists, update `homepage`/`repository` in `packages/cli/package.json` and `DEFAULT_MATRIX_URL` in `packages/cli/src/matrix.ts` if the final repo name differs from `cbosch101/eslint10-matrix`.
+Verified after publishing, from a clean directory with no local paths and no cache:
+`npm install eslint10-matrix` then `eslint10-matrix check` produced the three buckets against the
+CI-generated matrix, `--ci` exited 1 with blockers present, and the cache was written.
+
+### Caught during release
+
+- The hardcoded `DEFAULT_MATRIX_URL` named account `cbosch101`, which does not exist. The real
+  account is `Booyaka101`. Every install would have failed to fetch. Fixed before publishing.
+- CI failed on windows-latest: the runner's temp dir is an 8.3 short name (`RUNNER~1`), which
+  percent-encodes to `%7E` in a file URL and then will not load, so `resolveConfig` threw on a
+  config that existed. Now imports through the resolved real path, which also fixes symlinked
+  checkouts. Not reproducible on the dev machine; only the Windows CI leg found it.
+
+### No provenance on 1.0.0
+
+Published from an authenticated local npm session, so the version carries no provenance attestation
+and npm forbids adding one to an already-published version. Minting an automation token or
+configuring Trusted Publishing both sit behind npm's 2FA wall (see `LESSONS.md` 2026-08-20), so this
+is owner-operated. To get provenance from 1.0.1 onward: create a classic Automation token, add it as
+the `NPM_TOKEN` Actions secret, and publish from a workflow with `--provenance`.
