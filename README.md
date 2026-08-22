@@ -179,6 +179,14 @@ Add an entry to `packages/runner/src/plugins.json` with `name` and `weeklyDownlo
 }
 ```
 
+## Telling people about it
+
+The one place worth posting is the thread people are already stuck in, not a new announcement.
+[jsx-eslint/eslint-plugin-react#3977](https://github.com/jsx-eslint/eslint-plugin-react/issues/3977)
+has 355 reactions from people who cannot upgrade, and what helps there is the executed data:
+which rules break, why, and which of your other plugins are already fine. Lead with that, link the
+matrix once at the end, and skip it entirely if you have nothing new to add to the thread.
+
 ## License
 
 MIT
