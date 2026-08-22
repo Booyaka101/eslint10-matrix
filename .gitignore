@@ -1,0 +1,13 @@
+node_modules/
+dist/
+*.tsbuildinfo
+site/dist/
+.eslint10-matrix-tmp/
+shards/
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db
+.vitest/
+coverage/
+*.tgz

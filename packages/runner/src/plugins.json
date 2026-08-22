@@ -1,0 +1,281 @@
+{
+  "_comment": "Hand-reviewed from https://registry.npmjs.org/-/v1/search?text=eslint-plugin&size=250 plus explicit weekly-download lookups via https://api.npmjs.org/downloads/point/last-week/<pkg>. weeklyDownloads captured 2026-08-22. 'settings', 'parser' and 'extraDeps' are real configuration that ordinary repos supply; without them some rules never reach the code paths that break (eslint-plugin-react only calls the removed context.getFilename() API when it is asked to detect the React version).",
+  "plugins": [
+    {
+      "name": "@typescript-eslint/eslint-plugin",
+      "weeklyDownloads": 114433858,
+      "parser": "@typescript-eslint/parser",
+      "extraDeps": [
+        "@typescript-eslint/parser",
+        "typescript@^6",
+        "@typescript-eslint/utils"
+      ]
+    },
+    {
+      "name": "eslint-plugin-react-hooks",
+      "weeklyDownloads": 83059186
+    },
+    {
+      "name": "eslint-plugin-react",
+      "weeklyDownloads": 50254779,
+      "settings": {
+        "react": {
+          "version": "detect"
+        }
+      },
+      "extraDeps": [
+        "react@^19.0.0"
+      ]
+    },
+    {
+      "name": "eslint-plugin-import",
+      "weeklyDownloads": 49679969
+    },
+    {
+      "name": "eslint-plugin-jsx-a11y",
+      "weeklyDownloads": 38034458
+    },
+    {
+      "name": "eslint-plugin-prettier",
+      "weeklyDownloads": 37000022,
+      "extraDeps": [
+        "prettier@^3.4.2"
+      ]
+    },
+    {
+      "name": "eslint-plugin-react-refresh",
+      "weeklyDownloads": 35346714
+    },
+    {
+      "name": "@next/eslint-plugin-next",
+      "weeklyDownloads": 29073121
+    },
+    {
+      "name": "eslint-plugin-jest",
+      "weeklyDownloads": 12463399
+    },
+    {
+      "name": "eslint-plugin-storybook",
+      "weeklyDownloads": 7567976,
+      "parser": "@typescript-eslint/parser",
+      "extraDeps": [
+        "@typescript-eslint/parser",
+        "typescript@^6",
+        "@typescript-eslint/utils"
+      ]
+    },
+    {
+      "name": "eslint-plugin-testing-library",
+      "weeklyDownloads": 7072507
+    },
+    {
+      "name": "eslint-plugin-n",
+      "weeklyDownloads": 6943650
+    },
+    {
+      "name": "eslint-plugin-unicorn",
+      "weeklyDownloads": 5908364
+    },
+    {
+      "name": "eslint-plugin-es-x",
+      "weeklyDownloads": 5645290
+    },
+    {
+      "name": "eslint-plugin-promise",
+      "weeklyDownloads": 5430594
+    },
+    {
+      "name": "eslint-plugin-vue",
+      "weeklyDownloads": 5322623,
+      "parser": "vue-eslint-parser",
+      "extraDeps": [
+        "vue-eslint-parser",
+        "vue@^3.5.0"
+      ]
+    },
+    {
+      "name": "@stylistic/eslint-plugin",
+      "weeklyDownloads": 5312931
+    },
+    {
+      "name": "eslint-plugin-jsdoc",
+      "weeklyDownloads": 5288500
+    },
+    {
+      "name": "eslint-plugin-import-x",
+      "weeklyDownloads": 5280102
+    },
+    {
+      "name": "eslint-plugin-simple-import-sort",
+      "weeklyDownloads": 4725580
+    },
+    {
+      "name": "eslint-plugin-playwright",
+      "weeklyDownloads": 4152358
+    },
+    {
+      "name": "eslint-plugin-security",
+      "weeklyDownloads": 3455629
+    },
+    {
+      "name": "eslint-plugin-sonarjs",
+      "weeklyDownloads": 3117895
+    },
+    {
+      "name": "eslint-plugin-cypress",
+      "weeklyDownloads": 2959808
+    },
+    {
+      "name": "@vitest/eslint-plugin",
+      "weeklyDownloads": 2931261
+    },
+    {
+      "name": "eslint-plugin-node",
+      "weeklyDownloads": 2916474
+    },
+    {
+      "name": "eslint-plugin-eslint-comments",
+      "weeklyDownloads": 2808189
+    },
+    {
+      "name": "@angular-eslint/eslint-plugin",
+      "weeklyDownloads": 2725772,
+      "parser": "@typescript-eslint/parser",
+      "extraDeps": [
+        "@typescript-eslint/parser",
+        "typescript@^6",
+        "@typescript-eslint/utils"
+      ]
+    },
+    {
+      "name": "@tanstack/eslint-plugin-query",
+      "weeklyDownloads": 2571766
+    },
+    {
+      "name": "eslint-plugin-perfectionist",
+      "weeklyDownloads": 2337389
+    },
+    {
+      "name": "eslint-plugin-turbo",
+      "weeklyDownloads": 2206157
+    },
+    {
+      "name": "eslint-plugin-no-only-tests",
+      "weeklyDownloads": 2076284
+    },
+    {
+      "name": "@eslint-community/eslint-plugin-eslint-comments",
+      "weeklyDownloads": 2026635
+    },
+    {
+      "name": "eslint-plugin-regexp",
+      "weeklyDownloads": 1622145
+    },
+    {
+      "name": "eslint-plugin-jest-dom",
+      "weeklyDownloads": 1537691
+    },
+    {
+      "name": "@eslint-react/eslint-plugin",
+      "weeklyDownloads": 1502554,
+      "parser": "@typescript-eslint/parser",
+      "extraDeps": [
+        "@typescript-eslint/parser",
+        "typescript@^6",
+        "@typescript-eslint/utils"
+      ]
+    },
+    {
+      "name": "eslint-plugin-mocha",
+      "weeklyDownloads": 1400749
+    },
+    {
+      "name": "eslint-plugin-tailwindcss",
+      "weeklyDownloads": 1374659
+    },
+    {
+      "name": "eslint-plugin-boundaries",
+      "weeklyDownloads": 1356459
+    },
+    {
+      "name": "eslint-plugin-svelte",
+      "weeklyDownloads": 1293709,
+      "parser": "svelte-eslint-parser",
+      "extraDeps": [
+        "svelte-eslint-parser",
+        "svelte@^5.0.0"
+      ]
+    },
+    {
+      "name": "eslint-plugin-react-compiler",
+      "weeklyDownloads": 1254202
+    },
+    {
+      "name": "eslint-plugin-jsonc",
+      "weeklyDownloads": 1210657
+    },
+    {
+      "name": "eslint-plugin-compat",
+      "weeklyDownloads": 1106567
+    },
+    {
+      "name": "eslint-plugin-i18next",
+      "weeklyDownloads": 1037722
+    },
+    {
+      "name": "eslint-plugin-yml",
+      "weeklyDownloads": 1016794
+    },
+    {
+      "name": "eslint-plugin-lodash",
+      "weeklyDownloads": 685371
+    },
+    {
+      "name": "eslint-plugin-vitest",
+      "weeklyDownloads": 650222
+    },
+    {
+      "name": "eslint-plugin-deprecation",
+      "weeklyDownloads": 504808,
+      "parser": "@typescript-eslint/parser",
+      "extraDeps": [
+        "@typescript-eslint/parser",
+        "typescript@^6",
+        "@typescript-eslint/utils"
+      ]
+    },
+    {
+      "name": "eslint-plugin-markdown",
+      "weeklyDownloads": 458807
+    },
+    {
+      "name": "eslint-plugin-toml",
+      "weeklyDownloads": 408565
+    },
+    {
+      "name": "eslint-plugin-eslint-plugin",
+      "weeklyDownloads": 341613
+    },
+    {
+      "name": "@html-eslint/eslint-plugin",
+      "weeklyDownloads": 251828
+    },
+    {
+      "name": "eslint-plugin-depend",
+      "weeklyDownloads": 249324
+    },
+    {
+      "name": "@ternaus/eslint-plugin-react",
+      "weeklyDownloads": 575,
+      "namespace": "react",
+      "settings": {
+        "react": {
+          "version": "detect"
+        }
+      },
+      "extraDeps": [
+        "react@^19.0.0"
+      ]
+    }
+  ]
+}

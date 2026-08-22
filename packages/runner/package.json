@@ -1,0 +1,16 @@
+{
+  "name": "@eslint10-matrix/runner",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Executes every listed ESLint plugin against real ESLint 9 and 10 installs and emits matrix.json",
+  "license": "MIT",
+  "main": "./dist/run.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/run.js"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2"
+  }
+}

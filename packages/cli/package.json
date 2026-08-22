@@ -1,0 +1,52 @@
+{
+  "name": "eslint10-matrix",
+  "version": "1.0.0",
+  "description": "Can this repo upgrade to ESLint 10 yet? Answers from a nightly matrix of ESLint plugins actually executed against real ESLint 9 and 10 installs, not from declared peerDependencies.",
+  "keywords": [
+    "eslint",
+    "eslint10",
+    "compatibility",
+    "migration",
+    "plugins",
+    "peerdependencies",
+    "upgrade",
+    "flat-config"
+  ],
+  "homepage": "https://cbosch101.github.io/eslint10-matrix/",
+  "bugs": {
+    "url": "https://github.com/cbosch101/eslint10-matrix/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cbosch101/eslint10-matrix.git",
+    "directory": "packages/cli"
+  },
+  "license": "MIT",
+  "author": "Christiaan Bosch <cbosch101@gmail.com>",
+  "type": "module",
+  "bin": {
+    "eslint10-matrix": "./dist/index.js"
+  },
+  "main": "./dist/index.js",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "prepublishOnly": "npm run build"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2"
+  }
+}

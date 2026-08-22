@@ -1,0 +1,183 @@
+# eslint10-matrix
+
+**Can this repo upgrade to ESLint 10 yet?** Answered by running the plugins, not by reading their manifests.
+
+Three facts, all verifiable at the npm registry right now:
+
+| package | latest version | declared `peerDependencies.eslint` |
+| --- | --- | --- |
+| `eslint-plugin-react` | 7.37.5 (2025-04-03) | `^3 \|\| ^4 \|\| ^5 \|\| ^6 \|\| ^7 \|\| ^8 \|\| ^9.7` |
+| `eslint-plugin-jsx-a11y` | 6.10.2 (2024-10-26) | `^3 \|\| ^4 \|\| ^5 \|\| ^6 \|\| ^7 \|\| ^8 \|\| ^9` |
+| `eslint-plugin-import` | 2.32.0 | `^2 \|\| ^3 \|\| ^4 \|\| ^5 \|\| ^6 \|\| ^7.2.0 \|\| ^8 \|\| ^9` |
+
+ESLint's own latest is **10.9.0**. Every one of those ranges excludes it, so `npm install` refuses to resolve them against ESLint 10 and every readiness dashboard built on manifest data marks all three as blocked.
+
+That answer is wrong in both directions. Executed against real ESLint 10.9.0 with every rule enabled:
+
+- `eslint-plugin-import@2.32.0` declares `^9` and **mostly runs**. Three of its 46 rules crash (`no-default-export`, `no-named-export`, `unambiguous`); the other 43 are fine.
+- `eslint-plugin-jsx-a11y@6.10.2` declares `^9` and is **completely clean**, all 39 rules, no crashes. Nothing is wrong with it. The range is just stale.
+- `eslint-plugin-react@7.37.5` declares `^9` and **38 of its 101 rules throw**, including `display-name` with `contextOrFilename.getFilename is not a function`, exactly [issue #3977](https://github.com/jsx-eslint/eslint-plugin-react/issues/3977), 355 reactions, open since February 2026.
+
+And the failure does not have to be yours. `eslint-plugin-vitest@0.5.4` and `eslint-plugin-deprecation@3.0.0` both **fail to import entirely** on ESLint 10, because `@typescript-eslint/utils` does `class extends eslint.LegacyESLint` and ESLint 10 removed `LegacyESLint` along with eslintrc. Neither plugin's own manifest hints at that.
+
+A declared range is a claim its author last checked at publish time. The only ground truth is execution.
+
+**Live matrix: <https://cbosch101.github.io/eslint10-matrix/>**
+
+## Install
+
+```
+npx eslint10-matrix check
+```
+
+No install needed. Node 22 or newer, no runtime dependencies.
+
+## Usage
+
+Run it in a repo that has an `eslint.config.js`:
+
+```
+$ npx eslint10-matrix check
+
+ESLint 10.9.0 readiness for D:\tmp\scratch-app (7 plugins)
+matrix generated 2026-08-22T09:05:03.397Z
+
+BLOCKED (2)
+  eslint-plugin-import@2.32.0  3 rules crash on 10.9.0: no-default-export, no-named-export, unambiguous
+  eslint-plugin-react@7.37.5   38 rules crash on 10.9.0: boolean-prop-naming, default-props-match-prop-types, destructuring-assignment, +35 more
+
+SAFE TO FORCE (1)  declared below ^10, verified clean on 10.9.0 with all rules enabled
+  eslint-plugin-jsx-a11y@6.10.2
+
+  Add to package.json to install them against ESLint 10 anyway:
+    {
+      "overrides": {
+        "eslint-plugin-jsx-a11y": {
+          "eslint": "$eslint"
+        }
+      }
+    }
+
+CLEAN (4)  already declares ^10
+  @typescript-eslint/eslint-plugin@8.67.0, eslint-plugin-n@18.3.0, eslint-plugin-promise@7.3.0, eslint-plugin-unicorn@73.0.0
+
+First crash observed:
+  eslint-plugin-import/no-default-export: Error while loading rule 'import/no-default-export': Cannot use 'in' operator to search for 'sourceType' in undefined
+
+2 of 7 plugins block the upgrade to ESLint 10.9.0.
+```
+
+That is real output from the run recorded in this repo's `matrix.json`, against a repo whose `eslint.config.js` uses those seven plugins.
+
+The three buckets are the whole point:
+
+- **BLOCKED**. Actually breaks. Wait for a release, switch plugin, or disable the crashing rules.
+- **SAFE TO FORCE**. Declares an old range but runs clean with every rule enabled. The `overrides` block installs it against ESLint 10 anyway. `$eslint` resolves to whatever your root `eslint` dependency is, so you do not have to repeat the version.
+- **CLEAN**. Already declares `^10`. Nothing to do.
+
+### Commands
+
+```
+eslint10-matrix check [dir]      report ESLint 10 readiness for a repo (default: .)
+eslint10-matrix plugins          list every plugin in the published matrix
+```
+
+### Options
+
+| flag | effect |
+| --- | --- |
+| `--ci` | exit 1 when any plugin is BLOCKED. Without it the command always exits 0. |
+| `--json` | machine-readable output, including the `overrides` object |
+| `--matrix <src>` | use a local `matrix.json` path or a different URL |
+| `--no-cache` | never read or write `~/.cache/eslint10-matrix` |
+| `--plugins <a,b>` | skip config resolution and check these package names directly |
+| `--timeout <ms>` | network timeout for fetching the matrix (default 15000) |
+| `--no-color` | disable ANSI colour |
+
+### In CI
+
+```yaml
+- run: npx eslint10-matrix check --ci
+```
+
+Fails the job while anything is blocked, passes the moment the last blocker ships a fix. That turns "is our ESLint 10 upgrade unblocked yet" into a check that answers itself instead of a ticket somebody re-reads every sprint.
+
+Exit codes: `0` report printed, `1` `--ci` and something is BLOCKED, `2` the command could not run (no flat config, no matrix, bad arguments).
+
+## How the matrix is produced
+
+Nightly, for each plugin and each of ESLint 9.39.5 and 10.9.0:
+
+1. `mkdtemp` a fresh directory and write a minimal `package.json`.
+2. `npm install --legacy-peer-deps` the plugin at `latest`, ESLint at the pinned version, and any real peer packages it needs (`typescript`, `vue-eslint-parser`, `react`). The `--legacy-peer-deps` is the experiment: the declared range is what we are testing, so we install past it deliberately.
+3. Import the plugin, collect every rule from `configs.all.rules` (or `Object.keys(plugin.rules)`), and enable all of them at `error`.
+4. Lint a checked-in corpus of ordinary React, hooks, CommonJS, ESM, JSX-a11y and TypeScript source.
+5. Classify: **clean**, **rule-crash**, **load-fail**, or **install-fail**.
+
+A crashing rule aborts the entire lint run at the first casualty, so when the all-rules pass fails the runner re-lints **one rule at a time** to enumerate every broken rule rather than just the first. That is why the react row names 38 rules and not 1.
+
+Both ESLint versions are executed so the report can answer the question you actually asked: **what does the upgrade break?** A failure that reproduces identically on ESLint 9 is not an ESLint 10 blocker, so it is reported as pre-existing and the plugin is not marked BLOCKED. `@typescript-eslint/eslint-plugin` is the case that proves it: 64 of its rules refuse to load without `parserOptions.project`, identically on 9 and 10. Counting those would have marked the most-installed plugin in the ecosystem as blocked over a `tsconfig` setting.
+
+Volume of lint errors never affects the verdict. Enabling every rule on real source produces thousands of ordinary reports; only a module that fails to import and a rule that throws or emits a fatal message count against a plugin. ESLint validates rule options before running, so a rule that needs required options is recorded separately as a config problem, not as a compatibility failure.
+
+Everything runs in a child process, so a plugin that hard-crashes the Node process takes down only its own probe.
+
+### Configuration in `plugins.json`
+
+Each entry may carry `settings`, `parser` and `extraDeps`, the same configuration an ordinary repo supplies. This is not cosmetic. `eslint-plugin-react` only reaches the removed `context.getFilename()` API when it is asked to detect the React version, so without `settings: { react: { version: 'detect' } }` only 6 of its 38 broken rules surface. Testing plugins in a configuration nobody actually uses would understate the breakage.
+
+## Limitations
+
+- **Two ESLint versions**, the current `latest` (10.9.0) and the current `maintenance` (9.39.5). No sweep across the nine 10.x minors.
+- **Latest plugin version only.** If you are pinned to an older release, the row tells you where that plugin stands at its newest published version, not at yours.
+- **Flat config only.** ESLint 10 removed eslintrc, so a repo still on `.eslintrc` has a bigger migration than this tool measures.
+- **Fixture corpus, not your code.** A rule that only crashes on a syntax the corpus never uses will read as clean. Contributions to `packages/runner/fixtures/` are the fix.
+- **`plugins` maps only.** Plugins pulled in through a shared config's `extends` are not attributed to a package name; use `--plugins` to check those explicitly.
+- **A config that default-exports a function** is resolved by the ESLint CLI, not by this tool. Export the array, or pass `--plugins`.
+- The matrix is cached at `~/.cache/eslint10-matrix` and used when the network is unavailable, with a warning naming the age of the copy.
+
+## Development
+
+```
+npm ci
+npm run build                                    # both packages
+npm test                                         # 28 tests, vitest
+node packages/runner/dist/run.js --only eslint-plugin-react   # one plugin
+node packages/runner/dist/run.js                 # full pass, ~7 minutes
+node site/build.mjs --in matrix.json --out site/dist
+```
+
+The runner takes `--shard i/n` so the nightly workflow can fan out across four jobs and merge with `scripts/merge-shards.mjs`.
+
+### Adding a plugin
+
+Add an entry to `packages/runner/src/plugins.json` with `name` and `weeklyDownloads`, plus `parser`/`extraDeps`/`settings` if it needs them, then open a PR. Or open an issue and it will be added on the next pass.
+
+## Matrix schema
+
+```jsonc
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-08-22T09:12:44.108Z",
+  "eslintVersions": { "v9": "9.39.5", "v10": "10.9.0" },
+  "plugins": [
+    {
+      "name": "eslint-plugin-react",
+      "version": "7.37.5",
+      "declaredPeerRange": "^3 || ^4 || ^5 || ^6 || ^7 || ^8 || ^9.7",
+      "weeklyDownloads": 50254779,
+      "results": {
+        "10.9.0": {
+          "status": "rule-crash",              // clean | rule-crash | load-fail | install-fail
+          "crashingRules": [{ "rule": "display-name", "message": "..." }],
+          "totalRules": 101
+        }
+      }
+    }
+  ]
+}
+```
+
+## License
+
+MIT

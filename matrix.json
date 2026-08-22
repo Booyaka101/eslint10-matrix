@@ -1,0 +1,1404 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-08-22T09:05:03.397Z",
+  "eslintVersions": {
+    "v9": "9.39.5",
+    "v10": "10.9.0"
+  },
+  "plugins": [
+    {
+      "name": "@typescript-eslint/eslint-plugin",
+      "version": "8.67.0",
+      "declaredPeerRange": "^8.57.0 || ^9.0.0 || ^10.0.0",
+      "weeklyDownloads": 114433858,
+      "results": {
+        "9.39.5": {
+          "status": "rule-crash",
+          "crashingRules": [
+            {
+              "rule": "explicit-function-return-type",
+              "message": "Cannot read properties of undefined (reading 'length')"
+            },
+            {
+              "rule": "explicit-member-accessibility",
+              "message": "Cannot read properties of undefined (reading 'length')"
+            },
+            {
+              "rule": "explicit-module-boundary-types",
+              "message": "Cannot read properties of undefined (reading 'length')"
+            },
+            {
+              "rule": "no-useless-constructor",
+              "message": "Cannot read properties of undefined (reading 'length')"
+            }
+          ],
+          "totalRules": 125
+        },
+        "10.9.0": {
+          "status": "rule-crash",
+          "crashingRules": [
+            {
+              "rule": "explicit-function-return-type",
+              "message": "Cannot read properties of undefined (reading 'length')"
+            },
+            {
+              "rule": "explicit-member-accessibility",
+              "message": "Cannot read properties of undefined (reading 'length')"
+            },
+            {
+              "rule": "explicit-module-boundary-types",
+              "message": "Cannot read properties of undefined (reading 'length')"
+            },
+            {
+              "rule": "no-useless-constructor",
+              "message": "Cannot read properties of undefined (reading 'length')"
+            }
+          ],
+          "totalRules": 125
+        }
+      }
+    },
+    {
+      "name": "eslint-plugin-react-hooks",
+      "version": "7.1.1",
+      "declaredPeerRange": "^3.0.0 || ^4.0.0 || ^5.0.0 || ^6.0.0 || ^7.0.0 || ^8.0.0-0 || ^9.0.0 || ^10.0.0",
+      "weeklyDownloads": 83059186,
+      "results": {
+        "9.39.5": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 29
+        },
+        "10.9.0": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 29
+        }
+      }
+    },
+    {
+      "name": "eslint-plugin-react",
+      "version": "7.37.5",
+      "declaredPeerRange": "^3 || ^4 || ^5 || ^6 || ^7 || ^8 || ^9.7",
+      "weeklyDownloads": 50254779,
+      "results": {
+        "9.39.5": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 101
+        },
+        "10.9.0": {
+          "status": "rule-crash",
+          "crashingRules": [
+            {
+              "rule": "boolean-prop-naming",
+              "message": "Error while loading rule 'react/boolean-prop-naming': contextOrFilename.getFilename is not a function"
+            },
+            {
+              "rule": "default-props-match-prop-types",
+              "message": "Error while loading rule 'react/default-props-match-prop-types': contextOrFilename.getFilename is not a function"
+            },
+            {
+              "rule": "destructuring-assignment",
+              "message": "Error while loading rule 'react/destructuring-assignment': contextOrFilename.getFilename is not a function"
+            },
+            {
+              "rule": "display-name",
+              "message": "Error while loading rule 'react/display-name': contextOrFilename.getFilename is not a function"
+            },
+            {
+              "rule": "forward-ref-uses-ref",
+              "message": "Error while loading rule 'react/forward-ref-uses-ref': context.getSourceCode is not a function"
+            },
+            {
+              "rule": "function-component-definition",
+              "message": "Error while loading rule 'react/function-component-definition': contextOrFilename.getFilename is not a function"
+            },
+            {
+              "rule": "hook-use-state",
+              "message": "Error while loading rule 'react/hook-use-state': contextOrFilename.getFilename is not a function"
+            },
+            {
+              "rule": "jsx-curly-spacing",
+              "message": "sourceCode.isSpaceBetweenTokens is not a function"
+            },
+            {
+              "rule": "jsx-equals-spacing",
+              "message": "sourceCode.isSpaceBetweenTokens is not a function"
+            },
+            {
+              "rule": "jsx-filename-extension",
+              "message": "Error while loading rule 'react/jsx-filename-extension': context.getFilename is not a function"
+            },
+            {
+              "rule": "jsx-no-constructed-context-values",
+              "message": "Error while loading rule 'react/jsx-no-constructed-context-values': contextOrFilename.getFilename is not a function"
+            },
+            {
+              "rule": "jsx-one-expression-per-line",
+              "message": "getSourceCode(...).isSpaceBetweenTokens is not a function"
+            },
+            {
+              "rule": "jsx-tag-spacing",
+              "message": "sourceCode.isSpaceBetweenTokens is not a function"
+            },
+            {
+              "rule": "no-arrow-function-lifecycle",
+              "message": "Error while loading rule 'react/no-arrow-function-lifecycle': contextOrFilename.getFilename is not a function"
+            },
+            {
+              "rule": "no-did-mount-set-state",
+              "message": "Error while loading rule 'react/no-did-mount-set-state': contextOrFilename.getFilename is not a function"
+            },
+            {
+              "rule": "no-did-update-set-state",
+              "message": "Error while loading rule 'react/no-did-update-set-state': contextOrFilename.getFilename is not a function"
+            },
+            {
+              "rule": "no-direct-mutation-state",
+              "message": "Error while loading rule 'react/no-direct-mutation-state': contextOrFilename.getFilename is not a function"
+            },
+            {
+              "rule": "no-multi-comp",
+              "message": "Error while loading rule 'react/no-multi-comp': contextOrFilename.getFilename is not a function"
+            },
+            {
+              "rule": "no-set-state",
+              "message": "Error while loading rule 'react/no-set-state': contextOrFilename.getFilename is not a function"
+            },
+            {
+              "rule": "no-string-refs",
+              "message": "Error while loading rule 'react/no-string-refs': contextOrFilename.getFilename is not a function"
+            },
+            {
+              "rule": "no-render-return-value",
+              "message": "Error while loading rule 'react/no-render-return-value': contextOrFilename.getFilename is not a function"
+            },
+            {
+              "rule": "no-this-in-sfc",
+              "message": "Error while loading rule 'react/no-this-in-sfc': contextOrFilename.getFilename is not a function"
+            },
+            {
+              "rule": "no-typos",
+              "message": "Error while loading rule 'react/no-typos': contextOrFilename.getFilename is not a function"
+            },
+            {
+              "rule": "no-unknown-property",
+              "message": "contextOrFilename.getFilename is not a function"
+            },
+            {
+              "rule": "no-unsafe",
+              "message": "Error while loading rule 'react/no-unsafe': contextOrFilename.getFilename is not a function"
+            },
+            {
+              "rule": "no-unstable-nested-components",
+              "message": "Error while loading rule 'react/no-unstable-nested-components': contextOrFilename.getFilename is not a function"
+            },
+            {
+              "rule": "no-unused-prop-types",
+              "message": "Error while loading rule 'react/no-unused-prop-types': contextOrFilename.getFilename is not a function"
+            },
+            {
+              "rule": "no-object-type-as-default-prop",
+              "message": "Error while loading rule 'react/no-object-type-as-default-prop': contextOrFilename.getFilename is not a function"
+            },
+            {
+              "rule": "no-will-update-set-state",
+              "message": "contextOrFilename.getFilename is not a function"
+            },
+            {
+              "rule": "prefer-exact-props",
+              "message": "Error while loading rule 'react/prefer-exact-props': contextOrFilename.getFilename is not a function"
+            },
+            {
+              "rule": "prefer-read-only-props",
+              "message": "Error while loading rule 'react/prefer-read-only-props': contextOrFilename.getFilename is not a function"
+            },
+            {
+              "rule": "prefer-stateless-function",
+              "message": "Error while loading rule 'react/prefer-stateless-function': contextOrFilename.getFilename is not a function"
+            },
+            {
+              "rule": "prop-types",
+              "message": "Error while loading rule 'react/prop-types': contextOrFilename.getFilename is not a function"
+            },
+            {
+              "rule": "require-default-props",
+              "message": "Error while loading rule 'react/require-default-props': contextOrFilename.getFilename is not a function"
+            },
+            {
+              "rule": "require-optimization",
+              "message": "Error while loading rule 'react/require-optimization': contextOrFilename.getFilename is not a function"
+            },
+            {
+              "rule": "require-render-return",
+              "message": "Error while loading rule 'react/require-render-return': contextOrFilename.getFilename is not a function"
+            },
+            {
+              "rule": "sort-comp",
+              "message": "Error while loading rule 'react/sort-comp': contextOrFilename.getFilename is not a function"
+            },
+            {
+              "rule": "static-property-placement",
+              "message": "Error while loading rule 'react/static-property-placement': contextOrFilename.getFilename is not a function"
+            }
+          ],
+          "totalRules": 101
+        }
+      }
+    },
+    {
+      "name": "eslint-plugin-import",
+      "version": "2.32.0",
+      "declaredPeerRange": "^2 || ^3 || ^4 || ^5 || ^6 || ^7.2.0 || ^8 || ^9",
+      "weeklyDownloads": 49679969,
+      "results": {
+        "9.39.5": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 46
+        },
+        "10.9.0": {
+          "status": "rule-crash",
+          "crashingRules": [
+            {
+              "rule": "no-default-export",
+              "message": "Error while loading rule 'import/no-default-export': Cannot use 'in' operator to search for 'sourceType' in undefined"
+            },
+            {
+              "rule": "no-named-export",
+              "message": "Error while loading rule 'import/no-named-export': Cannot use 'in' operator to search for 'sourceType' in undefined"
+            },
+            {
+              "rule": "unambiguous",
+              "message": "Error while loading rule 'import/unambiguous': Cannot use 'in' operator to search for 'sourceType' in undefined"
+            }
+          ],
+          "totalRules": 46
+        }
+      }
+    },
+    {
+      "name": "eslint-plugin-jsx-a11y",
+      "version": "6.10.2",
+      "declaredPeerRange": "^3 || ^4 || ^5 || ^6 || ^7 || ^8 || ^9",
+      "weeklyDownloads": 38034458,
+      "results": {
+        "9.39.5": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 39
+        },
+        "10.9.0": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 39
+        }
+      }
+    },
+    {
+      "name": "eslint-plugin-prettier",
+      "version": "5.5.6",
+      "declaredPeerRange": ">=8.0.0",
+      "weeklyDownloads": 37000022,
+      "results": {
+        "9.39.5": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 1
+        },
+        "10.9.0": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 1
+        }
+      }
+    },
+    {
+      "name": "eslint-plugin-react-refresh",
+      "version": "0.5.4",
+      "declaredPeerRange": "^9 || ^10",
+      "weeklyDownloads": 35346714,
+      "results": {
+        "9.39.5": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 1
+        },
+        "10.9.0": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 1
+        }
+      }
+    },
+    {
+      "name": "@next/eslint-plugin-next",
+      "version": "16.3.2",
+      "declaredPeerRange": null,
+      "weeklyDownloads": 29073121,
+      "results": {
+        "9.39.5": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 22
+        },
+        "10.9.0": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 22
+        }
+      }
+    },
+    {
+      "name": "eslint-plugin-jest",
+      "version": "29.16.1",
+      "declaredPeerRange": "^8.57.0 || ^9.0.0 || ^10.0.0",
+      "weeklyDownloads": 12463399,
+      "results": {
+        "9.39.5": {
+          "status": "rule-crash",
+          "crashingRules": [
+            {
+              "rule": "no-deprecated-functions",
+              "message": "Error while loading rule 'jest/no-deprecated-functions': Unable to detect Jest version - please ensure jest package is installed, or otherwise set version explicitly"
+            }
+          ],
+          "totalRules": 71
+        },
+        "10.9.0": {
+          "status": "rule-crash",
+          "crashingRules": [
+            {
+              "rule": "no-deprecated-functions",
+              "message": "Error while loading rule 'jest/no-deprecated-functions': Unable to detect Jest version - please ensure jest package is installed, or otherwise set version explicitly"
+            }
+          ],
+          "totalRules": 71
+        }
+      }
+    },
+    {
+      "name": "eslint-plugin-storybook",
+      "version": "10.5.10",
+      "declaredPeerRange": ">=8",
+      "weeklyDownloads": 7567976,
+      "results": {
+        "9.39.5": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 16
+        },
+        "10.9.0": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 16
+        }
+      }
+    },
+    {
+      "name": "eslint-plugin-testing-library",
+      "version": "7.16.2",
+      "declaredPeerRange": "^8.57.0 || ^9.0.0 || ^10.0.0",
+      "weeklyDownloads": 7072507,
+      "results": {
+        "9.39.5": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 29
+        },
+        "10.9.0": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 29
+        }
+      }
+    },
+    {
+      "name": "eslint-plugin-n",
+      "version": "18.3.0",
+      "declaredPeerRange": ">=8.57.1",
+      "weeklyDownloads": 6943650,
+      "results": {
+        "9.39.5": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 30
+        },
+        "10.9.0": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 30
+        }
+      }
+    },
+    {
+      "name": "eslint-plugin-unicorn",
+      "version": "73.0.0",
+      "declaredPeerRange": ">=10.4",
+      "weeklyDownloads": 5908364,
+      "results": {
+        "9.39.5": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 337
+        },
+        "10.9.0": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 337
+        }
+      }
+    },
+    {
+      "name": "eslint-plugin-es-x",
+      "version": "10.0.0",
+      "declaredPeerRange": ">=10.6.0",
+      "weeklyDownloads": 5645290,
+      "results": {
+        "9.39.5": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 369
+        },
+        "10.9.0": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 369
+        }
+      }
+    },
+    {
+      "name": "eslint-plugin-promise",
+      "version": "7.3.0",
+      "declaredPeerRange": "^7.0.0 || ^8.0.0 || ^9.0.0 || ^10.0.0",
+      "weeklyDownloads": 5430594,
+      "results": {
+        "9.39.5": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 17
+        },
+        "10.9.0": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 17
+        }
+      }
+    },
+    {
+      "name": "eslint-plugin-vue",
+      "version": "10.10.0",
+      "declaredPeerRange": "^8.57.0 || ^9.0.0 || ^10.0.0",
+      "weeklyDownloads": 5322623,
+      "results": {
+        "9.39.5": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 252
+        },
+        "10.9.0": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 252
+        }
+      }
+    },
+    {
+      "name": "@stylistic/eslint-plugin",
+      "version": "5.10.0",
+      "declaredPeerRange": "^9.0.0 || ^10.0.0",
+      "weeklyDownloads": 5312931,
+      "results": {
+        "9.39.5": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 67
+        },
+        "10.9.0": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 67
+        }
+      }
+    },
+    {
+      "name": "eslint-plugin-jsdoc",
+      "version": "64.2.1",
+      "declaredPeerRange": "^7.0.0 || ^8.0.0 || ^9.0.0 || ^10.0.0",
+      "weeklyDownloads": 5288500,
+      "results": {
+        "9.39.5": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 76
+        },
+        "10.9.0": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 76
+        }
+      }
+    },
+    {
+      "name": "eslint-plugin-import-x",
+      "version": "4.17.1",
+      "declaredPeerRange": "^8.57.0 || ^9.0.0 || ^10.0.0",
+      "weeklyDownloads": 5280102,
+      "results": {
+        "9.39.5": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 47
+        },
+        "10.9.0": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 47
+        }
+      }
+    },
+    {
+      "name": "eslint-plugin-simple-import-sort",
+      "version": "14.0.0",
+      "declaredPeerRange": ">=5.0.0",
+      "weeklyDownloads": 4725580,
+      "results": {
+        "9.39.5": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 2
+        },
+        "10.9.0": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 2
+        }
+      }
+    },
+    {
+      "name": "eslint-plugin-playwright",
+      "version": "2.11.0",
+      "declaredPeerRange": ">=8.40.0",
+      "weeklyDownloads": 4152358,
+      "results": {
+        "9.39.5": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 59
+        },
+        "10.9.0": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 59
+        }
+      }
+    },
+    {
+      "name": "eslint-plugin-security",
+      "version": "4.0.1",
+      "declaredPeerRange": null,
+      "weeklyDownloads": 3455629,
+      "results": {
+        "9.39.5": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 14
+        },
+        "10.9.0": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 14
+        }
+      }
+    },
+    {
+      "name": "eslint-plugin-sonarjs",
+      "version": "4.2.0",
+      "declaredPeerRange": "^8.0.0 || ^9.0.0 || ^10.0.0",
+      "weeklyDownloads": 3117895,
+      "results": {
+        "9.39.5": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 279
+        },
+        "10.9.0": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 279
+        }
+      }
+    },
+    {
+      "name": "eslint-plugin-cypress",
+      "version": "7.0.0",
+      "declaredPeerRange": ">=10",
+      "weeklyDownloads": 2959808,
+      "results": {
+        "9.39.5": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 13
+        },
+        "10.9.0": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 13
+        }
+      }
+    },
+    {
+      "name": "@vitest/eslint-plugin",
+      "version": "1.6.27",
+      "declaredPeerRange": ">=8.57.0",
+      "weeklyDownloads": 2931261,
+      "results": {
+        "9.39.5": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 79
+        },
+        "10.9.0": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 79
+        }
+      }
+    },
+    {
+      "name": "eslint-plugin-node",
+      "version": "11.1.0",
+      "declaredPeerRange": ">=5.16.0",
+      "weeklyDownloads": 2916474,
+      "results": {
+        "9.39.5": {
+          "status": "rule-crash",
+          "crashingRules": [
+            {
+              "rule": "exports-style",
+              "message": "context.getScope is not a function"
+            },
+            {
+              "rule": "global-require",
+              "message": "context.getScope is not a function"
+            },
+            {
+              "rule": "handle-callback-err",
+              "message": "context.getScope is not a function"
+            },
+            {
+              "rule": "no-deprecated-api",
+              "message": "context.getScope is not a function"
+            },
+            {
+              "rule": "no-exports-assign",
+              "message": "context.getScope is not a function"
+            },
+            {
+              "rule": "no-extraneous-require",
+              "message": "context.getScope is not a function"
+            },
+            {
+              "rule": "no-missing-require",
+              "message": "context.getScope is not a function"
+            },
+            {
+              "rule": "no-path-concat",
+              "message": "context.getScope is not a function"
+            },
+            {
+              "rule": "no-restricted-require",
+              "message": "context.getScope is not a function"
+            },
+            {
+              "rule": "no-unpublished-require",
+              "message": "context.getScope is not a function"
+            },
+            {
+              "rule": "no-hide-core-modules",
+              "message": "context.getScope is not a function"
+            },
+            {
+              "rule": "no-unsupported-features",
+              "message": "context.getScope is not a function"
+            }
+          ],
+          "totalRules": 27
+        },
+        "10.9.0": {
+          "status": "rule-crash",
+          "crashingRules": [
+            {
+              "rule": "callback-return",
+              "message": "Error while loading rule 'node/callback-return': context.getSourceCode is not a function"
+            },
+            {
+              "rule": "exports-style",
+              "message": "Error while loading rule 'node/exports-style': context.getSourceCode is not a function"
+            },
+            {
+              "rule": "file-extension-in-import",
+              "message": "Error while loading rule 'node/file-extension-in-import': context.getFilename is not a function"
+            },
+            {
+              "rule": "global-require",
+              "message": "context.getScope is not a function"
+            },
+            {
+              "rule": "handle-callback-err",
+              "message": "context.getScope is not a function"
+            },
+            {
+              "rule": "no-deprecated-api",
+              "message": "Error while loading rule 'node/no-deprecated-api': context.getFilename is not a function"
+            },
+            {
+              "rule": "no-exports-assign",
+              "message": "context.getScope is not a function"
+            },
+            {
+              "rule": "no-extraneous-import",
+              "message": "Error while loading rule 'node/no-extraneous-import': context.getFilename is not a function"
+            },
+            {
+              "rule": "no-extraneous-require",
+              "message": "Error while loading rule 'node/no-extraneous-require': context.getFilename is not a function"
+            },
+            {
+              "rule": "no-missing-import",
+              "message": "Error while loading rule 'node/no-missing-import': context.getFilename is not a function"
+            },
+            {
+              "rule": "no-missing-require",
+              "message": "Error while loading rule 'node/no-missing-require': context.getFilename is not a function"
+            },
+            {
+              "rule": "no-path-concat",
+              "message": "context.getScope is not a function"
+            },
+            {
+              "rule": "no-restricted-import",
+              "message": "Error while loading rule 'node/no-restricted-import': context.getFilename is not a function"
+            },
+            {
+              "rule": "no-restricted-require",
+              "message": "Error while loading rule 'node/no-restricted-require': context.getFilename is not a function"
+            },
+            {
+              "rule": "no-unpublished-bin",
+              "message": "context.getFilename is not a function"
+            },
+            {
+              "rule": "no-unpublished-import",
+              "message": "Error while loading rule 'node/no-unpublished-import': context.getFilename is not a function"
+            },
+            {
+              "rule": "no-unpublished-require",
+              "message": "Error while loading rule 'node/no-unpublished-require': context.getFilename is not a function"
+            },
+            {
+              "rule": "shebang",
+              "message": "Error while loading rule 'node/shebang': context.getSourceCode is not a function"
+            },
+            {
+              "rule": "no-hide-core-modules",
+              "message": "Error while loading rule 'node/no-hide-core-modules': context.getFilename is not a function"
+            },
+            {
+              "rule": "no-unsupported-features",
+              "message": "Error while loading rule 'node/no-unsupported-features': context.getSourceCode is not a function"
+            }
+          ],
+          "totalRules": 27
+        }
+      }
+    },
+    {
+      "name": "eslint-plugin-eslint-comments",
+      "version": "3.2.0",
+      "declaredPeerRange": ">=4.19.1",
+      "weeklyDownloads": 2808189,
+      "results": {
+        "9.39.5": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 9
+        },
+        "10.9.0": {
+          "status": "rule-crash",
+          "crashingRules": [
+            {
+              "rule": "disable-enable-pair",
+              "message": "Error while loading rule 'eslint-comments/disable-enable-pair': context.getSourceCode is not a function"
+            },
+            {
+              "rule": "no-aggregating-enable",
+              "message": "Error while loading rule 'eslint-comments/no-aggregating-enable': context.getSourceCode is not a function"
+            },
+            {
+              "rule": "no-duplicate-disable",
+              "message": "Error while loading rule 'eslint-comments/no-duplicate-disable': context.getSourceCode is not a function"
+            },
+            {
+              "rule": "no-restricted-disable",
+              "message": "Error while loading rule 'eslint-comments/no-restricted-disable': context.getSourceCode is not a function"
+            },
+            {
+              "rule": "no-unlimited-disable",
+              "message": "Error while loading rule 'eslint-comments/no-unlimited-disable': context.getSourceCode is not a function"
+            },
+            {
+              "rule": "no-unused-enable",
+              "message": "Error while loading rule 'eslint-comments/no-unused-enable': context.getSourceCode is not a function"
+            },
+            {
+              "rule": "no-use",
+              "message": "Error while loading rule 'eslint-comments/no-use': context.getSourceCode is not a function"
+            },
+            {
+              "rule": "require-description",
+              "message": "Error while loading rule 'eslint-comments/require-description': context.getSourceCode is not a function"
+            }
+          ],
+          "totalRules": 9
+        }
+      }
+    },
+    {
+      "name": "@angular-eslint/eslint-plugin",
+      "version": "22.1.0",
+      "declaredPeerRange": "^9.0.0 || ^10.0.0",
+      "weeklyDownloads": 2725772,
+      "results": {
+        "9.39.5": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 50
+        },
+        "10.9.0": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 50
+        }
+      }
+    },
+    {
+      "name": "@tanstack/eslint-plugin-query",
+      "version": "5.101.4",
+      "declaredPeerRange": "^8.57.0 || ^9.0.0 || ^10.0.0",
+      "weeklyDownloads": 2571766,
+      "results": {
+        "9.39.5": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 8
+        },
+        "10.9.0": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 8
+        }
+      }
+    },
+    {
+      "name": "eslint-plugin-perfectionist",
+      "version": "5.10.1",
+      "declaredPeerRange": "^8.45.0 || ^9.0.0 || ^10.0.0",
+      "weeklyDownloads": 2337389,
+      "results": {
+        "9.39.5": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 23
+        },
+        "10.9.0": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 23
+        }
+      }
+    },
+    {
+      "name": "eslint-plugin-turbo",
+      "version": "2.10.11",
+      "declaredPeerRange": ">6.6.0",
+      "weeklyDownloads": 2206157,
+      "results": {
+        "9.39.5": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 1
+        },
+        "10.9.0": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 1
+        }
+      }
+    },
+    {
+      "name": "eslint-plugin-no-only-tests",
+      "version": "3.4.0",
+      "declaredPeerRange": null,
+      "weeklyDownloads": 2076284,
+      "results": {
+        "9.39.5": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 1
+        },
+        "10.9.0": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 1
+        }
+      }
+    },
+    {
+      "name": "@eslint-community/eslint-plugin-eslint-comments",
+      "version": "4.7.2",
+      "declaredPeerRange": "^6.0.0 || ^7.0.0 || ^8.0.0 || ^9.0.0 || ^10.0.0",
+      "weeklyDownloads": 2026635,
+      "results": {
+        "9.39.5": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 9
+        },
+        "10.9.0": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 9
+        }
+      }
+    },
+    {
+      "name": "eslint-plugin-regexp",
+      "version": "3.2.0",
+      "declaredPeerRange": ">=9.38.0",
+      "weeklyDownloads": 1622145,
+      "results": {
+        "9.39.5": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 82
+        },
+        "10.9.0": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 82
+        }
+      }
+    },
+    {
+      "name": "eslint-plugin-jest-dom",
+      "version": "5.10.1",
+      "declaredPeerRange": "^6.8.0 || ^7.0.0 || ^8.0.0 || ^9.0.0 || ^10.0.0",
+      "weeklyDownloads": 1537691,
+      "results": {
+        "9.39.5": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 12
+        },
+        "10.9.0": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 12
+        }
+      }
+    },
+    {
+      "name": "@eslint-react/eslint-plugin",
+      "version": "5.18.6",
+      "declaredPeerRange": "*",
+      "weeklyDownloads": 1502554,
+      "results": {
+        "9.39.5": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 82
+        },
+        "10.9.0": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 82
+        }
+      }
+    },
+    {
+      "name": "eslint-plugin-mocha",
+      "version": "12.0.2",
+      "declaredPeerRange": ">=10.2.0",
+      "weeklyDownloads": 1400749,
+      "results": {
+        "9.39.5": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 33
+        },
+        "10.9.0": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 33
+        }
+      }
+    },
+    {
+      "name": "eslint-plugin-tailwindcss",
+      "version": "4.4.0",
+      "declaredPeerRange": "^9.0.0 || ^10.0.0",
+      "weeklyDownloads": 1374659,
+      "results": {
+        "9.39.5": {
+          "status": "rule-crash",
+          "crashingRules": [
+            {
+              "rule": "classnames-order",
+              "message": "Could not find tailwindcss"
+            },
+            {
+              "rule": "enforces-canonical-classname",
+              "message": "Could not find tailwindcss"
+            },
+            {
+              "rule": "no-custom-classname",
+              "message": "Could not find tailwindcss"
+            },
+            {
+              "rule": "no-contradicting-classname",
+              "message": "Could not find tailwindcss"
+            },
+            {
+              "rule": "no-unnecessary-arbitrary-value",
+              "message": "Could not find tailwindcss"
+            }
+          ],
+          "totalRules": 9
+        },
+        "10.9.0": {
+          "status": "rule-crash",
+          "crashingRules": [
+            {
+              "rule": "classnames-order",
+              "message": "Could not find tailwindcss"
+            },
+            {
+              "rule": "enforces-canonical-classname",
+              "message": "Could not find tailwindcss"
+            },
+            {
+              "rule": "no-custom-classname",
+              "message": "Could not find tailwindcss"
+            },
+            {
+              "rule": "no-contradicting-classname",
+              "message": "Could not find tailwindcss"
+            },
+            {
+              "rule": "no-unnecessary-arbitrary-value",
+              "message": "Could not find tailwindcss"
+            }
+          ],
+          "totalRules": 9
+        }
+      }
+    },
+    {
+      "name": "eslint-plugin-boundaries",
+      "version": "7.2.0",
+      "declaredPeerRange": ">=6.0.0",
+      "weeklyDownloads": 1356459,
+      "results": {
+        "9.39.5": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 10
+        },
+        "10.9.0": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 10
+        }
+      }
+    },
+    {
+      "name": "eslint-plugin-svelte",
+      "version": "3.23.0",
+      "declaredPeerRange": "^8.57.1 || ^9.0.0 || ^10.0.0",
+      "weeklyDownloads": 1293709,
+      "results": {
+        "9.39.5": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 84
+        },
+        "10.9.0": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 84
+        }
+      }
+    },
+    {
+      "name": "eslint-plugin-react-compiler",
+      "version": "19.1.0-rc.2",
+      "declaredPeerRange": ">=7",
+      "weeklyDownloads": 1254202,
+      "results": {
+        "9.39.5": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 1
+        },
+        "10.9.0": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 1
+        }
+      }
+    },
+    {
+      "name": "eslint-plugin-jsonc",
+      "version": "3.4.1",
+      "declaredPeerRange": ">=9.38.0",
+      "weeklyDownloads": 1210657,
+      "results": {
+        "9.39.5": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 42
+        },
+        "10.9.0": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 42
+        }
+      }
+    },
+    {
+      "name": "eslint-plugin-compat",
+      "version": "7.0.2",
+      "declaredPeerRange": "^9.0.0 || ^10.0.0",
+      "weeklyDownloads": 1106567,
+      "results": {
+        "9.39.5": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 1
+        },
+        "10.9.0": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 1
+        }
+      }
+    },
+    {
+      "name": "eslint-plugin-i18next",
+      "version": "6.1.5",
+      "declaredPeerRange": null,
+      "weeklyDownloads": 1037722,
+      "results": {
+        "9.39.5": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 1
+        },
+        "10.9.0": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 1
+        }
+      }
+    },
+    {
+      "name": "eslint-plugin-yml",
+      "version": "3.8.1",
+      "declaredPeerRange": ">=9.38.0",
+      "weeklyDownloads": 1016794,
+      "results": {
+        "9.39.5": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 29
+        },
+        "10.9.0": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 29
+        }
+      }
+    },
+    {
+      "name": "eslint-plugin-lodash",
+      "version": "8.0.0",
+      "declaredPeerRange": ">=9.0.0",
+      "weeklyDownloads": 685371,
+      "results": {
+        "9.39.5": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 42
+        },
+        "10.9.0": {
+          "status": "rule-crash",
+          "crashingRules": [
+            {
+              "rule": "prefer-lodash-method",
+              "message": "context.getSourceCode is not a function"
+            }
+          ],
+          "totalRules": 42
+        }
+      }
+    },
+    {
+      "name": "eslint-plugin-vitest",
+      "version": "0.5.4",
+      "declaredPeerRange": "^8.57.0 || ^9.0.0",
+      "weeklyDownloads": 650222,
+      "results": {
+        "9.39.5": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 44
+        },
+        "10.9.0": {
+          "status": "load-fail",
+          "crashingRules": [],
+          "totalRules": 0,
+          "detail": "Class extends value undefined is not a constructor or null"
+        }
+      }
+    },
+    {
+      "name": "eslint-plugin-deprecation",
+      "version": "3.0.0",
+      "declaredPeerRange": "^8.0.0",
+      "weeklyDownloads": 504808,
+      "results": {
+        "9.39.5": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 1
+        },
+        "10.9.0": {
+          "status": "load-fail",
+          "crashingRules": [],
+          "totalRules": 0,
+          "detail": "Class extends value undefined is not a constructor or null"
+        }
+      }
+    },
+    {
+      "name": "eslint-plugin-markdown",
+      "version": "5.1.0",
+      "declaredPeerRange": ">=8",
+      "weeklyDownloads": 458807,
+      "results": {
+        "9.39.5": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 0
+        },
+        "10.9.0": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 0
+        }
+      }
+    },
+    {
+      "name": "eslint-plugin-toml",
+      "version": "1.5.0",
+      "declaredPeerRange": ">=9.38.0",
+      "weeklyDownloads": 408565,
+      "results": {
+        "9.39.5": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 22
+        },
+        "10.9.0": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 22
+        }
+      }
+    },
+    {
+      "name": "eslint-plugin-eslint-plugin",
+      "version": "7.6.2",
+      "declaredPeerRange": ">=9.0.0",
+      "weeklyDownloads": 341613,
+      "results": {
+        "9.39.5": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 38
+        },
+        "10.9.0": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 38
+        }
+      }
+    },
+    {
+      "name": "@html-eslint/eslint-plugin",
+      "version": "0.65.0",
+      "declaredPeerRange": ">=8.0.0 || ^10.0.0-0",
+      "weeklyDownloads": 251828,
+      "results": {
+        "9.39.5": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 65
+        },
+        "10.9.0": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 65
+        }
+      }
+    },
+    {
+      "name": "eslint-plugin-depend",
+      "version": "1.5.0",
+      "declaredPeerRange": ">=8.40.0",
+      "weeklyDownloads": 249324,
+      "results": {
+        "9.39.5": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 1
+        },
+        "10.9.0": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 1
+        }
+      }
+    },
+    {
+      "name": "@ternaus/eslint-plugin-react",
+      "version": "8.0.0",
+      "declaredPeerRange": "^10.0.0",
+      "weeklyDownloads": 575,
+      "results": {
+        "9.39.5": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 11
+        },
+        "10.9.0": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 11
+        }
+      }
+    }
+  ]
+}

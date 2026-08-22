@@ -1,0 +1,107 @@
+name: nightly matrix
+
+on:
+  schedule:
+    - cron: '17 3 * * *'
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'packages/runner/**'
+      - 'site/**'
+      - '.github/workflows/nightly.yml'
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: nightly-matrix
+  cancel-in-progress: false
+
+jobs:
+  shard:
+    name: shard ${{ matrix.shard }}/4
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+      - run: npm run build --workspace packages/runner
+
+      - name: Execute plugins against ESLint 9 and 10
+        run: node packages/runner/dist/run.js --shard ${{ matrix.shard }}/4 --concurrency 4 --out shards/shard-${{ matrix.shard }}.json
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: shard-${{ matrix.shard }}
+          path: shards/shard-${{ matrix.shard }}.json
+          retention-days: 7
+
+  merge:
+    name: merge and publish
+    needs: shard
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: shards
+          pattern: shard-*
+          merge-multiple: true
+
+      - name: Merge shards into matrix.json
+        run: node scripts/merge-shards.mjs shards matrix.json
+
+      - name: Build the static site
+        run: |
+          npm run build --workspace packages/cli
+          node site/build.mjs --in matrix.json --out site/dist
+
+      - name: Commit matrix.json
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add matrix.json
+          if git diff --staged --quiet; then
+            echo "matrix unchanged"
+          else
+            git commit -m "chore: nightly matrix $(date -u +%Y-%m-%d)"
+            git push
+          fi
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site/dist
+
+  deploy:
+    name: deploy pages
+    needs: merge
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
