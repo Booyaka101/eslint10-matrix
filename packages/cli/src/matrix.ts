@@ -2,7 +2,7 @@ import { mkdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 
-export const DEFAULT_MATRIX_URL = 'https://cbosch101.github.io/eslint10-matrix/matrix.json';
+export const DEFAULT_MATRIX_URL = 'https://booyaka101.github.io/eslint10-matrix/matrix.json';
 
 export type Status = 'clean' | 'rule-crash' | 'load-fail' | 'install-fail';
 

@@ -12,13 +12,13 @@
     "upgrade",
     "flat-config"
   ],
-  "homepage": "https://cbosch101.github.io/eslint10-matrix/",
+  "homepage": "https://booyaka101.github.io/eslint10-matrix/",
   "bugs": {
-    "url": "https://github.com/cbosch101/eslint10-matrix/issues"
+    "url": "https://github.com/Booyaka101/eslint10-matrix/issues"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/cbosch101/eslint10-matrix.git",
+    "url": "git+https://github.com/Booyaka101/eslint10-matrix.git",
     "directory": "packages/cli"
   },
   "license": "MIT",

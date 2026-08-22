@@ -26,7 +26,7 @@ export interface Report {
   overrides: Record<string, { eslint: string }>;
 }
 
-const ISSUE_URL = 'https://github.com/cbosch101/eslint10-matrix/issues/new';
+const ISSUE_URL = 'https://github.com/Booyaka101/eslint10-matrix/issues/new';
 
 function describeFailure(rules: string[], result: PluginRunResult, eslintV10: string): string {
   if (result.status === 'load-fail') return `fails to load on ${eslintV10}`;

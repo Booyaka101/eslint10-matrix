@@ -22,7 +22,7 @@ And the failure does not have to be yours. `eslint-plugin-vitest@0.5.4` and `esl
 
 A declared range is a claim its author last checked at publish time. The only ground truth is execution.
 
-**Live matrix: <https://cbosch101.github.io/eslint10-matrix/>**
+**Live matrix: <https://booyaka101.github.io/eslint10-matrix/>**
 
 ## Install
 
