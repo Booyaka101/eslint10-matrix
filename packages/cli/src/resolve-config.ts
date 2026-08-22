@@ -1,4 +1,4 @@
-import { readFile } from 'node:fs/promises';
+import { readFile, realpath } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { dirname, join, parse, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -149,7 +149,10 @@ export async function resolveConfig(startDir: string): Promise<ResolvedConfig> {
 
   let exported: unknown;
   try {
-    const mod = (await import(pathToFileURL(configPath).href)) as { default?: unknown };
+    // Import through the resolved real path: a Windows 8.3 short name such as
+    // RUNNER~1 percent-encodes to %7E in a file URL and fails to resolve, and a
+    // symlinked checkout would otherwise import under the wrong identity.
+    const mod = (await import(pathToFileURL(await realpath(configPath)).href)) as { default?: unknown };
     exported = mod.default ?? mod;
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
