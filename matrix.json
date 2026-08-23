@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-22T10:01:48.594Z",
+  "generatedAt": "2026-08-23T03:35:30.455Z",
   "eslintVersions": {
     "v9": "9.39.5",
     "v10": "10.9.0"
@@ -632,7 +632,7 @@
     },
     {
       "name": "eslint-plugin-cypress",
-      "version": "7.0.0",
+      "version": "7.0.1",
       "declaredPeerRange": ">=10",
       "weeklyDownloads": 2959808,
       "results": {
@@ -885,7 +885,7 @@
     },
     {
       "name": "@tanstack/eslint-plugin-query",
-      "version": "5.101.4",
+      "version": "5.102.0",
       "declaredPeerRange": "^8.57.0 || ^9.0.0 || ^10.0.0",
       "weeklyDownloads": 2571766,
       "results": {
@@ -1161,7 +1161,7 @@
     },
     {
       "name": "eslint-plugin-jsonc",
-      "version": "3.4.1",
+      "version": "3.4.2",
       "declaredPeerRange": ">=9.38.0",
       "weeklyDownloads": 1210657,
       "results": {
