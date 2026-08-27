@@ -1,7 +1,11 @@
 # PROGRESS
 
-Status at 2026-08-27: **v1.1.0 ready to ship.** Adds the RESCUABLE and PARTIAL-RESCUE verdicts on
-top of the shipped v1.0.0 (npm, Pages and nightly workflow all live since 2026-08-22).
+Status at 2026-08-27: **v1.1.0 merged and live on Pages.** RESCUABLE and PARTIAL-RESCUE ship on top
+of v1.0.0 (npm, Pages and nightly all live since 2026-08-22). PR #1 merged with CI green on both
+ubuntu and windows, the nightly then regenerated and deployed the published matrix, and
+`npm install eslint10-matrix` plus `check` against the live matrix was re-verified from a clean
+directory. The npm publish of 1.1.0 is the one remaining step and is owner-operated, because npm's
+2FA wall cannot be passed from here.
 
 ## v1.1.0: what changed and why
 
@@ -97,24 +101,39 @@ rules cannot fix a crash that happens at import time.
 
 | check | result |
 | --- | --- |
-| (1) full nightly pass completes, published JSON carries a non-BLOCKED rescue verdict | **yes**, 54 plugins, 4 RESCUABLE, every non-rescued attempt carries a classification |
-| (2) `check` prints a snippet that makes `eslint .` stop crashing on ESLint 10, asserted end to end | **yes**, `test/rescue.test.ts` installs a plugin that crashes on 10, runs the real `eslint` binary (exit 2, "not a function"), pastes the CLI's own printed snippet, and re-runs it clean |
-| (3) `npm test` green | **yes** |
-| (4) README numbers match the committed `matrix.json` | **yes** |
-| three original buckets unchanged on the current corpus | **yes**, verified by diffing verdicts against the v1.0.0 matrix |
+| (1) full nightly pass completes, published JSON carries a non-BLOCKED rescue verdict | **yes**. The GitHub Actions nightly (4 shards, all green) published 54 plugins with 4 RESCUABLE, and every non-rescued attempt carries a classification. Its Linux runners reproduced the Windows numbers exactly: react 38 to 0, node 8 to 0, eslint-comments 8 to 0, lodash 1 to 0. |
+| (2) `check` prints a snippet that makes `eslint .` stop crashing on ESLint 10, asserted end to end | **yes**, twice. `test/rescue.test.ts` installs a plugin that crashes on 10, runs the real `eslint` binary (exit 2, "not a function"), pastes the CLI's own printed snippet and re-runs clean. Repeated by hand against the real `eslint-plugin-react@7.37.5`: the #3977 crash, then exit 0. |
+| (3) `npm test` green | **yes**, 63 tests, and CI green on ubuntu and windows for the merged commit |
+| (4) README numbers match the committed `matrix.json` | **yes**, every count re-derived from `matrix.json` after the final run |
+| three original buckets unchanged on the current corpus | **yes**. Ran v1.0.0's compiled `verdictFor` and this version's over the committed v1.0.0 matrix: identical verdicts on all 54 rows (42 clean, 7 blocked, 5 force). |
+| published CLI resolves the live matrix from a clean install | **yes**, cache written, rescue tier and snippet printed, `--ci` exits 1 |
+| site renders with no console errors | **yes**, driven over CDP through every filter, the search box, a row toggle and the empty state. The detector was self-tested with a deliberate `console.error` first, so "none" is a real result. |
 
-## Shipped in v1.0.0, unchanged
+## Shipped
 
 | artifact | where |
 | --- | --- |
-| npm | https://www.npmjs.com/package/eslint10-matrix |
 | repo | https://github.com/Booyaka101/eslint10-matrix |
-| live matrix | https://booyaka101.github.io/eslint10-matrix/ |
+| PR | https://github.com/Booyaka101/eslint10-matrix/pull/1 (squash-merged, CI green on ubuntu and windows) |
+| live matrix | https://booyaka101.github.io/eslint10-matrix/ (rescue tier deployed) |
+| matrix.json | https://booyaka101.github.io/eslint10-matrix/matrix.json (7 rows carry `rescue`) |
+| npm | https://www.npmjs.com/package/eslint10-matrix (still 1.0.0, see below) |
 
-Publishing 1.1.0 to npm is owner-operated: it needs npm's 2FA, which no automation here can pass
-(see `LESSONS.md` 2026-08-20). To get provenance from this version onward, create a classic
-Automation token, add it as the `NPM_TOKEN` Actions secret, and publish from a workflow with
-`--provenance`.
+### The one step left: npm publish
+
+`npm publish` from here is blocked by npm's 2FA wall (`LESSONS.md` 2026-08-20), so 1.1.0 is tagged
+and released on GitHub but not on npm. The owner runs, from the repo root:
+
+```
+npm run build && npm test
+npm publish --workspace packages/cli
+```
+
+The tarball was already verified: `npm pack` produces 21 files, and installing that tarball into an
+empty directory gives a working `eslint10-matrix` 1.1.0 that resolves the live matrix.
+
+To get provenance from the version after this one, create a classic Automation token, add it as the
+`NPM_TOKEN` Actions secret, and publish from a workflow with `--provenance`.
 
 ## v1.0.0 record
 

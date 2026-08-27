@@ -139,6 +139,11 @@ versions, 8 more only on 10, and only those 8 are what RESCUABLE speaks to.
 
 ![The rescuable tier on the live matrix](docs/rescuable-tier.png)
 
+Clicking a row opens what was measured: the `@eslint/compat` line first, then every rule that
+crashed and the error it threw.
+
+![eslint-plugin-react expanded, showing the rescue line above its 38 crashing rules](docs/react-rescue-detail.png)
+
 ### Commands
 
 ```
