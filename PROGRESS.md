@@ -1,11 +1,14 @@
 # PROGRESS
 
-Status at 2026-08-27: **v1.1.0 merged and live on Pages.** RESCUABLE and PARTIAL-RESCUE ship on top
-of v1.0.0 (npm, Pages and nightly all live since 2026-08-22). PR #1 merged with CI green on both
-ubuntu and windows, the nightly then regenerated and deployed the published matrix, and
-`npm install eslint10-matrix` plus `check` against the live matrix was re-verified from a clean
-directory. The npm publish of 1.1.0 is the one remaining step and is owner-operated, because npm's
-2FA wall cannot be passed from here.
+Status at 2026-08-27: **v1.1.0 shipped.** RESCUABLE and PARTIAL-RESCUE are live on npm, Pages and
+the nightly. PR #1 merged with CI green on both ubuntu and windows, the nightly regenerated and
+deployed the published matrix, `eslint10-matrix@1.1.0` is on npm as `latest`, and installing it
+from the registry into an empty directory and running `check` against the live matrix reproduced
+the rescue tier and snippet.
+
+`main` also carries a branch ruleset: `deletion`, `non_fast_forward` and `required_linear_history`
+with **no bypass actors**, so force-push and branch deletion are refused for everyone including the
+repo admin, while the nightly's ordinary fast-forward push still lands.
 
 ## v1.1.0: what changed and why
 
@@ -117,23 +120,28 @@ rules cannot fix a crash that happens at import time.
 | PR | https://github.com/Booyaka101/eslint10-matrix/pull/1 (squash-merged, CI green on ubuntu and windows) |
 | live matrix | https://booyaka101.github.io/eslint10-matrix/ (rescue tier deployed) |
 | matrix.json | https://booyaka101.github.io/eslint10-matrix/matrix.json (7 rows carry `rescue`) |
-| npm | https://www.npmjs.com/package/eslint10-matrix (still 1.0.0, see below) |
+| npm | https://www.npmjs.com/package/eslint10-matrix (1.1.0, `latest`, 21 files, 29.6 kB, zero runtime deps) |
+| release | https://github.com/Booyaka101/eslint10-matrix/releases/tag/v1.1.0 (tag on 33e2776) |
 
-### The one step left: npm publish
+### Publish record
 
-`npm publish` from here is blocked by npm's 2FA wall (`LESSONS.md` 2026-08-20), so 1.1.0 is tagged
-and released on GitHub but not on npm. The owner runs, from the repo root:
+Published from an authenticated local npm session as `booyaka`, no OTP prompt. Registry confirms
+`1.1.0` as `latest` with shasum `98ad5270cac80d87e8bf34a95b939e03305f2bf0`, matching what was
+uploaded. The tag points at 33e2776 while `main` has moved on with nightly matrix commits; the
+packaged paths (`packages/cli/src`, `package.json`, `README.md`, `LICENSE`) are byte-identical
+between the two, so the published artifact is the CI-verified tagged code. `matrix.json` is the
+only difference and is not in the package.
 
-```
-npm run build && npm test
-npm publish --workspace packages/cli
-```
+`npm publish` warns that it auto-corrected `bin` from `./dist/index.js` to `dist/index.js`. That is
+cosmetic normalisation npm applies at publish time, 1.0.0 shipped the same way, and the installed
+binary works. Worth writing as `dist/index.js` in the manifest next time the file is touched.
 
-The tarball was already verified: `npm pack` produces 21 files, and installing that tarball into an
-empty directory gives a working `eslint10-matrix` 1.1.0 that resolves the live matrix.
+### No provenance on 1.1.0
 
-To get provenance from the version after this one, create a classic Automation token, add it as the
-`NPM_TOKEN` Actions secret, and publish from a workflow with `--provenance`.
+Same as 1.0.0: published from a local session, so no attestation, and npm forbids adding one after
+the fact. To get provenance from the next version, create a classic Automation token, add it as the
+`NPM_TOKEN` Actions secret, and publish from a workflow with `--provenance`. Both steps sit behind
+npm's 2FA, so they are owner-operated (`LESSONS.md` 2026-08-20).
 
 ## v1.0.0 record
 
