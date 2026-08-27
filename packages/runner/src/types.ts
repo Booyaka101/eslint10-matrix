@@ -13,6 +13,42 @@ export interface PluginRunResult {
   totalRules: number;
   /** Populated for install-fail and load-fail so the site can show why. */
   detail?: string;
+  /** Set on rescue-pass results: which @eslint/compat function produced this run. */
+  fixupFunction?: FixupFunction;
+  /** Set when fixupConfigRules was used: the plugin config key it wrapped. */
+  fixupConfigKey?: string;
+}
+
+export type FixupFunction = 'fixupPluginRules' | 'fixupConfigRules';
+
+export type RescueVerdict = 'rescuable' | 'partial-rescue' | 'blocked';
+
+/**
+ * Outcome of re-running a BLOCKED plugin with its rules wrapped by
+ * @eslint/compat. Only ever present on rows whose plain v10 run is a
+ * regression; a wrap that would be a no-op is never attempted or recorded.
+ */
+export interface RescueResult {
+  eslintVersion: string;
+  compatVersion: string;
+  attempted: boolean;
+  verdict: RescueVerdict;
+  /** Why the rescue pass did not run (cause is not a removed context API). */
+  skipReason?: string;
+  fixupFunction?: FixupFunction;
+  fixupConfigKey?: string;
+  crashingRulesBefore?: number;
+  crashingRulesAfter?: number;
+  /** Rules that still crash under the wrap; the user must disable these. */
+  residualRules?: CrashingRule[];
+  /**
+   * Rules still crashing under the wrap that already crashed on ESLint 9. They
+   * never counted towards the verdict, but a reader pasting the snippet will
+   * still meet them, so the report says so rather than claiming a clean run.
+   */
+  preexistingRulesAfter?: number;
+  /** Set when the rescue probe itself failed (for example compat did not install). */
+  detail?: string;
 }
 
 export interface PluginRow {
@@ -21,6 +57,7 @@ export interface PluginRow {
   declaredPeerRange: string | null;
   weeklyDownloads: number;
   results: Record<string, PluginRunResult>;
+  rescue?: RescueResult;
 }
 
 export interface Matrix {
@@ -41,7 +78,17 @@ export interface PluginSpec {
 
 /** Raw shape written by probe/probe.mjs. */
 export interface ProbeResult {
-  phase: 'input' | 'load' | 'eslint-load' | 'collect' | 'instantiate' | 'lint' | 'attribute' | 'done' | 'probe-internal';
+  phase:
+    | 'input'
+    | 'load'
+    | 'eslint-load'
+    | 'compat-load'
+    | 'collect'
+    | 'instantiate'
+    | 'lint'
+    | 'attribute'
+    | 'done'
+    | 'probe-internal';
   ok: boolean;
   totalRules: number;
   crashingRules: CrashingRule[];
@@ -50,23 +97,8 @@ export interface ProbeResult {
   totalMessages?: number;
   parseErrors?: number;
   tsParserLoaded?: boolean;
+  fixupFunction?: FixupFunction;
+  fixupConfigKey?: string;
   error?: { message: string; stack: string } | null;
 }
 
-/**
- * ESLint's own convention: eslint-plugin-x is referenced as `x`,
- * @scope/eslint-plugin as `@scope`, @scope/eslint-plugin-x as `@scope/x`.
- */
-export function namespaceFor(packageName: string): string {
-  if (packageName.startsWith('@')) {
-    const slash = packageName.indexOf('/');
-    const scope = packageName.slice(0, slash);
-    const rest = packageName.slice(slash + 1);
-    if (rest === 'eslint-plugin') return scope;
-    if (rest.startsWith('eslint-plugin-')) return `${scope}/${rest.slice('eslint-plugin-'.length)}`;
-    return `${scope}/${rest}`;
-  }
-  return packageName.startsWith('eslint-plugin-')
-    ? packageName.slice('eslint-plugin-'.length)
-    : packageName;
-}

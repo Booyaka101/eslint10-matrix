@@ -1,108 +1,123 @@
 # PROGRESS
 
-Status at 2026-08-22: **v1.0.0 shipped.** Published to npm, repo public, Pages live, nightly workflow green.
+Status at 2026-08-27: **v1.1.0 ready to ship.** Adds the RESCUABLE and PARTIAL-RESCUE verdicts on
+top of the shipped v1.0.0 (npm, Pages and nightly workflow all live since 2026-08-22).
 
-## Phase 0 verification (all re-fetched live on 2026-08-22)
+## v1.1.0: what changed and why
+
+ESLint 9 reached end of life on 2026-08-06, so BLOCKED stopped being an acceptable place for the
+tool to stop. `@eslint/compat@2.1.0` declares `eslint` peer `^8.40 || 9 || 10`, so it installs
+into the matrix's isolated ESLint 10 dirs with no new `--legacy-peer-deps` pressure, and its
+`fixupPluginRules()` wraps every rule in a plugin. Whether that actually rescues a given plugin is
+a measurement, not a claim, which is the whole point of this repo.
+
+## Phase 0 verification (all re-fetched live on 2026-08-27)
 
 | resource | result |
 | --- | --- |
-| `registry.npmjs.org/eslint-plugin-react/latest` | 7.37.5, peer `^3 \|\| … \|\| ^9.7`, matches brief |
-| `registry.npmjs.org/eslint` | dist-tags `latest: 10.9.0`, `maintenance: 9.39.5`; 10.0.0 published 2026-02-06 |
-| `registry.npmjs.org/eslint-plugin-jsx-a11y/latest` | 6.10.2, peer `^3 \|\| … \|\| ^9` |
-| `registry.npmjs.org/eslint-plugin-import/latest` | 2.32.0, peer `^2 \|\| … \|\| ^9` |
-| `eslint/eslint main tools/test-ecosystem/plugins-data.json` | 7 entries, fields `{commands, commit, repository}`, no `results` key |
-| `jsx-eslint/eslint-plugin-react#3977` | open, created 2026-02-07, updated 2026-08-21, 355 reactions (341 👍), 45 comments; body names `contextOrFilename.getFilename is not a function` and `display-name` |
-| issue comments | patrickconroy 2026-04-29 and stevensacks 2026-05-20 quotes present; ternaus announced the fork 2026-08-21 |
-| `api.github.com/search/repositories?q=eslint+compatibility+matrix…` | `total_count: 0` |
-| `@ternaus/eslint-plugin-react/latest` | 8.0.0, peer `^10.0.0` |
+| `registry.npmjs.org/@eslint/compat/latest` | 2.1.0, "Compatibility utilities for ESLint", peer `eslint ^8.40 \|\| 9 \|\| 10` (optional), engines node `^20.19.0 \|\| ^22.13.0 \|\| >=24`. Matches the brief. |
+| `eslint/rewrite` `packages/compat/README.md` | `fixupPluginRules()` applies `fixupRule()` to each rule and returns a new plugin; `fixupConfigRules()` documented; "intended for use with ESLint v8.x or v9.x to allow them to work as-is in ESLint v9.x and v10.x"; carries the "fixes the most common issues but can't fix everything" caveat. `includeIgnoreFile` deprecated. Matches. |
+| `jsx-eslint/eslint-plugin-react#3977` | open, created 2026-02-07, names `contextOrFilename.getFilename is not a function` in `react/display-name`, traced to `lib/util/version.js`, no fix merged. Matches. |
+| `jsx-eslint/eslint-plugin-jsx-a11y#1075` | open, "[Feature] Support for ESLint v10", created 2026-02-09, PRs #1079 and #1081 referenced, nothing merged. Matches. |
+| `Booyaka101/eslint10-matrix` README on main | the three shipped buckets, the nightly method, and the react 38-of-101 result, exactly as the brief describes. |
 
-**Cost model: free.** Public npm registry, public GitHub API, GitHub Actions and Pages on a public repo. No paid key, account or hosting. Not blocked.
+The GitHub HTML fetch did not return reaction counts today, so the two README lines that quoted a
+precise count now say "hundreds of reactions" rather than republish a number this run could not
+re-verify.
 
-## Findings that shaped the build (none were in the brief)
+**Cost model: free.** npm registry, GitHub API, Actions and Pages on a public repo. `@eslint/compat`
+is MIT on the public registry. No paid key, account or hosting.
 
-1. **`npm install` cannot be plain.** Every plugin declaring `^9` makes npm refuse to resolve against ESLint 10 with `ERESOLVE`. The runner uses `--legacy-peer-deps`; installing past the declared range *is* the experiment.
-2. **A crashing rule aborts the whole lint run.** The all-rules pass can only ever name the first casualty. When it fails, the probe re-lints one rule at a time. This is why `eslint-plugin-react` reports 38 crashing rules rather than 1.
-3. **`files: ['**/*']` is a universal pattern.** ESLint does not treat it as making a file eligible; every fixture came back "File ignored because no matching configuration was supplied". Config uses explicit extension globs.
-4. **Plugin configuration decides what breaks.** `eslint-plugin-react` only reaches the removed `context.getFilename()` API when detecting the React version. Without `settings: { react: { version: 'detect' } }` only 6 rules crash and `display-name` is not among them; with it, 38 crash including `display-name`. Testing in a configuration nobody uses would have understated the breakage and missed acceptance check (b).
-5. **`typescript@latest` is TS 7.0, which typescript-eslint rejects.** It broke `@typescript-eslint/eslint-plugin`, `@angular-eslint/eslint-plugin`, `@eslint-react/eslint-plugin` and `eslint-plugin-deprecation` identically on *both* ESLint versions. Pinned to `typescript@^6`. A load-fail on ESLint 9 is almost always a runner bug, not a plugin bug. That symmetry is the tell.
-6. **Windows `spawn` needs per-call `shell`.** npm resolves to `npm.cmd` (Node refuses to spawn a `.cmd` without a shell) while `process.execPath` lives under `C:\Program Files\...` and gets split in half by one.
+## What the run actually measured
 
-7. **Typed-linting rules are not crashes.** 64 `@typescript-eslint` rules refuse to load without `parserOptions.project`, identically on 9 and 10. Counting them marked the most-installed plugin in the ecosystem as blocked over a `tsconfig` setting. They are now classified as config prerequisites, and the report only blocks on rules that break on 10 *and not* on 9.
+Full 54-plugin pass against ESLint 9.39.5 and 10.9.1, rescue pass included.
 
-## Acceptance checks, all run
+| plugin | ESLint 10 | rescue |
+| --- | --- | --- |
+| `eslint-plugin-react@7.37.5` | 38 of 101 rules crash | **RESCUABLE**, all 38 recover under `fixupPluginRules()` |
+| `eslint-plugin-eslint-comments@3.2.0` | 8 rules crash | **RESCUABLE**, all 8 recover |
+| `eslint-plugin-node@11.1.0` | 20 crash, 12 of them on ESLint 9 too | **RESCUABLE** for the 8 that ESLint 10 broke; the other 12 survive the wrap and the report says so |
+| `eslint-plugin-lodash@8.0.0` | 1 rule crashes | **RESCUABLE** |
+| `eslint-plugin-import@2.32.0` | 3 rules crash | skipped, `not a removed context API`. The cause is `Cannot use 'in' operator to search for 'sourceType' in undefined`, which no rule wrapper repairs. |
+| `eslint-plugin-vitest@0.5.4` | fails to import | attempted, still **BLOCKED**: `Class extends value undefined` |
+| `eslint-plugin-deprecation@3.0.0` | fails to import | attempted, still **BLOCKED**, same cause |
 
-| check | result |
-| --- | --- |
-| (a) full pass ≥40 plugins × 2 versions, validates against schema | **54 plugins, 108 pairs, 384s, schema valid** |
-| (b) reproduces the react `display-name` crash on 10.9.0 | **yes**. `Error while loading rule 'react/display-name': contextOrFilename.getFilename is not a function`, 38 of 101 rules |
-| (c) `check` in a scratch repo prints all three buckets + valid JSON overrides | **yes**. 7 real plugins resolved from a real `eslint.config.js` |
-| (d) `--ci` exits 1 with a blocked plugin, 0 without | **yes**. 1 and 0 |
-| (e) whole test suite passes | **38 tests, 3 files, pass** |
-| (f) site renders to one static HTML file, no console errors | **yes**. driven in Chrome over CDP in a dedicated tab, hard reload with the recorder armed: `CONSOLE ERRORS/WARNINGS: NONE` |
+Both load failures are `@typescript-eslint/utils` doing `class extends eslint.LegacyESLint`. The
+rescue pass tries them because the message names a removed API, and correctly reports that wrapping
+rules cannot fix a crash that happens at import time.
 
-## Also verified
+## Findings from this phase
 
-- CLI packs to a tarball and installs into a clean directory (never tested via `npx .`, which is a silent no-op on Windows per `LESSONS.md` 2026-08-06).
-- Error paths: no flat config, unreachable matrix, bad flag, missing matrix file, future schema version. All exit 2 with a message and no stack trace.
-- Offline fallback: with the network unreachable, the cached copy at `~/.cache/eslint10-matrix` is used and the warning names its age.
-- `plugins` subcommand lists all 54 rows with both versions' statuses.
-
-## Notable real findings in the shipped matrix
-
-- `eslint-plugin-jsx-a11y@6.10.2` declares `^9` and is completely clean on 10.9.0. The declared range is simply stale.
-- `eslint-plugin-vitest@0.5.4` and `eslint-plugin-deprecation@3.0.0` fail to *import* on ESLint 10 through `@typescript-eslint/utils`, which does `class extends eslint.LegacyESLint`, an API ESLint 10 removed with eslintrc. Neither manifest hints at it.
-- `@ternaus/eslint-plugin-react@8.0.0`, the fork announced in #3977 on 2026-08-21, declares `^10.0.0` and is clean. Its claim now has an independent execution behind it.
+1. **A rescue must be scoped to the regression, not the plugin.** `eslint-plugin-node` crashes on
+   ESLint 9 as well. Counting its pre-existing failures would have hidden the 8 rules ESLint 10
+   broke; ignoring them entirely would have printed "all recover" to somebody who will still watch
+   12 rules crash. The verdict uses the regression, and the report names the remainder separately.
+2. **The skip reason should classify, not narrate.** The first version embedded the failing message
+   in `skipReason`, which duplicated data already on the row and produced a 200-character terminal
+   line. It is now a short classification (`not a removed context API`, `missing dependency`,
+   `parser failure`) with the evidence left where it already lived.
+3. **`fixupConfigRules()` almost never wins the measurement.** It applies the same `fixupRule()` to
+   the same rules, so it can only beat `fixupPluginRules()` when the config's plugin object carries
+   rules the top-level `rules` map does not. Across all 54 plugins it never did. Both paths are
+   still measured and the winner recorded, per the brief, and the snippet writer supports both
+   because a user consuming `plugin.configs['flat/recommended']` wants the config wrapped. Worth
+   revisiting if it stays unused.
+4. **Rules that live only inside a plugin's flat config are invisible to the probe.** They are
+   recorded as a config prerequisite rather than linted, so such a plugin reads as clean and never
+   reaches the rescue pass. Found while building a fixture for finding 3, now a documented
+   limitation.
 
 ## House-rule audit
 
-Run before the first commit, with tools rather than by eye.
+- **Clone check, difflib over function line lists.** Found two pairs above the 60% threshold, both
+  introduced by this change: `snippet.ts:pluginNamespace` vs `types.ts:namespaceFor` at **92.3%**,
+  and `report.ts:regressionOnTen` vs `rescue.ts:newlyBrokenOnTen` at **90.9%**. Both were the
+  "duplicate across the package boundary and pin it with a test" shape. Extracted instead: the
+  runner now imports `regressionOnTen` and `pluginNamespace` from the CLI's built output, exactly
+  as `site/build.mjs` already imports `verdictFor`. "Blocked" now has one definition rather than
+  two that a test hopes agree. Re-run: **0 pairs at or above 55%**.
+- **Cost of that extraction, stated.** The runner now needs the CLI built first, so the nightly
+  shard job runs `npm run build` instead of building only the runner, and `npm test` builds first.
+- **Proof the probe refactor changed nothing.** `probe.mjs` had its lint-and-attribute flow pulled
+  into a reusable `measure()` so the wrapped run reuses it. Recorded `probe-result.json` from
+  `HEAD`'s probe and from the new one over five fixture plugins covering the clean fast path (513
+  lint messages), rule-crash attribution, load failure, and both new fixtures: **byte for byte
+  identical** on every case, with only the probe's own stack line numbers normalised.
+- **Em dashes.** Checked through Node rather than a bash pattern, per the lesson that `$'...'`
+  silently matches nothing. None in any README, CHANGELOG, PROGRESS or source comment.
+- **Report text reviewed as output, not as code.** The first render put a 200-character BLOCKED
+  line with two nested colons, repeated the crashing-rule list that the wrap makes irrelevant,
+  named the residual rule twice, quoted an object key that needs no quotes
+  (`plugins: { 'react': ... }`), and repeated the `npm install` line once per plugin. All fixed.
+- **Backward compatibility.** Each entry's `reason` string is byte-identical to what v1.0.0
+  produced; the rescue detail travels in a separate `rescue` object. `--ci` exit codes and the
+  `ready` flag are unchanged, since a rescuable plugin still breaks a plain upgrade.
 
-- **Em dashes in outward-facing prose.** The first pass used a bash `$'...'` grep pattern and silently matched nothing, because bash never expanded the escape. Re-run through Node it found 23 lines across both READMEs and PROGRESS. All rewritten with periods and commas. Commit messages were already clean.
-- **Clone check, difflib over function line lists.** `regressionOnTen` was duplicated between `packages/cli/src/report.ts` and `site/build.mjs` at **64%**, over the 60% threshold. The site also carried its own looser `satisfiesTen` instead of the CLI's `satisfies`, and the two disagreed on bounded ranges: a plugin declaring `>=9 <10` rendered as "ready" for ESLint 10 on the site while the CLI correctly said "safe to force". Extracted `verdictFor` in `report.ts` as the single place a matrix row becomes a verdict; the site imports it. Regression test added.
-- **Proof the extraction changed nothing.** Built the site from `HEAD`'s `build.mjs` and from the new one over the committed `matrix.json`: the rendered HTML is **byte-for-byte identical**. The behaviour change is confined to the bug, demonstrated separately with a synthetic `>=9 <10` row (old "ready", new "safe to force").
-- **Where the extraction stopped.** The remaining pairs at or above 55% are `fixtures/types.ts:worker` vs `run.ts:mapWithConcurrency` and `fixtures/esm-imports.mjs:fetchJson` vs `registry.ts:getJson`. Both sides of each pair are the lint corpus, which exists to be realistic source for plugins to lint, not product code to share. Deduplicating them would make the fixtures less idiomatic for no gain. The `readVersion`/`writeCache`/`readDependencies` pairs at 47 to 50% are the ordinary "try a file operation, fall back" shape over genuinely different workflows.
-- **Comment density.** Two rationale essays trimmed to the constraint they document (the `CONFIG_ERROR` block in `probe.mjs` and the `--legacy-peer-deps` note in `run.ts`).
+## Acceptance checks
 
-## Maintainability pass
+| check | result |
+| --- | --- |
+| (1) full nightly pass completes, published JSON carries a non-BLOCKED rescue verdict | **yes**, 54 plugins, 4 RESCUABLE, every non-rescued attempt carries a classification |
+| (2) `check` prints a snippet that makes `eslint .` stop crashing on ESLint 10, asserted end to end | **yes**, `test/rescue.test.ts` installs a plugin that crashes on 10, runs the real `eslint` binary (exit 2, "not a function"), pastes the CLI's own printed snippet, and re-runs it clean |
+| (3) `npm test` green | **yes** |
+| (4) README numbers match the committed `matrix.json` | **yes** |
+| three original buckets unchanged on the current corpus | **yes**, verified by diffing verdicts against the v1.0.0 matrix |
 
-- **The repo now lints itself**, on ESLint 10 with `typescript-eslint`, which for this project is dogfooding rather than housekeeping. It was the most obvious gap: a tool that measures ESLint readiness had no `eslint.config.js`. `npm run lint` is wired into CI. Typed rules are off deliberately, since they need `parserOptions.project`, the same prerequisite the matrix classifies separately.
-- **`ruleIdFromError` had an unreachable branch and a real hole.** Its second regex repeated the first as an alternative, so `bare[1]` could never be reached. The guard against mistaking a module path for a rule id tested `includes('.js')`, which does not match `.cjs` or `.mjs`, so a path ending in either was returned as a rule id. Rewritten around named regexes with an anchored extension test, plus four tests covering bare ids, every module extension, stack-frame fallback, and the null case.
-- **Dead code removed.** `pad(part, fill)` in `semver-lite.ts` was always called with a no-op ternary (`? 0 : 0`), so the parameter was removed. `run.ts` re-exported `classify` although nothing imports `run.ts` as a module.
-- **Entrypoint guards unified.** `run.ts` compared `process.argv[1]` against a `dist/run.js` suffix, which breaks on rename; it now uses the same `import.meta.url` comparison as the CLI.
-- **Schema drift pinned by a test.** The CLI redeclares the matrix shape because it ships standalone with no dependency on the private runner package. Two tests now push a runner-built matrix through the CLI loader and check both agree on every status.
-- **10 raw ESC bytes** sat invisibly in the colour helpers in `report.ts`, now written as unicode escapes, with runtime colour output verified byte-identical afterwards. The `no-control-regex` error the linter raised was a separate matter: a test regex that matched ESC, now asserted with `toContain`.
-- **Known gaps, deliberately not closed for v1.** `scripts/merge-shards.mjs` and the site's inline browser script have no unit tests; both are exercised end to end instead (the nightly workflow and the CDP render check). `probe.mjs` is the longest file at 271 lines and its `main()` carries the phase machine; splitting it would spread the phase transitions across files for no clear gain at this size.
-
-## Shipped
+## Shipped in v1.0.0, unchanged
 
 | artifact | where |
 | --- | --- |
-| npm | https://www.npmjs.com/package/eslint10-matrix (1.0.0, MIT, zero runtime deps) |
+| npm | https://www.npmjs.com/package/eslint10-matrix |
 | repo | https://github.com/Booyaka101/eslint10-matrix |
-| release | https://github.com/Booyaka101/eslint10-matrix/releases/tag/v1.0.0 (tag v1.0.0 on b5431f4) |
 | live matrix | https://booyaka101.github.io/eslint10-matrix/ |
-| matrix.json | https://booyaka101.github.io/eslint10-matrix/matrix.json |
 
-Release order was deliberate: CI green on the exact commit, then the nightly run to populate Pages,
-then npm, so the published CLI resolved its matrix on the first install rather than erroring.
+Publishing 1.1.0 to npm is owner-operated: it needs npm's 2FA, which no automation here can pass
+(see `LESSONS.md` 2026-08-20). To get provenance from this version onward, create a classic
+Automation token, add it as the `NPM_TOKEN` Actions secret, and publish from a workflow with
+`--provenance`.
 
-Verified after publishing, from a clean directory with no local paths and no cache:
-`npm install eslint10-matrix` then `eslint10-matrix check` produced the three buckets against the
-CI-generated matrix, `--ci` exited 1 with blockers present, and the cache was written.
+## v1.0.0 record
 
-### Caught during release
-
-- The hardcoded `DEFAULT_MATRIX_URL` named account `cbosch101`, which does not exist. The real
-  account is `Booyaka101`. Every install would have failed to fetch. Fixed before publishing.
-- CI failed on windows-latest: the runner's temp dir is an 8.3 short name (`RUNNER~1`), which
-  percent-encodes to `%7E` in a file URL and then will not load, so `resolveConfig` threw on a
-  config that existed. Now imports through the resolved real path, which also fixes symlinked
-  checkouts. Not reproducible on the dev machine; only the Windows CI leg found it.
-
-### No provenance on 1.0.0
-
-Published from an authenticated local npm session, so the version carries no provenance attestation
-and npm forbids adding one to an already-published version. Minting an automation token or
-configuring Trusted Publishing both sit behind npm's 2FA wall (see `LESSONS.md` 2026-08-20), so this
-is owner-operated. To get provenance from 1.0.1 onward: create a classic Automation token, add it as
-the `NPM_TOKEN` Actions secret, and publish from a workflow with `--provenance`.
+Kept for context: the original three buckets, the 54-plugin corpus, the `--legacy-peer-deps`
+install method, the per-rule attribution loop, and the release notes are all as recorded at
+2026-08-22. Nothing in v1.1.0 changes how the three original verdicts are computed.

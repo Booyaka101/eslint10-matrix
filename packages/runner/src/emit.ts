@@ -3,6 +3,7 @@ import { dirname } from 'node:path';
 import { SCHEMA_VERSION, type Matrix, type PluginRow } from './types.js';
 
 const STATUSES = new Set(['clean', 'rule-crash', 'load-fail', 'install-fail']);
+const RESCUE_VERDICTS = new Set(['rescuable', 'partial-rescue', 'blocked']);
 
 export function buildMatrix(
   eslintVersions: { v9: string; v10: string },
@@ -63,6 +64,31 @@ export function validateMatrix(value: unknown): string[] {
         }
       }
       if (typeof result?.totalRules !== 'number') problems.push(`${rat}.totalRules must be a number`);
+    }
+
+    if (row.rescue !== undefined) {
+      const rat = `${at}.rescue`;
+      if (!row.rescue || typeof row.rescue !== 'object') {
+        problems.push(`${rat} must be an object when present`);
+        continue;
+      }
+      if (!RESCUE_VERDICTS.has(row.rescue.verdict)) problems.push(`${rat}.verdict invalid: ${row.rescue.verdict}`);
+      if (typeof row.rescue.attempted !== 'boolean') problems.push(`${rat}.attempted must be a boolean`);
+      if (typeof row.rescue.eslintVersion !== 'string') problems.push(`${rat}.eslintVersion must be a string`);
+      if (typeof row.rescue.compatVersion !== 'string') problems.push(`${rat}.compatVersion must be a string`);
+      if (!row.rescue.attempted && typeof row.rescue.skipReason !== 'string') {
+        problems.push(`${rat}.skipReason must explain an unattempted rescue`);
+      }
+      if (row.rescue.residualRules !== undefined) {
+        if (!Array.isArray(row.rescue.residualRules)) problems.push(`${rat}.residualRules must be an array`);
+        else {
+          for (const [j, rule] of row.rescue.residualRules.entries()) {
+            if (typeof rule?.rule !== 'string' || typeof rule?.message !== 'string') {
+              problems.push(`${rat}.residualRules[${j}] must be {rule, message} strings`);
+            }
+          }
+        }
+      }
     }
   }
   return problems;

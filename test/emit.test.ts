@@ -4,9 +4,10 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { buildMatrix, validateMatrix, writeMatrix } from '../packages/runner/src/emit.js';
 import { classify, ruleIdFromError } from '../packages/runner/src/classify.js';
-import { namespaceFor, type PluginRow, type Status } from '../packages/runner/src/types.js';
+import type { PluginRow, Status } from '../packages/runner/src/types.js';
 import { assertMatrixShape, loadMatrix } from '../packages/cli/src/matrix.js';
 import { verdictFor } from '../packages/cli/src/report.js';
+import { pluginNamespace } from '../packages/cli/src/snippet.js';
 
 const ROWS: PluginRow[] = [
   {
@@ -25,12 +26,14 @@ const ROWS: PluginRow[] = [
   },
 ];
 
-describe('namespaceFor', () => {
+describe('pluginNamespace', () => {
+  // One implementation, used by the runner to configure each probe and by the
+  // CLI to write the snippet, so a probe and its snippet cannot disagree.
   it('follows the ESLint plugin naming convention', () => {
-    expect(namespaceFor('eslint-plugin-react')).toBe('react');
-    expect(namespaceFor('@typescript-eslint/eslint-plugin')).toBe('@typescript-eslint');
-    expect(namespaceFor('@next/eslint-plugin-next')).toBe('@next/next');
-    expect(namespaceFor('@ternaus/eslint-plugin-react')).toBe('@ternaus/react');
+    expect(pluginNamespace('eslint-plugin-react')).toBe('react');
+    expect(pluginNamespace('@typescript-eslint/eslint-plugin')).toBe('@typescript-eslint');
+    expect(pluginNamespace('@next/eslint-plugin-next')).toBe('@next/next');
+    expect(pluginNamespace('@ternaus/eslint-plugin-react')).toBe('@ternaus/react');
   });
 });
 

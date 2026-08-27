@@ -7,7 +7,9 @@ import { fileURLToPath } from 'node:url';
 import { classify, installFail } from './classify.js';
 import { buildMatrix, writeMatrix } from './emit.js';
 import { eslintDistTags, packageFacts } from './registry.js';
-import { namespaceFor, type PluginRow, type PluginRunResult, type PluginSpec, type ProbeResult } from './types.js';
+import { pluginNamespace } from '../../cli/dist/snippet.js';
+import { COMPAT_SPEC, deriveRescue, rescueEligibility, skippedRescue } from './rescue.js';
+import type { PluginRow, PluginRunResult, PluginSpec, ProbeResult, RescueResult } from './types.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const PACKAGE_ROOT = resolve(HERE, '..');
@@ -112,7 +114,12 @@ function run(
   });
 }
 
-async function probePair(spec: PluginSpec, eslintVersion: string, keepTemp: boolean): Promise<PluginRunResult> {
+async function probePair(
+  spec: PluginSpec,
+  eslintVersion: string,
+  keepTemp: boolean,
+  rescue = false
+): Promise<PluginRunResult> {
   const dir = await mkdtemp(join(tmpdir(), 'e10m-'));
   try {
     await writeFile(
@@ -124,6 +131,7 @@ async function probePair(spec: PluginSpec, eslintVersion: string, keepTemp: bool
 
     const parser = spec.parser ?? null;
     const deps = [`eslint@${eslintVersion}`, `${spec.name}@latest`, ...(spec.extraDeps ?? [])];
+    if (rescue) deps.push(COMPAT_SPEC);
 
     // The declared peer range is what we are testing, so a plain install would
     // just refuse to resolve. --legacy-peer-deps installs past it deliberately.
@@ -144,10 +152,11 @@ async function probePair(spec: PluginSpec, eslintVersion: string, keepTemp: bool
       JSON.stringify(
         {
           specifier: spec.name,
-          namespace: spec.namespace ?? namespaceFor(spec.name),
+          namespace: spec.namespace ?? pluginNamespace(spec.name),
           settings: spec.settings ?? null,
           parserSpecifier: parser,
           fixturesDir: 'fixtures',
+          fixup: rescue,
         },
         null,
         2
@@ -170,6 +179,27 @@ async function probePair(spec: PluginSpec, eslintVersion: string, keepTemp: bool
   } finally {
     if (!keepTemp) await rm(dir, { recursive: true, force: true, maxRetries: 3 }).catch(() => {});
   }
+}
+
+/**
+ * Runs only for plugins whose plain v10 result is a regression on ESLint 10.
+ * Clean and safe-to-force rows never get a rescue field: a no-op wrap must not
+ * be reported as a rescue.
+ */
+async function rescuePass(
+  spec: PluginSpec,
+  results: Record<string, PluginRunResult>,
+  eslintVersions: { v9: string; v10: string },
+  keepTemp: boolean
+): Promise<RescueResult | undefined> {
+  const onNine = results[eslintVersions.v9];
+  const onTen = results[eslintVersions.v10]!;
+  const eligibility = rescueEligibility(onNine, onTen);
+  if (eligibility.kind === 'not-blocked') return undefined;
+  if (eligibility.kind === 'skip') return skippedRescue(eslintVersions.v10, eligibility.reason);
+
+  const wrapped = await probePair(spec, eslintVersions.v10, keepTemp, true);
+  return deriveRescue(onNine, onTen, wrapped, eslintVersions.v10, eligibility.newlyBroken);
 }
 
 async function mapWithConcurrency<T, R>(items: readonly T[], limit: number, fn: (item: T) => Promise<R>): Promise<R[]> {
@@ -218,12 +248,14 @@ async function main(): Promise<void> {
     for (const version of [eslintVersions.v9, eslintVersions.v10]) {
       results[version] = await probePair(spec, version, opts.keepTemp);
     }
+    const rescue = await rescuePass(spec, results, eslintVersions, opts.keepTemp);
     done += 1;
     const v10 = results[eslintVersions.v10]!;
     console.log(
       `[matrix] (${done}/${shard.length}) ${spec.name}@${facts.version ?? '?'} ` +
         `v9=${results[eslintVersions.v9]!.status} v10=${v10.status}` +
-        (v10.crashingRules.length > 0 ? ` (${v10.crashingRules.length} crashing rules)` : '')
+        (v10.crashingRules.length > 0 ? ` (${v10.crashingRules.length} crashing rules)` : '') +
+        (rescue ? ` rescue=${rescue.attempted ? rescue.verdict : `skipped (${rescue.skipReason})`}` : '')
     );
     return {
       name: spec.name,
@@ -231,6 +263,7 @@ async function main(): Promise<void> {
       declaredPeerRange: facts.peerRange,
       weeklyDownloads: spec.weeklyDownloads,
       results,
+      ...(rescue ? { rescue } : {}),
     };
   });
 

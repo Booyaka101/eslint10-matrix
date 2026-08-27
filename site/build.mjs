@@ -36,7 +36,14 @@ function formatDownloads(n) {
   return String(n);
 }
 
-const VERDICT_TEXT = { blocked: 'blocked', force: 'safe to force', clean: 'ready', untested: 'untested' };
+const VERDICT_TEXT = {
+  blocked: 'blocked',
+  rescuable: 'rescuable',
+  'partial-rescue': 'partial rescue',
+  force: 'safe to force',
+  clean: 'ready',
+  untested: 'untested',
+};
 
 function cell(result) {
   if (!result) return '<td class="s"><span class="pill untested">untested</span></td>';
@@ -50,29 +57,53 @@ function cell(result) {
   return `<td class="s"><span class="pill ${esc(result.status)}">${esc(label)}</span><span class="sub">${esc(detail)}</span></td>`;
 }
 
+/** A row is expandable when it has crashing rules to list, a rescue to explain, or both. */
+function hasDetail(row, v10) {
+  return (row.results[v10]?.crashingRules.length ?? 0) > 0 || Boolean(row.rescue);
+}
+
 function crashDetail(row, v10) {
-  const result = row.results[v10];
-  if (!result || result.crashingRules.length === 0) return '';
-  const items = result.crashingRules
-    .map((r) => `<li><code>${esc(r.rule)}</code><span>${esc(r.message)}</span></li>`)
-    .join('');
+  if (!hasDetail(row, v10)) return '';
+  const items =
+    rescueDetail(row) +
+    (row.results[v10]?.crashingRules ?? [])
+      .map((r) => `<li><code>${esc(r.rule)}</code><span>${esc(r.message)}</span></li>`)
+      .join('');
   return `<tr class="detail" hidden><td colspan="5"><ul class="crashes">${items}</ul></td></tr>`;
+}
+
+function rescueDetail(row) {
+  const rescue = row.rescue;
+  if (!rescue) return '';
+  if (!rescue.attempted) {
+    return `<li class="rescue"><code>@eslint/compat</code><span>rescue not attempted: ${esc(rescue.skipReason ?? '')}</span></li>`;
+  }
+  if (rescue.verdict === 'blocked') {
+    return `<li class="rescue"><code>@eslint/compat</code><span>wrap did not help: ${esc(rescue.detail ?? 'no improvement')}</span></li>`;
+  }
+  const fn = rescue.fixupFunction ?? 'fixupPluginRules';
+  const after = rescue.crashingRulesAfter ?? 0;
+  const summary =
+    after === 0
+      ? `all crashing rules recover wrapped in ${fn}()`
+      : `${fn}() fixes all but ${after}: ${(rescue.residualRules ?? []).map((r) => r.rule).join(', ')}`;
+  return `<li class="rescue"><code>@eslint/compat@${esc(rescue.compatVersion)}</code><span>${esc(summary)}. Run <code>npx eslint10-matrix check</code> for the config to paste.</span></li>`;
 }
 
 function render(matrix) {
   const { v9, v10 } = matrix.eslintVersions;
-  const counts = { blocked: 0, force: 0, clean: 0, untested: 0 };
+  const counts = { blocked: 0, rescuable: 0, 'partial-rescue': 0, force: 0, clean: 0, untested: 0 };
   for (const row of matrix.plugins) counts[verdictFor(row, matrix.eslintVersions).verdict] += 1;
 
   const rows = matrix.plugins
     .map((row, index) => {
       const { verdict } = verdictFor(row, matrix.eslintVersions);
-      const hasDetail = (row.results[v10]?.crashingRules.length ?? 0) > 0;
+      const expandable = hasDetail(row, v10);
       const name = row.version ? `${row.name}@${row.version}` : row.name;
       return `<tr class="row v-${verdict}" data-verdict="${verdict}" data-name="${esc(row.name)}"${
-        hasDetail ? ` data-detail="${index}" tabindex="0" role="button" aria-expanded="false"` : ''
+        expandable ? ` data-detail="${index}" tabindex="0" role="button" aria-expanded="false"` : ''
       }>
-    <td class="n"><span class="pkg">${esc(name)}</span><span class="sub">${formatDownloads(row.weeklyDownloads)}/wk${hasDetail ? ' · click for crashing rules' : ''}</span></td>
+    <td class="n"><span class="pkg">${esc(name)}</span><span class="sub">${formatDownloads(row.weeklyDownloads)}/wk${expandable ? ' · click for details' : ''}</span></td>
     <td class="d"><code>${esc(row.declaredPeerRange ?? 'none')}</code></td>
     ${cell(row.results[v9])}
     ${cell(row.results[v10])}
@@ -101,7 +132,7 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:
 .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
 .card b{display:block;font-size:26px;line-height:1.2}
 .card span{color:var(--muted);font-size:12.5px}
-.card.blocked b{color:var(--bad)}.card.force b{color:var(--warn)}.card.clean b{color:var(--ok)}
+.card.blocked b{color:var(--bad)}.card.rescue b{color:var(--accent)}.card.force b{color:var(--warn)}.card.clean b{color:var(--ok)}
 .controls{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
 input[type=search]{background:var(--panel);border:1px solid var(--line);color:var(--fg);border-radius:8px;padding:8px 12px;min-width:230px;font-size:14px}
 input[type=search]:focus-visible,button:focus-visible,tr:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
@@ -120,11 +151,14 @@ tr.row:hover{background:#1c2230}
 .pill.load-fail,.pill.install-fail{color:var(--warn);border-color:#8a6415;background:#2a2009}
 .pill.untested{color:var(--muted);border-color:var(--line)}
 .verdict{font-weight:600;font-size:13px}
-.verdict.blocked{color:var(--bad)}.verdict.force{color:var(--warn)}.verdict.clean{color:var(--ok)}.verdict.untested{color:var(--muted)}
+.verdict.blocked{color:var(--bad)}.verdict.rescuable,.verdict.partial-rescue{color:var(--accent)}.verdict.force{color:var(--warn)}.verdict.clean{color:var(--ok)}.verdict.untested{color:var(--muted)}
 .crashes{margin:0;padding:0 0 0 4px;list-style:none;display:grid;gap:6px}
 .crashes li{display:grid;grid-template-columns:230px 1fr;gap:12px;font-size:12.5px}
 .crashes code{color:var(--bad)}
 .crashes span{color:var(--muted)}
+.crashes li.rescue{padding-bottom:6px;border-bottom:1px solid var(--line);margin-bottom:2px}
+.crashes li.rescue code{color:var(--accent)}
+.crashes li.rescue span{color:var(--fg)}
 .empty{padding:26px;text-align:center;color:var(--muted)}
 footer{color:var(--muted);font-size:13px;margin-top:34px}
 a{color:var(--accent)}
@@ -136,10 +170,12 @@ a{color:var(--accent)}
   <h1>ESLint ${esc(v10)} plugin compatibility matrix</h1>
   <p class="lede">Every plugin below is installed into a clean temp directory against real ESLint ${esc(v9)} and ESLint ${esc(v10)}, has <strong>every rule it exports</strong> enabled at <code>error</code>, and lints a fixture corpus of ordinary React, hooks, CommonJS, ESM and TypeScript source.</p>
   <p class="lede">A declared <code>peerDependencies</code> range is a claim. This is the execution. It is wrong in both directions: plugins that declare <code>^9</code> and run perfectly, and plugins that install happily and then throw inside a rule.</p>
+  <p class="lede">Blocked plugins are re-run wrapped in <a href="https://www.npmjs.com/package/@eslint/compat">@eslint/compat</a>. <strong>rescuable</strong> means every crashing rule recovered under the wrap; <strong>partial rescue</strong> means most did and the leftovers are listed. Run <code>npx eslint10-matrix check</code> in your repo for the exact config to paste.</p>
   <p class="meta">Generated ${esc(matrix.generatedAt)} · ${matrix.plugins.length} plugins · schema v${esc(matrix.schemaVersion)} · <a href="./matrix.json">matrix.json</a></p>
 
   <div class="cards">
     <div class="card blocked"><b>${counts.blocked}</b><span>blocked on ${esc(v10)}</span></div>
+    <div class="card rescue"><b>${counts.rescuable + counts['partial-rescue']}</b><span>rescuable with @eslint/compat</span></div>
     <div class="card force"><b>${counts.force}</b><span>safe to force</span></div>
     <div class="card clean"><b>${counts.clean}</b><span>already declare ^10</span></div>
     <div class="card"><b>${matrix.plugins.length}</b><span>plugins executed</span></div>
@@ -149,6 +185,8 @@ a{color:var(--accent)}
     <input type="search" id="q" placeholder="Filter plugins…" aria-label="Filter plugins by name">
     <button data-filter="all" aria-pressed="true">All</button>
     <button data-filter="blocked" aria-pressed="false">Blocked</button>
+    <button data-filter="rescuable" aria-pressed="false">Rescuable</button>
+    <button data-filter="partial-rescue" aria-pressed="false">Partial rescue</button>
     <button data-filter="force" aria-pressed="false">Safe to force</button>
     <button data-filter="clean" aria-pressed="false">Ready</button>
   </div>
@@ -166,7 +204,7 @@ ${rows}
 
   <footer>
     <p><strong>Can my repo upgrade?</strong> Run <code>npx eslint10-matrix check</code> in it.</p>
-    <p>Built by executing plugins, not by reading manifests. <a href="https://github.com/cbosch101/eslint10-matrix">Source and issue tracker</a>. MIT.</p>
+    <p>Built by executing plugins, not by reading manifests. <a href="https://github.com/Booyaka101/eslint10-matrix">Source and issue tracker</a>. MIT.</p>
   </footer>
 </main>
 <script>
