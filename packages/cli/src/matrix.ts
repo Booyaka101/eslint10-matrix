@@ -18,12 +18,33 @@ export interface PluginRunResult {
   detail?: string;
 }
 
+export type FixupFunction = 'fixupPluginRules' | 'fixupConfigRules';
+
+export type RescueVerdict = 'rescuable' | 'partial-rescue' | 'blocked';
+
+/** Outcome of re-running a blocked plugin wrapped by @eslint/compat. */
+export interface RescueResult {
+  eslintVersion: string;
+  compatVersion: string;
+  attempted: boolean;
+  verdict: RescueVerdict;
+  skipReason?: string;
+  fixupFunction?: FixupFunction;
+  fixupConfigKey?: string;
+  crashingRulesBefore?: number;
+  crashingRulesAfter?: number;
+  residualRules?: CrashingRule[];
+  preexistingRulesAfter?: number;
+  detail?: string;
+}
+
 export interface PluginRow {
   name: string;
   version: string | null;
   declaredPeerRange: string | null;
   weeklyDownloads: number;
   results: Record<string, PluginRunResult>;
+  rescue?: RescueResult;
 }
 
 export interface Matrix {

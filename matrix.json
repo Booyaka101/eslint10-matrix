@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-26T03:37:06.248Z",
+  "generatedAt": "2026-08-27T01:02:37.238Z",
   "eslintVersions": {
     "v9": "9.39.5",
     "v10": "10.9.1"
@@ -245,6 +245,15 @@
           ],
           "totalRules": 101
         }
+      },
+      "rescue": {
+        "eslintVersion": "10.9.1",
+        "compatVersion": "2.1.0",
+        "attempted": true,
+        "verdict": "rescuable",
+        "crashingRulesBefore": 38,
+        "fixupFunction": "fixupPluginRules",
+        "crashingRulesAfter": 0
       }
     },
     {
@@ -276,6 +285,13 @@
           ],
           "totalRules": 46
         }
+      },
+      "rescue": {
+        "eslintVersion": "10.9.1",
+        "compatVersion": "2.1.0",
+        "attempted": false,
+        "verdict": "blocked",
+        "skipReason": "not a removed context API"
       }
     },
     {
@@ -316,7 +332,7 @@
     },
     {
       "name": "eslint-plugin-react-refresh",
-      "version": "0.5.4",
+      "version": "0.5.5",
       "declaredPeerRange": "^9 || ^10",
       "weeklyDownloads": 35346714,
       "results": {
@@ -812,6 +828,15 @@
           ],
           "totalRules": 27
         }
+      },
+      "rescue": {
+        "eslintVersion": "10.9.1",
+        "compatVersion": "2.1.0",
+        "attempted": true,
+        "verdict": "rescuable",
+        "crashingRulesBefore": 8,
+        "fixupFunction": "fixupPluginRules",
+        "crashingRulesAfter": 0
       }
     },
     {
@@ -863,6 +888,15 @@
           ],
           "totalRules": 9
         }
+      },
+      "rescue": {
+        "eslintVersion": "10.9.1",
+        "compatVersion": "2.1.0",
+        "attempted": true,
+        "verdict": "rescuable",
+        "crashingRulesBefore": 8,
+        "fixupFunction": "fixupPluginRules",
+        "crashingRulesAfter": 0
       }
     },
     {
@@ -885,7 +919,7 @@
     },
     {
       "name": "@tanstack/eslint-plugin-query",
-      "version": "5.102.4",
+      "version": "5.102.6",
       "declaredPeerRange": "^8.57.0 || ^9.0.0 || ^10.0.0",
       "weeklyDownloads": 2571766,
       "results": {
@@ -1252,6 +1286,15 @@
           ],
           "totalRules": 42
         }
+      },
+      "rescue": {
+        "eslintVersion": "10.9.1",
+        "compatVersion": "2.1.0",
+        "attempted": true,
+        "verdict": "rescuable",
+        "crashingRulesBefore": 1,
+        "fixupFunction": "fixupPluginRules",
+        "crashingRulesAfter": 0
       }
     },
     {
@@ -1271,6 +1314,13 @@
           "totalRules": 0,
           "detail": "Class extends value undefined is not a constructor or null"
         }
+      },
+      "rescue": {
+        "eslintVersion": "10.9.1",
+        "compatVersion": "2.1.0",
+        "attempted": true,
+        "verdict": "blocked",
+        "detail": "still fails to load with @eslint/compat installed: Class extends value undefined is not a constructor or null"
       }
     },
     {
@@ -1290,6 +1340,13 @@
           "totalRules": 0,
           "detail": "Class extends value undefined is not a constructor or null"
         }
+      },
+      "rescue": {
+        "eslintVersion": "10.9.1",
+        "compatVersion": "2.1.0",
+        "attempted": true,
+        "verdict": "blocked",
+        "detail": "still fails to load with @eslint/compat installed: Class extends value undefined is not a constructor or null"
       }
     },
     {

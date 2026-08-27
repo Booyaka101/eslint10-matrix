@@ -3,6 +3,7 @@ dist/
 *.tsbuildinfo
 site/dist/
 .eslint10-matrix-tmp/
+test/.tmp/
 shards/
 *.log
 npm-debug.log*

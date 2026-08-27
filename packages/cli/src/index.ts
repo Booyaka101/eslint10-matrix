@@ -15,7 +15,8 @@ USAGE
   eslint10-matrix --version
 
 OPTIONS
-  --ci                exit 1 when any plugin is BLOCKED (default: always exit 0)
+  --ci                exit 1 when any plugin is BLOCKED, RESCUABLE or
+                      PARTIAL-RESCUE (default: always exit 0)
   --json              print machine-readable JSON instead of the human report
   --matrix <src>      use a matrix.json path or URL instead of the published one
   --no-cache          never read or write the ~/.cache/eslint10-matrix copy
@@ -120,15 +121,19 @@ function jsonReport(report: Report, source: string, stale?: string): string {
       ...(stale ? { matrixStaleReason: stale } : {}),
       projectDir: report.projectDir,
       configPath: report.configPath,
-      ready: report.blocked.length === 0,
+      ready: report.blocked.length + report.rescuable.length + report.partialRescue.length === 0,
       counts: {
         blocked: report.blocked.length,
+        rescuable: report.rescuable.length,
+        partialRescue: report.partialRescue.length,
         safeToForce: report.safeToForce.length,
         clean: report.clean.length,
         untested: report.untested.length,
         unknown: report.unknown.length,
       },
       blocked: report.blocked,
+      rescuable: report.rescuable,
+      partialRescue: report.partialRescue,
       safeToForce: report.safeToForce,
       clean: report.clean,
       untested: report.untested,
@@ -153,7 +158,11 @@ async function commandPlugins(opts: Options): Promise<number> {
   for (const row of matrix.plugins) {
     const nine = row.results[v9]?.status ?? 'untested';
     const ten = row.results[v10]?.status ?? 'untested';
-    console.log(`  ${row.name.padEnd(width)}${String(v9).padEnd(9)}${nine.padEnd(14)}${v10} ${ten}`);
+    const rescue =
+      row.rescue?.attempted && row.rescue.verdict !== 'blocked'
+        ? `  ${row.rescue.verdict} via ${row.rescue.fixupFunction ?? 'fixupPluginRules'}`
+        : '';
+    console.log(`  ${row.name.padEnd(width)}${String(v9).padEnd(9)}${nine.padEnd(14)}${v10} ${ten}${rescue}`);
   }
   return 0;
 }
@@ -195,7 +204,10 @@ async function commandCheck(opts: Options): Promise<number> {
     process.stdout.write(renderReport(report, { color: opts.color }));
   }
 
-  return opts.ci && report.blocked.length > 0 ? 1 : 0;
+  // Rescuable plugins still block a plain upgrade until the wrap is applied,
+  // which also keeps --ci's exit code identical to when they were all BLOCKED.
+  const blocking = report.blocked.length + report.rescuable.length + report.partialRescue.length;
+  return opts.ci && blocking > 0 ? 1 : 0;
 }
 
 export async function main(argv: string[]): Promise<number> {

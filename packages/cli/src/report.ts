@@ -1,8 +1,9 @@
-import type { Matrix, PluginRow, PluginRunResult } from './matrix.js';
+import type { Matrix, PluginRow, PluginRunResult, RescueResult } from './matrix.js';
 import { rowFor } from './matrix.js';
 import { satisfies } from './semver-lite.js';
+import { rescueSnippet } from './snippet.js';
 
-export type Bucket = 'blocked' | 'safe-to-force' | 'clean' | 'untested' | 'unknown';
+export type Bucket = 'blocked' | 'rescuable' | 'partial-rescue' | 'safe-to-force' | 'clean' | 'untested' | 'unknown';
 
 export interface Entry {
   name: string;
@@ -11,6 +12,9 @@ export interface Entry {
   bucket: Bucket;
   result?: PluginRunResult;
   reason: string;
+  rescue?: RescueResult;
+  /** Copy-pasteable eslint.config.js wiring, present on rescue buckets. */
+  snippet?: string;
 }
 
 export interface Report {
@@ -19,6 +23,8 @@ export interface Report {
   projectDir: string;
   configPath: string;
   blocked: Entry[];
+  rescuable: Entry[];
+  partialRescue: Entry[];
   safeToForce: Entry[];
   clean: Entry[];
   untested: Entry[];
@@ -41,8 +47,12 @@ function describeFailure(rules: string[], result: PluginRunResult, eslintV10: st
  * A failure that reproduces identically on ESLint 9 is not an upgrade blocker,
  * so `blocked` means "breaks on 10 and not on 9". Returns the newly broken rule
  * ids, or null when ESLint 10 is not what breaks this plugin.
+ *
+ * The runner imports this to decide which plugins enter the rescue pass, so
+ * "blocked" cannot mean one thing when the matrix is built and another when it
+ * is read.
  */
-function regressionOnTen(onNine: PluginRunResult | undefined, onTen: PluginRunResult): string[] | null {
+export function regressionOnTen(onNine: PluginRunResult | undefined, onTen: PluginRunResult): string[] | null {
   if (onTen.status === 'clean') return null;
   if (!onNine || onNine.status === 'clean') {
     return onTen.status === 'rule-crash' ? onTen.crashingRules.map((r) => r.rule) : [];
@@ -55,11 +65,14 @@ function regressionOnTen(onNine: PluginRunResult | undefined, onTen: PluginRunRe
   return newlyBroken.length > 0 ? newlyBroken : null;
 }
 
-export type Verdict = 'blocked' | 'force' | 'clean' | 'untested';
+export type Verdict = 'blocked' | 'rescuable' | 'partial-rescue' | 'force' | 'clean' | 'untested';
 
 /**
  * The single place a matrix row becomes a verdict. The CLI buckets by it and the
  * site colours its table by it, so they cannot drift apart.
+ *
+ * A rescue result only upgrades a verdict that is blocked to begin with, so a
+ * stray rescue field on a clean row can never surface a no-op wrap as a rescue.
  */
 export function verdictFor(
   row: PluginRow,
@@ -69,7 +82,13 @@ export function verdictFor(
   if (!onTen) return { verdict: 'untested', regressedRules: [] };
 
   const regressed = regressionOnTen(row.results[versions.v9], onTen);
-  if (regressed !== null) return { verdict: 'blocked', regressedRules: regressed };
+  if (regressed !== null) {
+    const rescue = row.rescue;
+    if (rescue?.attempted && rescue.eslintVersion === versions.v10 && rescue.verdict !== 'blocked') {
+      return { verdict: rescue.verdict, regressedRules: regressed };
+    }
+    return { verdict: 'blocked', regressedRules: regressed };
+  }
 
   return { verdict: satisfies(versions.v10, row.declaredPeerRange) ? 'clean' : 'force', regressedRules: [] };
 }
@@ -85,6 +104,8 @@ export function buildReport(
     projectDir: input.projectDir,
     configPath: input.configPath,
     blocked: [],
+    rescuable: [],
+    partialRescue: [],
     safeToForce: [],
     clean: [],
     untested: [],
@@ -130,13 +151,22 @@ export function buildReport(
     const base = { name, version: row.version, declaredPeerRange: row.declaredPeerRange };
     const { verdict, regressedRules } = verdictFor(row, matrix.eslintVersions);
 
-    if (verdict === 'blocked') {
-      report.blocked.push({
+    if (verdict === 'blocked' || verdict === 'rescuable' || verdict === 'partial-rescue') {
+      const entry: Entry = {
         ...base,
-        bucket: 'blocked',
+        bucket: verdict,
         result: { ...result, crashingRules: result.crashingRules.filter((r) => regressedRules.includes(r.rule)) },
         reason: describeFailure(regressedRules, result, v10),
-      });
+        ...(row.rescue ? { rescue: row.rescue } : {}),
+      };
+      // `reason` stays exactly what v1.0.0 produced, so anything parsing --json
+      // keeps working; the rescue detail travels in the `rescue` object instead.
+      if (verdict === 'blocked') {
+        report.blocked.push(entry);
+      } else {
+        entry.snippet = rescueSnippet(row, row.rescue!, v10);
+        (verdict === 'rescuable' ? report.rescuable : report.partialRescue).push(entry);
+      }
       continue;
     }
 
@@ -162,9 +192,42 @@ export function buildReport(
 
   const byName = (a: Entry, b: Entry) => a.name.localeCompare(b.name);
   report.blocked.sort(byName);
+  report.rescuable.sort(byName);
+  report.partialRescue.sort(byName);
   report.safeToForce.sort(byName);
   report.clean.sort(byName);
   return report;
+}
+
+/** Keeps a long crash message from running a terminal line past readability. */
+function clip(text: string, max = 96): string {
+  return text.length > max ? `${text.slice(0, max - 1)}…` : text;
+}
+
+/** The one-line "why this is still blocked" note under a BLOCKED plugin. */
+function blockedRescueNote(rescue: RescueResult | undefined): string | null {
+  if (!rescue) return null;
+  if (!rescue.attempted) return clip(`@eslint/compat not attempted: ${rescue.skipReason ?? 'no reason recorded'}`);
+  return clip(`@eslint/compat did not help: ${rescue.detail ?? 'the wrap changed nothing'}`);
+}
+
+/**
+ * States the measurement rather than the rule list: when every crashing rule
+ * recovers, naming them is noise, and when some do not, only those matter.
+ */
+function rescueLine(entry: Entry, eslintV10: string): string {
+  const rescue = entry.rescue!;
+  const before = rescue.crashingRulesBefore;
+  const broke = before === undefined ? 'fails to load' : `${before} ${before === 1 ? 'rule crashes' : 'rules crash'}`;
+  const fn = `${rescue.fixupFunction ?? 'fixupPluginRules'}()`;
+  const after = rescue.crashingRulesAfter ?? 0;
+  const older = rescue.preexistingRulesAfter ?? 0;
+  // Pre-existing crashes never counted towards the verdict, but they survive the
+  // wrap, so saying "all recover" without them would overpromise.
+  const alsoOnNine = older > 0 ? ` (${older} more crash on ESLint 9 too and still do)` : '';
+  if (after === 0) return `${broke} on ${eslintV10}, all recover wrapped in ${fn}${alsoOnNine}`;
+  const residual = (rescue.residualRules ?? []).map((r) => r.rule).join(', ');
+  return `${broke} on ${eslintV10}, ${fn} fixes all but ${after}: ${residual}${alsoOnNine}`;
 }
 
 function pad(text: string, width: number): string {
@@ -191,7 +254,13 @@ export function renderReport(report: Report, options: { color?: boolean } = {}):
   const yellow = (s: string) => (c ? `\u001B[33m${s}\u001B[0m` : s);
   const green = (s: string) => (c ? `\u001B[32m${s}\u001B[0m` : s);
 
-  const total = report.blocked.length + report.safeToForce.length + report.clean.length + report.untested.length;
+  const total =
+    report.blocked.length +
+    report.rescuable.length +
+    report.partialRescue.length +
+    report.safeToForce.length +
+    report.clean.length +
+    report.untested.length;
   const out: string[] = [];
   const plural = total === 1 ? 'plugin' : 'plugins';
 
@@ -203,9 +272,44 @@ export function renderReport(report: Report, options: { color?: boolean } = {}):
   if (report.blocked.length > 0) {
     out.push(red(bold(`BLOCKED (${report.blocked.length})`)));
     const width = Math.max(...report.blocked.map((e) => label(e).length));
-    for (const entry of report.blocked) out.push(`  ${pad(label(entry), width + 2)}${entry.reason}`);
+    for (const entry of report.blocked) {
+      out.push(`  ${pad(label(entry), width + 2)}${entry.reason}`);
+      const note = blockedRescueNote(entry.rescue);
+      if (note) out.push(dim(`  ${' '.repeat(width + 2)}${note}`));
+    }
     out.push('');
   }
+
+  /** Both rescue tiers print the same shape: a headline, one install line, then a snippet each. */
+  function pushRescueBucket(title: string, note: string, entries: Entry[]): void {
+    if (entries.length === 0) return;
+    out.push(yellow(bold(`${title} (${entries.length})`)) + `  ${note}`);
+    out.push(dim('  npm install --save-dev @eslint/compat, then in eslint.config.js:'));
+    for (const entry of entries) {
+      out.push('');
+      out.push(`  ${label(entry)}  ${rescueLine(entry, report.eslintVersions.v10)}`);
+      out.push('');
+      out.push(
+        entry
+          .snippet!.trimEnd()
+          .split('\n')
+          .map((line) => (line === '' ? '' : `    ${line}`))
+          .join('\n')
+      );
+    }
+    out.push('');
+  }
+
+  pushRescueBucket(
+    'RESCUABLE',
+    'crashes as published, verified clean when wrapped with @eslint/compat',
+    report.rescuable
+  );
+  pushRescueBucket(
+    'PARTIAL-RESCUE',
+    '@eslint/compat fixes most crashing rules; the rest must stay off',
+    report.partialRescue
+  );
 
   if (report.safeToForce.length > 0) {
     out.push(
@@ -237,7 +341,8 @@ export function renderReport(report: Report, options: { color?: boolean } = {}):
     out.push('');
   }
 
-  if (report.blocked.length === 0) {
+  const blocking = report.blocked.length + report.rescuable.length + report.partialRescue.length;
+  if (blocking === 0) {
     out.push(green(`Nothing blocks the upgrade to ESLint ${report.eslintVersions.v10}.`));
   } else {
     const worst = report.blocked
@@ -248,8 +353,12 @@ export function renderReport(report: Report, options: { color?: boolean } = {}):
       out.push(dim(`  ${worst[0]}`));
       out.push('');
     }
+    const rescueNote =
+      report.rescuable.length + report.partialRescue.length > 0
+        ? ` (${report.rescuable.length + report.partialRescue.length} of them rescuable with @eslint/compat)`
+        : '';
     out.push(
-      `${report.blocked.length} of ${total} ${plural} block the upgrade to ESLint ${report.eslintVersions.v10}.`
+      `${blocking} of ${total} ${plural} block the upgrade to ESLint ${report.eslintVersions.v10}${rescueNote}.`
     );
   }
   out.push('');

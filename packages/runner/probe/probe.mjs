@@ -63,6 +63,28 @@ function isTsFile(file) {
   return TS_EXTENSIONS.some((e) => file.endsWith(e));
 }
 
+/**
+ * A flat config entry carries plugins as an object map; eslintrc-style configs
+ * list plugin names as strings. That difference is the discriminator.
+ */
+function flatConfigEntries(configs) {
+  const out = [];
+  for (const [key, value] of Object.entries(configs ?? {})) {
+    const entries = Array.isArray(value) ? value : [value];
+    const isFlat = entries.some(
+      (c) => c && typeof c === 'object' && c.plugins && !Array.isArray(c.plugins)
+    );
+    if (isFlat) out.push({ key, configs: entries });
+  }
+  return out;
+}
+
+/** Prefers the widest config so the fixupConfigRules path wraps as much as possible. */
+function pickFlatConfig(entries) {
+  const score = ({ key }) => (/(^|\/)all$/.test(key) ? 2 : /recommended/.test(key) ? 1 : 0);
+  return [...entries].sort((a, b) => score(b) - score(a))[0] ?? null;
+}
+
 async function main() {
   const result = {
     phase: 'load',
@@ -76,6 +98,7 @@ async function main() {
     tsParserLoaded: false,
     error: null,
   };
+  const emit = () => writeFile(OUTPUT, JSON.stringify(result, null, 2));
 
   let input;
   try {
@@ -83,11 +106,18 @@ async function main() {
   } catch (err) {
     result.phase = 'input';
     result.error = errorInfo(err);
-    await writeFile(OUTPUT, JSON.stringify(result, null, 2));
+    await emit();
     return;
   }
 
-  const { specifier, namespace, settings = null, parserSpecifier = null, fixturesDir = 'fixtures' } = input;
+  const {
+    specifier,
+    namespace,
+    settings = null,
+    parserSpecifier = null,
+    fixturesDir = 'fixtures',
+    fixup = false,
+  } = input;
 
   // --- load phase -----------------------------------------------------------
   let plugin;
@@ -105,7 +135,7 @@ async function main() {
     }
   } catch (err) {
     result.error = errorInfo(err);
-    await writeFile(OUTPUT, JSON.stringify(result, null, 2));
+    await emit();
     return;
   }
 
@@ -115,10 +145,46 @@ async function main() {
   } catch (err) {
     result.phase = 'eslint-load';
     result.error = errorInfo(err);
-    await writeFile(OUTPUT, JSON.stringify(result, null, 2));
+    await emit();
     return;
   }
   const { ESLint, Linter } = eslintApi;
+
+  // --- fixup candidates (rescue pass only) ----------------------------------
+  // Both wrap paths are measured and the cleaner one is recorded. They differ
+  // only when the config's plugin object carries rules the top-level `rules` map
+  // does not, since fixupConfigRules applies the same fixupRule underneath.
+  let candidates = [{ plugin }];
+  if (fixup) {
+    let compat;
+    try {
+      compat = await import('@eslint/compat');
+    } catch (err) {
+      result.phase = 'compat-load';
+      result.error = errorInfo(err);
+      await emit();
+      return;
+    }
+    try {
+      candidates = [{ plugin: compat.fixupPluginRules(plugin), fixupFunction: 'fixupPluginRules' }];
+      const flat = pickFlatConfig(flatConfigEntries(plugin.configs));
+      if (flat) {
+        const wrappedConfigs = compat.fixupConfigRules(flat.configs);
+        for (const config of wrappedConfigs) {
+          const wrapped = Object.values(config?.plugins ?? {}).find((p) => p && typeof p === 'object' && p.rules);
+          if (wrapped) {
+            candidates.push({ plugin: wrapped, fixupFunction: 'fixupConfigRules', fixupConfigKey: flat.key });
+            break;
+          }
+        }
+      }
+    } catch (err) {
+      result.phase = 'compat-load';
+      result.error = errorInfo(err);
+      await emit();
+      return;
+    }
+  }
 
   // --- collect phase --------------------------------------------------------
   result.phase = 'collect';
@@ -128,14 +194,14 @@ async function main() {
     result.totalRules = ruleNames.length;
   } catch (err) {
     result.error = errorInfo(err);
-    await writeFile(OUTPUT, JSON.stringify(result, null, 2));
+    await emit();
     return;
   }
 
   if (ruleNames.length === 0) {
     result.phase = 'done';
     result.ok = true;
-    await writeFile(OUTPUT, JSON.stringify(result, null, 2));
+    await emit();
     return;
   }
 
@@ -155,14 +221,14 @@ async function main() {
   const usableFiles = tsParser ? files : jsFiles;
 
   const rules = Object.fromEntries(ruleNames.map((id) => [`${namespace}/${id}`, 'error']));
-  const common = { plugins: { [namespace]: plugin }, ...(settings ? { settings } : {}) };
   const jsLanguageOptions = {
     ecmaVersion: 'latest',
     sourceType: 'module',
     parserOptions: { ecmaFeatures: { jsx: true } },
   };
 
-  function buildConfig(activeRules) {
+  function buildConfig(pluginObject, activeRules) {
+    const common = { plugins: { [namespace]: pluginObject }, ...(settings ? { settings } : {}) };
     const config = [
       { ...common, files: ['**/*.{js,jsx,mjs,cjs}'], languageOptions: jsLanguageOptions, rules: activeRules },
     ];
@@ -182,82 +248,130 @@ async function main() {
     return config;
   }
 
-  // --- fast path: every rule at once ---------------------------------------
-  result.phase = 'instantiate';
-  let eslint;
-  try {
-    eslint = new ESLint({ overrideConfigFile: true, overrideConfig: buildConfig(rules), errorOnUnmatchedPattern: false });
-  } catch (err) {
-    result.error = errorInfo(err);
-    await writeFile(OUTPUT, JSON.stringify(result, null, 2));
-    return;
-  }
-
-  result.phase = 'lint';
-  let fastPathClean;
-  try {
-    const reports = await eslint.lintFiles(usableFiles);
-    result.lintedFiles = reports.length;
-    let fatalWithRule = 0;
-    for (const report of reports) {
-      result.totalMessages += report.messages.length;
-      for (const message of report.messages) {
-        if (!message.fatal) continue;
-        if (message.ruleId) fatalWithRule += 1;
-        else result.parseErrors += 1;
-      }
-    }
-    fastPathClean = fatalWithRule === 0;
-  } catch {
-    fastPathClean = false; // fall through to per-rule attribution
-  }
-
-  if (fastPathClean) {
-    result.phase = 'done';
-    result.ok = true;
-    await writeFile(OUTPUT, JSON.stringify(result, null, 2));
-    return;
-  }
-
-  // --- attribution: one rule at a time -------------------------------------
-  // A rule that throws aborts the whole run, so the all-rules pass can only ever
-  // name the first casualty. Re-linting per rule is the only way to enumerate them.
-  result.phase = 'attribute';
-  const sources = new Map();
-  for (const file of usableFiles) {
-    try {
-      sources.set(file, await readFile(file, 'utf8'));
-    } catch {
-      /* unreadable fixture: skip */
-    }
-  }
-
-  const linter = new Linter();
-  const crashed = new Map();
-  const configInvalid = new Map();
-
-  for (const id of ruleNames) {
-    const qualified = `${namespace}/${id}`;
-    for (const [file, code] of sources) {
-      if (crashed.has(id) || configInvalid.has(id)) break;
-      const single = buildConfig({ [qualified]: 'error' });
+  let sources = null;
+  async function readSources() {
+    if (sources) return sources;
+    sources = new Map();
+    for (const file of usableFiles) {
       try {
-        const messages = linter.verify(code, single, file);
-        const fatal = messages.find((m) => m.fatal && m.ruleId);
-        if (fatal) crashed.set(id, firstLine(fatal.message));
-      } catch (err) {
-        const message = firstLine(err?.message ?? err);
-        if (CONFIG_ERROR.test(message)) configInvalid.set(id, message);
-        else crashed.set(id, message);
+        sources.set(file, await readFile(file, 'utf8'));
+      } catch {
+        /* unreadable fixture: skip */
       }
     }
+    return sources;
   }
 
-  result.crashingRules = [...crashed].map(([rule, message]) => ({ rule, message }));
-  result.configInvalidRules = [...configInvalid].map(([rule, message]) => ({ rule, message }));
-  result.phase = 'done';
+  /**
+   * The full flow for one plugin object: every rule at once, then one rule at a
+   * time when that fails. A rule that throws aborts the whole run, so the
+   * all-rules pass can only ever name the first casualty; re-linting per rule
+   * is the only way to enumerate them.
+   */
+  async function measure(pluginObject) {
+    const outcome = {
+      phase: 'instantiate',
+      fatal: null,
+      crashingRules: [],
+      configInvalidRules: [],
+      lintedFiles: 0,
+      totalMessages: 0,
+      parseErrors: 0,
+    };
+
+    let eslint;
+    try {
+      eslint = new ESLint({
+        overrideConfigFile: true,
+        overrideConfig: buildConfig(pluginObject, rules),
+        errorOnUnmatchedPattern: false,
+      });
+    } catch (err) {
+      outcome.fatal = errorInfo(err);
+      return outcome;
+    }
+
+    outcome.phase = 'lint';
+    let fastPathClean;
+    try {
+      const reports = await eslint.lintFiles(usableFiles);
+      outcome.lintedFiles = reports.length;
+      let fatalWithRule = 0;
+      for (const report of reports) {
+        outcome.totalMessages += report.messages.length;
+        for (const message of report.messages) {
+          if (!message.fatal) continue;
+          if (message.ruleId) fatalWithRule += 1;
+          else outcome.parseErrors += 1;
+        }
+      }
+      fastPathClean = fatalWithRule === 0;
+    } catch {
+      fastPathClean = false; // fall through to per-rule attribution
+    }
+
+    if (fastPathClean) {
+      outcome.phase = 'done';
+      return outcome;
+    }
+
+    outcome.phase = 'attribute';
+    const linter = new Linter();
+    const crashed = new Map();
+    const configInvalid = new Map();
+
+    for (const id of ruleNames) {
+      const qualified = `${namespace}/${id}`;
+      for (const [file, code] of await readSources()) {
+        if (crashed.has(id) || configInvalid.has(id)) break;
+        const single = buildConfig(pluginObject, { [qualified]: 'error' });
+        try {
+          const messages = linter.verify(code, single, file);
+          const fatal = messages.find((m) => m.fatal && m.ruleId);
+          if (fatal) crashed.set(id, firstLine(fatal.message));
+        } catch (err) {
+          const message = firstLine(err?.message ?? err);
+          if (CONFIG_ERROR.test(message)) configInvalid.set(id, message);
+          else crashed.set(id, message);
+        }
+      }
+    }
+
+    outcome.crashingRules = [...crashed].map(([rule, message]) => ({ rule, message }));
+    outcome.configInvalidRules = [...configInvalid].map(([rule, message]) => ({ rule, message }));
+    outcome.phase = 'done';
+    return outcome;
+  }
+
+  const badness = (o) => (o.fatal ? Number.MAX_SAFE_INTEGER : o.crashingRules.length);
+  let best = null;
+  let bestCandidate = null;
+  for (const candidate of candidates) {
+    const outcome = await measure(candidate.plugin);
+    if (!best || badness(outcome) < badness(best)) {
+      best = outcome;
+      bestCandidate = candidate;
+    }
+    if (badness(best) === 0) break;
+  }
+
+  result.phase = best.phase;
+  result.lintedFiles = best.lintedFiles;
+  result.totalMessages = best.totalMessages;
+  result.parseErrors = best.parseErrors;
+  if (bestCandidate.fixupFunction) {
+    result.fixupFunction = bestCandidate.fixupFunction;
+    if (bestCandidate.fixupConfigKey) result.fixupConfigKey = bestCandidate.fixupConfigKey;
+  }
+  if (best.fatal) {
+    result.error = best.fatal;
+    await emit();
+    return;
+  }
+  result.crashingRules = best.crashingRules;
+  result.configInvalidRules = best.configInvalidRules;
   result.ok = true;
-  await writeFile(OUTPUT, JSON.stringify(result, null, 2));
+  await emit();
 }
 
 try {

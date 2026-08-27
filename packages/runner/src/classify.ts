@@ -64,6 +64,10 @@ export function classify(probe: ProbeResult | null, childStderr = ''): PluginRun
     return loadFail(probe.error?.message ?? `probe failed during ${probe.phase}`, probe.totalRules);
   }
 
+  if (probe.phase === 'compat-load') {
+    return loadFail(`@eslint/compat failed to load: ${probe.error?.message ?? 'unknown'}`, probe.totalRules);
+  }
+
   if (probe.phase === 'instantiate' || probe.phase === 'collect') {
     const message = probe.error?.message ?? '';
     const ruleId = ruleIdFromError(message, probe.error?.stack ?? '');
@@ -86,11 +90,15 @@ export function classify(probe: ProbeResult | null, childStderr = ''): PluginRun
     message: truncate(entry.message, 300),
   }));
 
+  const fixup = probe.fixupFunction
+    ? { fixupFunction: probe.fixupFunction, ...(probe.fixupConfigKey ? { fixupConfigKey: probe.fixupConfigKey } : {}) }
+    : {};
+
   if (crashingRules.length > 0) {
-    return { status: 'rule-crash', crashingRules, totalRules: probe.totalRules };
+    return { status: 'rule-crash', crashingRules, totalRules: probe.totalRules, ...fixup };
   }
 
-  return { status: 'clean', crashingRules: [], totalRules: probe.totalRules };
+  return { status: 'clean', crashingRules: [], totalRules: probe.totalRules, ...fixup };
 }
 
 function firstMeaningfulLine(text: string): string {

@@ -1,6 +1,6 @@
 {
   "name": "eslint10-matrix",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Can this repo upgrade to ESLint 10 yet? Answers from a nightly matrix of ESLint plugins actually executed against real ESLint 9 and 10 installs, not from declared peerDependencies.",
   "keywords": [
     "eslint",

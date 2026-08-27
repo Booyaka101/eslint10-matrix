@@ -38,7 +38,8 @@ jobs:
           cache: npm
 
       - run: npm ci
-      - run: npm run build --workspace packages/runner
+      # Both packages: the runner imports the CLI's verdict and namespace helpers.
+      - run: npm run build
 
       - name: Execute plugins against ESLint 9 and 10
         run: node packages/runner/dist/run.js --shard ${{ matrix.shard }}/4 --concurrency 4 --out shards/shard-${{ matrix.shard }}.json
