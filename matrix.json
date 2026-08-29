@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-28T05:56:30.693Z",
+  "generatedAt": "2026-08-29T03:27:34.387Z",
   "eslintVersions": {
     "v9": "9.39.5",
     "v10": "10.9.1"
@@ -450,7 +450,7 @@
     },
     {
       "name": "eslint-plugin-unicorn",
-      "version": "73.0.0",
+      "version": "74.0.0",
       "declaredPeerRange": ">=10.4",
       "weeklyDownloads": 5908364,
       "results": {
