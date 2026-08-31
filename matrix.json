@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-30T03:29:53.941Z",
+  "generatedAt": "2026-08-31T03:32:45.885Z",
   "eslintVersions": {
     "v9": "9.39.5",
     "v10": "10.9.1"
@@ -368,7 +368,7 @@
     },
     {
       "name": "eslint-plugin-jest",
-      "version": "29.16.5",
+      "version": "29.16.6",
       "declaredPeerRange": "^8.57.0 || ^9.0.0 || ^10.0.0",
       "weeklyDownloads": 12463399,
       "results": {
@@ -540,7 +540,7 @@
     },
     {
       "name": "eslint-plugin-jsdoc",
-      "version": "64.3.1",
+      "version": "64.3.2",
       "declaredPeerRange": "^7.0.0 || ^8.0.0 || ^9.0.0 || ^10.0.0",
       "weeklyDownloads": 5288500,
       "results": {
@@ -901,7 +901,7 @@
     },
     {
       "name": "@angular-eslint/eslint-plugin",
-      "version": "22.1.0",
+      "version": "22.2.0",
       "declaredPeerRange": "^9.0.0 || ^10.0.0",
       "weeklyDownloads": 2725772,
       "results": {
