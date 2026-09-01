@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-31T03:32:45.885Z",
+  "generatedAt": "2026-09-01T03:33:10.543Z",
   "eslintVersions": {
     "v9": "9.39.5",
     "v10": "10.9.1"
@@ -8,7 +8,7 @@
   "plugins": [
     {
       "name": "@typescript-eslint/eslint-plugin",
-      "version": "8.68.0",
+      "version": "8.69.0",
       "declaredPeerRange": "^8.57.0 || ^9.0.0 || ^10.0.0",
       "weeklyDownloads": 114433858,
       "results": {
@@ -350,7 +350,7 @@
     },
     {
       "name": "@next/eslint-plugin-next",
-      "version": "16.3.3",
+      "version": "16.3.4",
       "declaredPeerRange": null,
       "weeklyDownloads": 29073121,
       "results": {
@@ -540,7 +540,7 @@
     },
     {
       "name": "eslint-plugin-jsdoc",
-      "version": "64.3.2",
+      "version": "64.3.3",
       "declaredPeerRange": "^7.0.0 || ^8.0.0 || ^9.0.0 || ^10.0.0",
       "weeklyDownloads": 5288500,
       "results": {
@@ -937,7 +937,7 @@
     },
     {
       "name": "eslint-plugin-perfectionist",
-      "version": "5.10.1",
+      "version": "5.11.0",
       "declaredPeerRange": "^8.45.0 || ^9.0.0 || ^10.0.0",
       "weeklyDownloads": 2337389,
       "results": {
