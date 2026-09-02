@@ -39,7 +39,7 @@ Run it in a repo that has an `eslint.config.js`:
 ```
 $ npx eslint10-matrix check
 
-ESLint 10.9.1 readiness for D:\tmp\scratch-app (7 plugins)
+ESLint 10.9.1 readiness for ./my-app (7 plugins)
 matrix generated 2026-08-27T01:02:37.238Z
 
 BLOCKED (1)
