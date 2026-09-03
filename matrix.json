@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-09-02T03:31:49.128Z",
+  "generatedAt": "2026-09-03T04:44:05.582Z",
   "eslintVersions": {
     "v9": "9.39.5",
     "v10": "10.9.1"
@@ -332,7 +332,7 @@
     },
     {
       "name": "eslint-plugin-react-refresh",
-      "version": "0.5.5",
+      "version": "0.5.6",
       "declaredPeerRange": "^9 || ^10",
       "weeklyDownloads": 35346714,
       "results": {
@@ -396,7 +396,7 @@
     },
     {
       "name": "eslint-plugin-storybook",
-      "version": "10.5.10",
+      "version": "10.6.0",
       "declaredPeerRange": ">=8",
       "weeklyDownloads": 7567976,
       "results": {
