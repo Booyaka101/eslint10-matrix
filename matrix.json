@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-09-03T04:44:05.582Z",
+  "generatedAt": "2026-09-04T03:33:45.281Z",
   "eslintVersions": {
     "v9": "9.39.5",
     "v10": "10.9.1"
@@ -540,7 +540,7 @@
     },
     {
       "name": "eslint-plugin-jsdoc",
-      "version": "64.3.4",
+      "version": "64.3.5",
       "declaredPeerRange": "^7.0.0 || ^8.0.0 || ^9.0.0 || ^10.0.0",
       "weeklyDownloads": 5288500,
       "results": {
@@ -1009,7 +1009,7 @@
     },
     {
       "name": "eslint-plugin-regexp",
-      "version": "3.2.0",
+      "version": "3.3.0",
       "declaredPeerRange": ">=9.38.0",
       "weeklyDownloads": 1622145,
       "results": {
