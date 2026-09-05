@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-09-04T03:33:45.281Z",
+  "generatedAt": "2026-09-05T03:29:23.000Z",
   "eslintVersions": {
     "v9": "9.39.5",
-    "v10": "10.9.1"
+    "v10": "10.10.0"
   },
   "plugins": [
     {
@@ -34,7 +34,7 @@
           ],
           "totalRules": 125
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "rule-crash",
           "crashingRules": [
             {
@@ -69,7 +69,7 @@
           "crashingRules": [],
           "totalRules": 29
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 29
@@ -87,7 +87,7 @@
           "crashingRules": [],
           "totalRules": 101
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "rule-crash",
           "crashingRules": [
             {
@@ -247,7 +247,7 @@
         }
       },
       "rescue": {
-        "eslintVersion": "10.9.1",
+        "eslintVersion": "10.10.0",
         "compatVersion": "2.1.0",
         "attempted": true,
         "verdict": "rescuable",
@@ -267,7 +267,7 @@
           "crashingRules": [],
           "totalRules": 46
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "rule-crash",
           "crashingRules": [
             {
@@ -287,7 +287,7 @@
         }
       },
       "rescue": {
-        "eslintVersion": "10.9.1",
+        "eslintVersion": "10.10.0",
         "compatVersion": "2.1.0",
         "attempted": false,
         "verdict": "blocked",
@@ -305,7 +305,7 @@
           "crashingRules": [],
           "totalRules": 39
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 39
@@ -323,7 +323,7 @@
           "crashingRules": [],
           "totalRules": 1
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 1
@@ -341,7 +341,7 @@
           "crashingRules": [],
           "totalRules": 1
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 1
@@ -359,7 +359,7 @@
           "crashingRules": [],
           "totalRules": 22
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 22
@@ -382,7 +382,7 @@
           ],
           "totalRules": 71
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "rule-crash",
           "crashingRules": [
             {
@@ -405,7 +405,7 @@
           "crashingRules": [],
           "totalRules": 16
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 16
@@ -423,7 +423,7 @@
           "crashingRules": [],
           "totalRules": 29
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 29
@@ -441,7 +441,7 @@
           "crashingRules": [],
           "totalRules": 30
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 30
@@ -459,7 +459,7 @@
           "crashingRules": [],
           "totalRules": 337
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 337
@@ -477,7 +477,7 @@
           "crashingRules": [],
           "totalRules": 369
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 369
@@ -495,7 +495,7 @@
           "crashingRules": [],
           "totalRules": 17
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 17
@@ -513,7 +513,7 @@
           "crashingRules": [],
           "totalRules": 252
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 252
@@ -531,7 +531,7 @@
           "crashingRules": [],
           "totalRules": 67
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 67
@@ -549,7 +549,7 @@
           "crashingRules": [],
           "totalRules": 77
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 77
@@ -567,7 +567,7 @@
           "crashingRules": [],
           "totalRules": 47
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 47
@@ -585,7 +585,7 @@
           "crashingRules": [],
           "totalRules": 2
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 2
@@ -603,7 +603,7 @@
           "crashingRules": [],
           "totalRules": 59
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 59
@@ -621,7 +621,7 @@
           "crashingRules": [],
           "totalRules": 14
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 14
@@ -639,7 +639,7 @@
           "crashingRules": [],
           "totalRules": 279
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 279
@@ -657,7 +657,7 @@
           "crashingRules": [],
           "totalRules": 13
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 13
@@ -675,7 +675,7 @@
           "crashingRules": [],
           "totalRules": 79
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 79
@@ -742,7 +742,7 @@
           ],
           "totalRules": 27
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "rule-crash",
           "crashingRules": [
             {
@@ -830,7 +830,7 @@
         }
       },
       "rescue": {
-        "eslintVersion": "10.9.1",
+        "eslintVersion": "10.10.0",
         "compatVersion": "2.1.0",
         "attempted": true,
         "verdict": "rescuable",
@@ -850,7 +850,7 @@
           "crashingRules": [],
           "totalRules": 9
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "rule-crash",
           "crashingRules": [
             {
@@ -890,7 +890,7 @@
         }
       },
       "rescue": {
-        "eslintVersion": "10.9.1",
+        "eslintVersion": "10.10.0",
         "compatVersion": "2.1.0",
         "attempted": true,
         "verdict": "rescuable",
@@ -910,7 +910,7 @@
           "crashingRules": [],
           "totalRules": 50
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 50
@@ -928,7 +928,7 @@
           "crashingRules": [],
           "totalRules": 8
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 8
@@ -946,7 +946,7 @@
           "crashingRules": [],
           "totalRules": 23
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 23
@@ -964,7 +964,7 @@
           "crashingRules": [],
           "totalRules": 1
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 1
@@ -982,7 +982,7 @@
           "crashingRules": [],
           "totalRules": 1
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 1
@@ -1000,7 +1000,7 @@
           "crashingRules": [],
           "totalRules": 9
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 9
@@ -1018,7 +1018,7 @@
           "crashingRules": [],
           "totalRules": 82
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 82
@@ -1036,7 +1036,7 @@
           "crashingRules": [],
           "totalRules": 12
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 12
@@ -1054,7 +1054,7 @@
           "crashingRules": [],
           "totalRules": 82
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 82
@@ -1072,7 +1072,7 @@
           "crashingRules": [],
           "totalRules": 33
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 33
@@ -1111,7 +1111,7 @@
           ],
           "totalRules": 9
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "rule-crash",
           "crashingRules": [
             {
@@ -1150,7 +1150,7 @@
           "crashingRules": [],
           "totalRules": 10
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 10
@@ -1168,7 +1168,7 @@
           "crashingRules": [],
           "totalRules": 84
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 84
@@ -1186,7 +1186,7 @@
           "crashingRules": [],
           "totalRules": 1
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 1
@@ -1204,7 +1204,7 @@
           "crashingRules": [],
           "totalRules": 42
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 42
@@ -1222,7 +1222,7 @@
           "crashingRules": [],
           "totalRules": 1
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 1
@@ -1240,7 +1240,7 @@
           "crashingRules": [],
           "totalRules": 1
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 1
@@ -1258,7 +1258,7 @@
           "crashingRules": [],
           "totalRules": 29
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 29
@@ -1276,7 +1276,7 @@
           "crashingRules": [],
           "totalRules": 42
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "rule-crash",
           "crashingRules": [
             {
@@ -1288,7 +1288,7 @@
         }
       },
       "rescue": {
-        "eslintVersion": "10.9.1",
+        "eslintVersion": "10.10.0",
         "compatVersion": "2.1.0",
         "attempted": true,
         "verdict": "rescuable",
@@ -1308,7 +1308,7 @@
           "crashingRules": [],
           "totalRules": 44
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "load-fail",
           "crashingRules": [],
           "totalRules": 0,
@@ -1316,7 +1316,7 @@
         }
       },
       "rescue": {
-        "eslintVersion": "10.9.1",
+        "eslintVersion": "10.10.0",
         "compatVersion": "2.1.0",
         "attempted": true,
         "verdict": "blocked",
@@ -1334,7 +1334,7 @@
           "crashingRules": [],
           "totalRules": 1
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "load-fail",
           "crashingRules": [],
           "totalRules": 0,
@@ -1342,7 +1342,7 @@
         }
       },
       "rescue": {
-        "eslintVersion": "10.9.1",
+        "eslintVersion": "10.10.0",
         "compatVersion": "2.1.0",
         "attempted": true,
         "verdict": "blocked",
@@ -1360,7 +1360,7 @@
           "crashingRules": [],
           "totalRules": 0
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 0
@@ -1378,7 +1378,7 @@
           "crashingRules": [],
           "totalRules": 22
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 22
@@ -1396,7 +1396,7 @@
           "crashingRules": [],
           "totalRules": 38
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 38
@@ -1414,7 +1414,7 @@
           "crashingRules": [],
           "totalRules": 65
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 65
@@ -1432,7 +1432,7 @@
           "crashingRules": [],
           "totalRules": 1
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 1
@@ -1450,7 +1450,7 @@
           "crashingRules": [],
           "totalRules": 11
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 11
