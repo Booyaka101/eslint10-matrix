@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-09-07T03:32:48.118Z",
+  "generatedAt": "2026-09-08T03:30:19.734Z",
   "eslintVersions": {
     "v9": "9.39.5",
     "v10": "10.10.0"
@@ -8,7 +8,7 @@
   "plugins": [
     {
       "name": "@typescript-eslint/eslint-plugin",
-      "version": "8.69.0",
+      "version": "8.70.0",
       "declaredPeerRange": "^8.57.0 || ^9.0.0 || ^10.0.0",
       "weeklyDownloads": 114433858,
       "results": {
@@ -32,7 +32,7 @@
               "message": "Cannot read properties of undefined (reading 'length')"
             }
           ],
-          "totalRules": 125
+          "totalRules": 126
         },
         "10.10.0": {
           "status": "rule-crash",
@@ -54,7 +54,7 @@
               "message": "Cannot read properties of undefined (reading 'length')"
             }
           ],
-          "totalRules": 125
+          "totalRules": 126
         }
       }
     },
@@ -901,19 +901,19 @@
     },
     {
       "name": "@angular-eslint/eslint-plugin",
-      "version": "22.2.0",
+      "version": "22.5.0",
       "declaredPeerRange": "^9.0.0 || ^10.0.0",
       "weeklyDownloads": 2725772,
       "results": {
         "9.39.5": {
           "status": "clean",
           "crashingRules": [],
-          "totalRules": 50
+          "totalRules": 51
         },
         "10.10.0": {
           "status": "clean",
           "crashingRules": [],
-          "totalRules": 50
+          "totalRules": 51
         }
       }
     },
@@ -991,7 +991,7 @@
     },
     {
       "name": "@eslint-community/eslint-plugin-eslint-comments",
-      "version": "4.7.2",
+      "version": "4.8.0",
       "declaredPeerRange": "^6.0.0 || ^7.0.0 || ^8.0.0 || ^9.0.0 || ^10.0.0",
       "weeklyDownloads": 2026635,
       "results": {
