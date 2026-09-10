@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-09-10T01:34:04.617Z",
+  "generatedAt": "2026-09-10T03:25:10.348Z",
   "eslintVersions": {
     "v9": "9.39.5",
     "v10": "10.10.0"
@@ -1088,56 +1088,16 @@
       "weeklyDownloads": 1374659,
       "results": {
         "9.39.5": {
-          "status": "rule-crash",
-          "crashingRules": [
-            {
-              "rule": "classnames-order",
-              "message": "Could not find tailwindcss"
-            },
-            {
-              "rule": "enforces-canonical-classname",
-              "message": "Could not find tailwindcss"
-            },
-            {
-              "rule": "no-custom-classname",
-              "message": "Could not find tailwindcss"
-            },
-            {
-              "rule": "no-contradicting-classname",
-              "message": "Could not find tailwindcss"
-            },
-            {
-              "rule": "no-unnecessary-arbitrary-value",
-              "message": "Could not find tailwindcss"
-            }
-          ],
-          "totalRules": 9
+          "status": "load-fail",
+          "crashingRules": [],
+          "totalRules": 0,
+          "detail": "probe timed out after 360s"
         },
         "10.10.0": {
-          "status": "rule-crash",
-          "crashingRules": [
-            {
-              "rule": "classnames-order",
-              "message": "Could not find tailwindcss"
-            },
-            {
-              "rule": "enforces-canonical-classname",
-              "message": "Could not find tailwindcss"
-            },
-            {
-              "rule": "no-custom-classname",
-              "message": "Could not find tailwindcss"
-            },
-            {
-              "rule": "no-contradicting-classname",
-              "message": "Could not find tailwindcss"
-            },
-            {
-              "rule": "no-unnecessary-arbitrary-value",
-              "message": "Could not find tailwindcss"
-            }
-          ],
-          "totalRules": 9
+          "status": "load-fail",
+          "crashingRules": [],
+          "totalRules": 0,
+          "detail": "probe timed out after 360s"
         }
       }
     },
