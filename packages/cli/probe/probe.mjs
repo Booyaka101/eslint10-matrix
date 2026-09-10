@@ -6,12 +6,19 @@
  * probe-input.json, writes probe-result.json, and never throws out of the top
  * level: every failure mode is a recorded phase, because the caller classifies
  * from the file, not the exit code.
+ *
+ * Its scratch files sit beside this script rather than in the working
+ * directory, so the caller can leave the process in the environment root. Some
+ * plugins resolve their own toolchain relative to the working directory and
+ * hang in a worker thread when it is somewhere else.
  */
 import { readFile, writeFile } from 'node:fs/promises';
-import { isAbsolute, join, resolve } from 'node:path';
+import { dirname, isAbsolute, join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const INPUT = 'probe-input.json';
-const OUTPUT = 'probe-result.json';
+const HERE = dirname(fileURLToPath(import.meta.url));
+const INPUT = join(HERE, 'probe-input.json');
+const OUTPUT = join(HERE, 'probe-result.json');
 
 /**
  * Rule options fail validation and typed-linting rules refuse to start without

@@ -248,7 +248,8 @@ export async function probe(plan: ProbePlan, options: ProbeOptions = {}): Promis
     // a probe-result.json left by a killed run would be read as this run's
     // answer. Bare imports still resolve upwards into the environment.
     runDir = await mkdtemp(join(dir, 'run-'));
-    await cp(PROBE, join(runDir, 'probe.mjs'));
+    const script = join(runDir, 'probe.mjs');
+    await cp(PROBE, script);
     await writeFile(
       join(runDir, 'probe-input.json'),
       JSON.stringify(
@@ -267,7 +268,10 @@ export async function probe(plan: ProbePlan, options: ProbeOptions = {}): Promis
       )
     );
 
-    const result = await run(process.execPath, ['probe.mjs'], runDir, PROBE_TIMEOUT_MS);
+    // The environment root, not the scratch directory: eslint-plugin-tailwindcss
+    // and anything else that resolves its toolchain from the working directory
+    // deadlocks in a synckit worker when there is no node_modules there.
+    const result = await run(process.execPath, [script], dir, PROBE_TIMEOUT_MS);
     let parsed: ProbeResult | null = null;
     try {
       parsed = JSON.parse(await readFile(join(runDir, 'probe-result.json'), 'utf8')) as ProbeResult;

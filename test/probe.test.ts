@@ -12,7 +12,7 @@ describe('probe + classify against real ESLint', () => {
   // Only this file's case dirs: rescue.test.ts shares the sandbox root and the
   // two files run in parallel workers.
   afterAll(async () => {
-    for (const dir of ['crashing', 'reporting', 'import-throws']) {
+    for (const dir of ['crashing', 'reporting', 'import-throws', 'scratch-dir']) {
       await rm(`${SANDBOX}/${dir}`, { recursive: true, force: true });
     }
   });
@@ -37,6 +37,21 @@ describe('probe + classify against real ESLint', () => {
     const result = classify(probe, stderr);
     expect(result.status).toBe('clean');
     expect(result.crashingRules).toEqual([]);
+  });
+
+  it('keeps its scratch files beside itself and lints from the environment root', async () => {
+    // A plugin that resolves its own toolchain from process.cwd() deadlocks in a
+    // worker thread when that directory has no node_modules, which is what the
+    // per-run scratch directory used to give it.
+    const { probe, stderr } = await probeFixturePlugin('scratch-dir', 'cwd-plugin.mjs', 'fixture', {
+      scratch: 'run-1',
+    });
+    expect(probe, 'the result belongs next to the probe, not in the working directory').not.toBeNull();
+
+    const result = classify(probe, stderr);
+    expect(result.status).toBe('rule-crash');
+    expect(result.crashingRules[0]!.message).toContain(`ran in ${join(SANDBOX, 'scratch-dir')}`);
+    expect(result.crashingRules[0]!.message).not.toContain('run-1');
   });
 
   it('classifies a plugin that throws at import time as load-fail', async () => {

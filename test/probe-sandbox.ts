@@ -17,9 +17,9 @@ export const ESLINT_9 = join(REPO_ROOT, 'node_modules', 'eslint9');
 // the workspace node_modules, exactly as it resolves against a temp install in production.
 export const SANDBOX = join(REPO_ROOT, 'test', '.tmp');
 
-function runNode(cwd: string): Promise<{ code: number | null; stderr: string }> {
+function runNode(cwd: string, script: string): Promise<{ code: number | null; stderr: string }> {
   return new Promise((resolvePromise) => {
-    const child = spawn(process.execPath, ['probe.mjs'], { cwd, shell: false });
+    const child = spawn(process.execPath, [script], { cwd, shell: false });
     let stderr = '';
     child.stderr.on('data', (c) => {
       stderr += c;
@@ -36,6 +36,11 @@ export interface SandboxOptions {
   /** Where `files` are relative to. Defaults to the corpus copied into the case. */
   cwd?: string;
   files?: string[];
+  /**
+   * Put the probe and its scratch files in this subdirectory while still
+   * starting the process in the case root, as production does.
+   */
+  scratch?: string;
 }
 
 /**
@@ -60,13 +65,15 @@ export async function probeFixturePlugin(
   await rm(dir, { recursive: true, force: true });
   await mkdir(join(dir, 'node_modules'), { recursive: true });
   await writeFile(join(dir, 'package.json'), JSON.stringify({ name: 'probe-case', private: true, type: 'module' }));
-  await cp(PROBE, join(dir, 'probe.mjs'));
+  const scratch = options.scratch ? join(dir, options.scratch) : dir;
+  await mkdir(scratch, { recursive: true });
+  await cp(PROBE, join(scratch, 'probe.mjs'));
   if (options.eslintDir) await symlink(options.eslintDir, join(dir, 'node_modules', 'eslint'), 'junction');
   const specifier = await installPlugin(dir, plugin);
   if (!options.files) await cp(CORPUS_DIR, join(dir, 'fixtures'), { recursive: true });
 
   await writeFile(
-    join(dir, 'probe-input.json'),
+    join(scratch, 'probe-input.json'),
     JSON.stringify({
       specifier,
       namespace,
@@ -79,10 +86,10 @@ export async function probeFixturePlugin(
     })
   );
 
-  const { stderr } = await runNode(dir);
+  const { stderr } = await runNode(dir, join(scratch, 'probe.mjs'));
   let probe: ProbeResult | null;
   try {
-    probe = JSON.parse(await readFile(join(dir, 'probe-result.json'), 'utf8')) as ProbeResult;
+    probe = JSON.parse(await readFile(join(scratch, 'probe-result.json'), 'utf8')) as ProbeResult;
   } catch {
     probe = null;
   }
