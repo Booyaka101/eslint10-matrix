@@ -1,7 +1,8 @@
-import { mkdir, rm } from 'node:fs/promises';
+import { mkdir, readFile, rm } from 'node:fs/promises';
+import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { classify } from '../packages/cli/src/classify.js';
-import { probeFixturePlugin, SANDBOX } from './probe-sandbox.js';
+import { probeFixturePlugin, REPO_ROOT, SANDBOX } from './probe-sandbox.js';
 
 describe('probe + classify against real ESLint', () => {
   beforeAll(async () => {
@@ -47,5 +48,24 @@ describe('probe + classify against real ESLint', () => {
     expect(result.status).toBe('load-fail');
     expect(result.detail).toMatch(/removed-in-10/);
     expect(result.crashingRules).toEqual([]);
+  });
+});
+
+describe('the attribution budget', () => {
+  const literal = (expr: string): number =>
+    expr.split('*').reduce((total, part) => total * Number(part.replace(/_/g, '').trim()), 1);
+
+  it('is one deadline for the whole process, and stays under the timeout that kills it', async () => {
+    // A rescue probe measures two wrapped candidates in one process. A budget
+    // per measure() call, or one above the kill, means the probe is SIGKILLed
+    // with no result file and the plugin reads as a load failure.
+    const probeSource = await readFile(join(REPO_ROOT, 'packages', 'cli', 'probe', 'probe.mjs'), 'utf8');
+    const runSource = await readFile(join(REPO_ROOT, 'packages', 'cli', 'src', 'probe-run.ts'), 'utf8');
+    expect(probeSource).toMatch(/^const DEADLINE = Date[.]now[(][)] [+] ATTRIBUTE_BUDGET_MS;$/m);
+    const budget = /ATTRIBUTE_BUDGET_MS = ([\d *_]+);/.exec(probeSource)?.[1];
+    const kill = /PROBE_TIMEOUT_MS = ([\d *_]+);/.exec(runSource)?.[1];
+    expect(budget).toBeDefined();
+    expect(kill).toBeDefined();
+    expect(literal(budget!)).toBeLessThan(literal(kill!));
   });
 });

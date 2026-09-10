@@ -93,11 +93,19 @@ interface NpmLock {
 function fromNpmLock(doc: NpmLock): Map<string, string> {
   const out = new Map<string, string>();
   // v2 and v3 key by install path; the last node_modules segment is the package.
+  // npm writes those paths sorted, so a nested copy under another package can
+  // come first: the shallowest path is the hoisted install, and that is the one
+  // a plugin resolved from the repo root would get.
+  const depth = new Map<string, number>();
   for (const [path, entry] of Object.entries(doc.packages ?? {})) {
     const at = path.lastIndexOf('node_modules/');
     if (at === -1 || !entry?.version) continue;
     const name = path.slice(at + 'node_modules/'.length);
-    if (!out.has(name)) out.set(name, entry.version);
+    const nesting = path.split('node_modules/').length;
+    if (!out.has(name) || nesting < depth.get(name)!) {
+      out.set(name, entry.version);
+      depth.set(name, nesting);
+    }
   }
   // v1 nests by name; the top level is the hoisted install, which is what a
   // plugin resolved from the repo root would get.

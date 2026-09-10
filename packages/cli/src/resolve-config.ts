@@ -107,6 +107,9 @@ export function conventionalPackageNames(configKey: string): string[] {
   return [`eslint-plugin-${configKey}`, configKey];
 }
 
+/** Carry no semantics of their own, so a block holding only these plus `ignores` is still a global ignore. */
+const CONFIG_META_KEYS = new Set(['name', 'basePath']);
+
 interface ConfigContents {
   plugins: Map<string, unknown>;
   ignores: string[];
@@ -121,7 +124,7 @@ function collectPluginEntries(value: unknown, out: ConfigContents, depth = 0): v
     return;
   }
   if (typeof value !== 'object') return;
-  const entry = value as { plugins?: unknown; ignores?: unknown; settings?: unknown };
+  const entry = value as { plugins?: unknown; ignores?: unknown; settings?: unknown; basePath?: unknown };
   if (entry.plugins && typeof entry.plugins === 'object' && !Array.isArray(entry.plugins)) {
     for (const [key, mod] of Object.entries(entry.plugins as Record<string, unknown>)) {
       if (!out.plugins.has(key)) out.plugins.set(key, mod);
@@ -129,10 +132,15 @@ function collectPluginEntries(value: unknown, out: ConfigContents, depth = 0): v
   }
   // A flat-config object whose only key is `ignores` is the global ignore list.
   // Beside `files` it scopes that block instead, and hoisting it would skip
-  // files ESLint still lints.
-  if (Array.isArray(entry.ignores) && Object.keys(entry).length === 1) {
+  // files ESLint still lints. `name` and `basePath` are metadata and do not
+  // count, which is the shape ESLint's own globalIgnores() emits.
+  const significant = Object.keys(entry).filter((key) => !CONFIG_META_KEYS.has(key));
+  if (Array.isArray(entry.ignores) && significant.length === 1) {
+    const base = typeof entry.basePath === 'string' ? entry.basePath : '';
     for (const pattern of entry.ignores) {
-      if (typeof pattern === 'string' && !out.ignores.includes(pattern)) out.ignores.push(pattern);
+      if (typeof pattern !== 'string') continue;
+      const scoped = base ? `${base.replace(/\/+$/, '')}/${pattern.replace(/^\.\//, '')}` : pattern;
+      if (!out.ignores.includes(scoped)) out.ignores.push(scoped);
     }
   }
   if (entry.settings && typeof entry.settings === 'object') {

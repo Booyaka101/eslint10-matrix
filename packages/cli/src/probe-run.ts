@@ -133,10 +133,23 @@ export async function pruneEnvs(maxAgeMs = ENV_MAX_AGE_MS): Promise<number> {
 }
 
 /**
+ * Package names and semver ranges only ever need these. `scan` builds its specs
+ * from version strings and peer ranges read out of the caller's own
+ * node_modules, and npm is spawned through a shell, so anything outside this set
+ * would reach sh as syntax rather than as a version.
+ */
+const SAFE_SPEC = /^[A-Za-z0-9@/._+^~<>=|*\- ]+$/;
+
+export function unsafeSpecs(deps: readonly string[]): string[] {
+  return deps.filter((spec) => !SAFE_SPEC.test(spec));
+}
+
+/**
  * npm runs through a shell, and spawning through one joins the arguments with
  * spaces and quotes nothing, so a peer range such as `>=4.8.4 <5.9.0` or one
  * containing `||` would arrive as several words and fail to install. Double
- * quotes are the one form both cmd.exe and sh honour.
+ * quotes are the one form both cmd.exe and sh honour. Specs must have passed
+ * `unsafeSpecs` first; quoting alone does not stop sh expanding `$(...)`.
  */
 export function installArgs(deps: readonly string[]): string[] {
   // The declared peer range is what we are testing, so a plain install would
@@ -149,11 +162,20 @@ export function installArgs(deps: readonly string[]): string[] {
     '--legacy-peer-deps',
     '--loglevel',
     'error',
-    ...deps.map((spec) => `"${spec.replace(/"/g, '')}"`),
+    ...deps.map((spec) => `"${spec}"`),
   ];
 }
 
 async function npmInstall(dir: string, deps: string[]): Promise<CommandResult> {
+  const unsafe = unsafeSpecs(deps);
+  if (unsafe.length > 0) {
+    return {
+      code: 1,
+      stdout: '',
+      stderr: `refusing to install a spec that is not a package name and version: ${unsafe.join(', ')}`,
+      timedOut: false,
+    };
+  }
   await writeFile(
     join(dir, 'package.json'),
     JSON.stringify({ name: 'eslint10-matrix-probe', version: '0.0.0', private: true, type: 'module' }, null, 2)

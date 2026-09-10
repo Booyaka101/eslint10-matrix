@@ -189,7 +189,6 @@ export async function scan(options: ScanOptions): Promise<ScanResult> {
     if (pruned > 0) options.onLog?.(`removed ${pruned} cached installs older than 14 days`);
   }
   const measured: string[] = [];
-  const unresolved: string[] = [];
   const rows: PluginRow[] = [];
 
   const specs = await Promise.all(
@@ -198,7 +197,6 @@ export async function scan(options: ScanOptions): Promise<ScanResult> {
 
   for (const { name, installed } of specs) {
     if (!installed) {
-      unresolved.push(name);
       notes.push(`${name} is used by the config but has no installed version here, so it was not scanned`);
     } else if (installed.source === 'lockfile') {
       notes.push(`${name} was read from ${lockfile?.path ?? 'the lockfile'}, not from node_modules`);

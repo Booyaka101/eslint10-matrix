@@ -4,7 +4,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { loadMatrix, MatrixError, type Matrix } from '../packages/cli/src/matrix.js';
-import { installArgs, run } from '../packages/cli/src/probe-run.js';
+import { installArgs, run, unsafeSpecs } from '../packages/cli/src/probe-run.js';
 import { buildReport, renderOverrides, renderReport, verdictFor } from '../packages/cli/src/report.js';
 import { ConfigError, conventionalPackageNames, findConfigFile, readWorkspaces, resolveConfig } from '../packages/cli/src/resolve-config.js';
 import { satisfies } from '../packages/cli/src/semver-lite.js';
@@ -150,6 +150,34 @@ describe('resolve-config', () => {
     }
   });
 
+  it('reads the shape globalIgnores() emits, where name sits beside ignores', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'e10m-gign-'));
+    try {
+      await writeFile(join(dir, 'package.json'), JSON.stringify({ name: 'x', type: 'module' }));
+      await writeFile(
+        join(dir, 'eslint.config.js'),
+        `export default [{ name: 'globalIgnores(["dist/**"])', ignores: ["dist/**"] }];\n`
+      );
+      expect((await resolveConfig(dir)).ignores).toEqual(['dist/**']);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('scopes a global ignores block to its basePath', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'e10m-base-'));
+    try {
+      await writeFile(join(dir, 'package.json'), JSON.stringify({ name: 'x', type: 'module' }));
+      await writeFile(
+        join(dir, 'eslint.config.js'),
+        'export default [{ basePath: "packages/a", ignores: ["dist/**"] }];\n'
+      );
+      expect((await resolveConfig(dir)).ignores).toEqual(['packages/a/dist/**']);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
   it('names flat config as the requirement when no config file exists', async () => {
     const dir = await mkdtemp(join(tmpdir(), 'e10m-empty-'));
     try {
@@ -207,6 +235,25 @@ describe('probe environment', () => {
       'error',
       '"eslint@10.9.0"',
       '"typescript@>=4.8.4 <5.9.0"',
+    ]);
+  });
+
+  it('passes every character a package name or semver range needs', () => {
+    expect(
+      unsafeSpecs(['eslint@10.10.0', '@typescript-eslint/parser@^8.67.0', 'typescript@>=4.8.4 <5.9.0 || ^6.0.0-beta.1', 'x@*'])
+    ).toEqual([]);
+  });
+
+  it('refuses a spec carrying shell syntax, because scan reads specs out of the caller tree', () => {
+    // A dependency's own manifest supplies these strings, and npm is spawned
+    // through a shell, so $(...) in a peer range would be sh syntax.
+    expect(unsafeSpecs(['react@$(id)', 'a@`id`', 'b@1;id', 'c@1&id', "d@'1'", 'e@%PATH%'])).toEqual([
+      'react@$(id)',
+      'a@`id`',
+      'b@1;id',
+      'c@1&id',
+      "d@'1'",
+      'e@%PATH%',
     ]);
   });
 

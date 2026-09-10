@@ -65,6 +65,20 @@ Found in review before this shipped:
   qualifications.
 - A workspace root scanned with `--plugins` printed "(--plugins) is a workspace root". The note names
   the directory now.
+- A global ignore written by ESLint's own `globalIgnores()` was not recognised. It emits
+  `{ name, ignores }`, and the check required `ignores` to be the object's only key, so `scan` linted
+  build output ESLint never looks at. `name` and `basePath` are metadata now, and a `basePath` scopes
+  the patterns under it.
+- npm v2 and v3 lockfiles are keyed by install path and written sorted, so a copy nested under
+  another package sorts ahead of the hoisted one and won. A lockfile-only tree (`npm ci --omit=dev`)
+  could report a transitive version as the repo's. The shallowest path wins now.
+- Install specs are checked against the characters a package name and semver range can contain.
+  `scan` builds its specs from versions and peer ranges read out of the caller's own
+  `node_modules`, and npm is spawned through a shell, so `$(...)` in a dependency's declared range
+  reached `sh` as syntax. Anything outside that set is refused with the spec named.
+- The attribution budget is one deadline for the whole probe process rather than one per measured
+  candidate. A rescue probe measures two, and two four-minute budgets plus the lint passes overran
+  the six-minute kill, which reported a rescuable plugin as still failing to load.
 
 Board refreshed to ESLint 10.10.0 against the 9.39.5 maintenance line, 54 plugins, and
 @eslint/compat 2.1.1. 7 of 54 plugins block the upgrade, 5 of them rescuable.

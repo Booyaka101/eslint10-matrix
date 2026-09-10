@@ -30,8 +30,13 @@ const EVIDENCE_CAP = 25;
  * Per-rule attribution is rules times files, so a large repo and a plugin with
  * hundreds of rules can outlast the caller's timeout. Stopping early reports
  * fewer rules; being killed reports none at all and reads as a load failure.
+ *
+ * The budget is the whole process's, not one measure() call's. A rescue probe
+ * measures two wrapped candidates, and two fresh budgets plus the lint passes
+ * would overrun the six-minute kill this is meant to stay under.
  */
 const ATTRIBUTE_BUDGET_MS = 4 * 60_000;
+const DEADLINE = Date.now() + ATTRIBUTE_BUDGET_MS;
 
 function errorInfo(err) {
   if (!(err instanceof Error)) return { message: String(err), stack: '' };
@@ -330,7 +335,6 @@ async function main() {
     const linter = new Linter({ cwd: baseDir });
     const crashed = new Map();
     const configInvalid = new Map();
-    const deadline = Date.now() + ATTRIBUTE_BUDGET_MS;
     let truncated = false;
 
     const note = (id, message, file) => {
@@ -340,7 +344,7 @@ async function main() {
     };
 
     for (const id of ruleNames) {
-      if (Date.now() > deadline) {
+      if (Date.now() > DEADLINE) {
         truncated = true;
         break;
       }
@@ -392,6 +396,9 @@ async function main() {
   let best = null;
   let bestCandidate = null;
   for (const candidate of candidates) {
+    // Reporting the first candidate's measurement beats starting a second one
+    // with no time left and being killed with nothing written.
+    if (best && Date.now() > DEADLINE) break;
     const outcome = await measure(candidate.plugin);
     if (!best || badness(outcome) < badness(best)) {
       best = outcome;

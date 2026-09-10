@@ -99,9 +99,11 @@ describe('lockfile formats', () => {
         lockfileVersion: 3,
         packages: {
           '': { name: 'app' },
+          // npm writes these sorted, so the nested copy comes first and a
+          // first-one-wins read returns the wrong version for the repo root.
+          'node_modules/eslint-config-x/node_modules/eslint-plugin-react': { version: '7.30.0' },
           'node_modules/eslint-plugin-react': { version: '7.37.5' },
           'node_modules/@typescript-eslint/parser': { version: '8.67.0' },
-          'node_modules/other/node_modules/eslint-plugin-react': { version: '7.30.0' },
         },
       })
     );

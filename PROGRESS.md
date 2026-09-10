@@ -39,7 +39,7 @@ Every line below was executed on this machine on 2026-09-10.
 | --- | --- |
 | `npm run build` | clean, both workspaces |
 | `npm run lint` | clean, this repo lints itself on ESLint 10 |
-| `npm test` | **9 files, 103 tests passed**, 3.95s |
+| `npm test` | **9 files, 108 tests passed**, 4.01s |
 | pre-refactor tier regression | `test/tiers-regression.test.ts` replays `test/fixtures/tiers-before-refactor.json` through the extracted modules and reproduces all 54 verdicts and the rendered report byte for byte |
 | corpus vs repo disagreement | `test/scan-vs-corpus.test.ts` tiers the same plugin CLEAN over the fixture corpus and BLOCKED over the fixture repo, citing `src\Card.jsx` and `(1 more file)` |
 | `scan examples/react-app` | exit 0, 5 plugins, 7 files, BLOCKED 1 / RESCUABLE 2 / SAFE TO FORCE 1 / CLEAN 1 |
@@ -147,11 +147,41 @@ Prose and help pass: `--color` was a working flag documented nowhere, so it is i
 both README option tables. The exit-code line said "at least one plugin is BLOCKED" while `--ci`
 exits 1 for RESCUABLE and PARTIAL-RESCUE too.
 
+## Review round three: what the last read found
+
+A second review pass over the whole branch diff turned up four more, all fixed and all with a test
+that fails against the old code:
+
+1. **`globalIgnores()` was not recognised.** ESLint's own helper emits `{ name, ignores }`, and the
+   global-ignore check required `ignores` to be the object's only key, so those patterns were
+   dropped and `scan` linted build output ESLint never looks at. `name` and `basePath` are treated
+   as metadata now, matching `META_FIELDS` in `@eslint/config-array`, and a `basePath` scopes the
+   patterns under it.
+2. **npm v2/v3 lockfiles returned the wrong version.** They key by install path and npm writes the
+   paths sorted, so `node_modules/eslint-config-x/node_modules/eslint-plugin-react` comes before
+   `node_modules/eslint-plugin-react` and a first-one-wins read kept the nested copy. Reproduced at
+   7.30.0 against a hoisted 7.37.5. The shallowest path wins now. It only bites a tree resolved
+   through the lockfile, which is exactly `npm ci --omit=dev`.
+3. **Shell injection through an install spec.** `scan` builds specs from versions and peer ranges
+   read out of the caller's own `node_modules`, and npm is spawned through a shell, so `$(...)` in
+   a dependency's declared range reached `sh` as syntax. Quoting does not stop that. Specs are now
+   checked against the characters a package name and semver range can contain, and anything else is
+   refused with the spec named. Verified end to end: a spec carrying `$(touch ...)` comes back
+   `install-fail` and no file is written. (cmd.exe does not expand `$(...)`, so the hole was only
+   reachable on POSIX, which is where CI and most users are.)
+4. **The attribution budget was per measured candidate, not per process.** A rescue probe measures
+   two wrapped candidates, and two four-minute budgets plus the lint passes overran the six-minute
+   kill: SIGKILL, no result file, and a rescuable plugin reported as still failing to load. One
+   process-wide deadline now, the second candidate is skipped once it passes, and a test asserts the
+   budget stays under the kill because the two constants live in different files.
+
+Also removed a dead store in `scan.ts` (`unresolved` was written and never read).
+
 ## Acceptance checks from the brief
 
 | check | result |
 | --- | --- |
-| full existing suite green | **yes**, 103 tests, and every pre-existing test is unchanged |
+| full existing suite green | **yes**, 108 tests, and every pre-existing test is unchanged |
 | pre-refactor regression fixture reproduces byte for byte | **yes** |
 | `scan` on a repo pinned to `eslint-plugin-react@7.37.5` reports BLOCKED and cites a file path | **partly, and the difference is a measurement, not a gap.** react 7.37.5 measures **RESCUABLE**, not BLOCKED: every rule it breaks recovers under `fixupPluginRules()`, and the report cites `react/forward-ref-uses-ref crashed on eslint.config.js ... (6 more files)`. The BLOCKED-with-a-file-citation path is proven directly by `test/scan-vs-corpus.test.ts`, which cites `src\Card.jsx`. The example app's real BLOCKED row is `eslint-plugin-vitest@0.5.4`, and being a load failure it has no file to cite. |
 | `scan` with no `node_modules` exits non-zero with a readable message | **yes**, exit 2 |
