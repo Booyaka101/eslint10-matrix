@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.2.1 - 2026-09-10
+
+- Fixes a probe hang introduced in 1.2.0. The probe got a scratch directory of its own so that a
+  killed run could not leave its answer behind for the next one, and that directory became the
+  process's working directory. A plugin that resolves its own toolchain from there, such as
+  `eslint-plugin-tailwindcss`, found no `node_modules` and deadlocked in a worker thread until
+  the six-minute kill. The scratch directory stays, but the probe now reads and writes it by its
+  own path and leaves the process in the environment root. Measuring
+  `eslint-plugin-tailwindcss@4.4.0` went from 729s and two timeouts to 14s, and the board reports
+  its five crashing rules again instead of a bare load failure.
+
 ## 1.2.0 - 2026-09-10
 
 ESLint 9 went end of life on 2026-08-06 and ESLint 10.10.0 is now the release everyone is landing

@@ -1,6 +1,6 @@
 {
   "name": "eslint10-matrix",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Can this repo upgrade to ESLint 10 yet? `scan` executes your own installed plugin versions against ESLint 10 on your own source files. Answers come from execution, not from declared peerDependencies.",
   "keywords": [
     "eslint",
