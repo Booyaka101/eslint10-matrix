@@ -41,6 +41,10 @@ const EVIDENCE_CAP = 25;
  * The budget is the whole process's, not one measure() call's. A rescue probe
  * measures two wrapped candidates, and two fresh budgets plus the lint passes
  * would overrun the six-minute kill this is meant to stay under.
+ *
+ * It only bounds work that hands the thread back. A rule that blocks it, which
+ * is what a plugin resolving its own toolchain in a synchronous worker does,
+ * runs no timers and is never interrupted here.
  */
 const ATTRIBUTE_BUDGET_MS = 4 * 60_000;
 const DEADLINE = Date.now() + ATTRIBUTE_BUDGET_MS;
