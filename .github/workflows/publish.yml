@@ -3,6 +3,10 @@ name: publish
 # Publishing stays deliberate: this runs only when someone asks for it by tag.
 # It refuses a tag whose version does not match the manifest it would publish,
 # and it runs the full suite on the tagged tree before anything leaves the box.
+#
+# Dispatch it from main and name the tag in the input. The definition comes from
+# whichever ref you dispatch, the published code comes from the tag, and tags
+# older than this file cannot run it at all.
 on:
   workflow_dispatch:
     inputs:
@@ -21,7 +25,7 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ inputs.tag }}
 
