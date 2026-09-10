@@ -428,11 +428,16 @@ tools reading the old shape keep working.
 
 ## Telling people about it
 
-The one place worth posting is the thread people are already stuck in, not a new announcement.
+The best place is the thread people are already stuck in, not a new announcement.
 [jsx-eslint/eslint-plugin-react#3977](https://github.com/jsx-eslint/eslint-plugin-react/issues/3977)
 has hundreds of reactions from people who cannot upgrade, and what helps there is the executed data:
 which rules break, why, and which of your other plugins are already fine. Lead with that, link the
 matrix once at the end, and skip it entirely if you have nothing new to add to the thread.
+
+If you take it somewhere with a stricter format, lead with the same thing. r/javascript auto-removes
+any self post not prefixed `[AskJS]` and wants a link post with the write-up as the first comment,
+which suits this well: link the board, put the numbers and the `fixupPluginRules` snippet in the
+comment.
 
 ## License
 
