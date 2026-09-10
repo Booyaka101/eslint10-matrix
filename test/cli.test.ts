@@ -3,6 +3,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { describe, expect, it } from 'vitest';
+import { displayPath } from '../packages/cli/src/display-path.js';
 import { loadMatrix, MatrixError, type Matrix } from '../packages/cli/src/matrix.js';
 import { installArgs, run, unsafeSpecs } from '../packages/cli/src/probe-run.js';
 import { buildReport, renderOverrides, renderReport, verdictFor } from '../packages/cli/src/report.js';
@@ -518,5 +519,22 @@ describe('matrix loading', () => {
     await expect(
       loadMatrix({ url: 'https://127.0.0.1:9/matrix.json', noCache: true, timeoutMs: 1500 })
     ).rejects.toThrowError(MatrixError);
+  });
+});
+
+describe('displayPath', () => {
+  const repo = resolve('repo');
+
+  it('names a directory relative to where the command ran', () => {
+    expect(displayPath(join(repo, 'examples', 'react-app'), repo)).toBe(join('examples', 'react-app'));
+  });
+
+  it('names the current directory by its own name rather than a bare dot', () => {
+    expect(displayPath(join(repo, 'my-app'), join(repo, 'my-app'))).toBe('my-app');
+  });
+
+  it('leaves a directory outside the current one absolute, because a trail of dot-dots is worse', () => {
+    const outside = resolve('elsewhere');
+    expect(displayPath(outside, join(repo, 'deep', 'inside'))).toBe(outside);
   });
 });

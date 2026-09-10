@@ -1,5 +1,6 @@
 import { dirname, resolve } from 'node:path';
 import { collectFiles } from './collect-files.js';
+import { displayPath } from './display-path.js';
 import { hasNodeModules, readLockfile, resolveInstalled, type InstalledPackage, type Lockfile } from './installed.js';
 import type { CrashingRule, Matrix, PluginRow, PluginRunResult } from './matrix.js';
 import { mapWithConcurrency, probe, pruneEnvs, rescuePass, type ProbeOptions, type ProbePlan } from './probe-run.js';
@@ -127,7 +128,7 @@ export async function scan(options: ScanOptions): Promise<ScanResult> {
   const rootDir = found ? dirname(found) : resolve(options.dir);
   if ((found || named.length > 0) && !hasNodeModules(rootDir)) {
     throw new ScanError(
-      `no node_modules under ${rootDir}, so there are no installed plugin versions to measure`,
+      `no node_modules under ${displayPath(rootDir)}, so there are no installed plugin versions to measure`,
       'Run your package manager\'s install first. `scan` reports on the versions this repo actually has; it will not fall back to whatever npm publishes as latest.'
     );
   }
@@ -148,14 +149,14 @@ export async function scan(options: ScanOptions): Promise<ScanResult> {
   const collected = await collectFiles(projectDir, { ignores: resolved.ignores, max: maxFiles });
   if (collected.files.length === 0) {
     throw new ScanError(
-      `found no JavaScript or TypeScript files to lint under ${projectDir}`,
+      `found no JavaScript or TypeScript files to lint under ${displayPath(projectDir)}`,
       'Everything matching was ignored by the config, or the sources live elsewhere. Point scan at the directory holding them.'
     );
   }
 
   const notes: string[] = [];
   if (named.length > 0 && found) {
-    notes.push(`--plugins skipped ${found}, so its ignores and settings were not applied`);
+    notes.push(`--plugins skipped ${displayPath(found)}, so its ignores and settings were not applied`);
   }
   if (collected.skipped > 0) {
     notes.push(`${collected.skipped} more files matched and were not scanned (raise --max-files to include them)`);
@@ -171,7 +172,7 @@ export async function scan(options: ScanOptions): Promise<ScanResult> {
   const workspaces = await readWorkspaces(projectDir);
   if (workspaces.length > 0) {
     notes.push(
-      `${projectDir} is a workspace root (${workspaces.join(', ')}); scan measures the config here only and does not walk into the packages`
+      `${displayPath(projectDir)} is a workspace root (${workspaces.join(', ')}); scan measures the config here only and does not walk into the packages`
     );
   }
 
@@ -180,7 +181,7 @@ export async function scan(options: ScanOptions): Promise<ScanResult> {
     .filter((name) => looksLikePluginPackage(name) && !resolved.plugins.includes(name))
     .sort();
   if (unreferenced.length > 0) {
-    notes.push(`installed but not used by ${configPath}, so not scanned: ${unreferenced.join(', ')}`);
+    notes.push(`installed but not used by ${displayPath(configPath)}, so not scanned: ${unreferenced.join(', ')}`);
   }
 
   const probeOptions: ProbeOptions = { cache: options.cache ?? true, onLog: options.onLog };
@@ -199,7 +200,7 @@ export async function scan(options: ScanOptions): Promise<ScanResult> {
     if (!installed) {
       notes.push(`${name} is used by the config but has no installed version here, so it was not scanned`);
     } else if (installed.source === 'lockfile') {
-      notes.push(`${name} was read from ${lockfile?.path ?? 'the lockfile'}, not from node_modules`);
+      notes.push(`${name} was read from ${lockfile ? displayPath(lockfile.path) : 'the lockfile'}, not from node_modules`);
     }
   }
 

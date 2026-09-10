@@ -2,6 +2,7 @@
 import { readFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { displayPath } from './display-path.js';
 import { loadMatrix, MatrixError, type Matrix } from './matrix.js';
 import { buildReport, renderReport, type Report } from './report.js';
 import { ConfigError, resolveConfig } from './resolve-config.js';
@@ -258,7 +259,7 @@ async function commandCheck(opts: Options): Promise<number> {
       );
     }
     if (plugins.length === 0 && unknown.length === 0) {
-      console.log(`\nNo ESLint plugins found in ${configPath}. Nothing to check.\n`);
+      console.log(`\nNo ESLint plugins found in ${displayPath(configPath)}. Nothing to check.\n`);
       return 0;
     }
     process.stdout.write(renderReport(report, { color: opts.color }));

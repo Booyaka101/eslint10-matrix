@@ -79,6 +79,9 @@ Found in review before this shipped:
 - The attribution budget is one deadline for the whole probe process rather than one per measured
   candidate. A rescue probe measures two, and two four-minute budgets plus the lint passes overran
   the six-minute kill, which reported a rescuable plugin as still failing to load.
+- Both commands name the measured directory relative to where you ran them, and by its own name
+  when that is the directory you are standing in. Reports get pasted into issues, and the header
+  used to print the absolute path of the machine it ran on.
 
 Board refreshed to ESLint 10.10.0 against the 9.39.5 maintenance line, 54 plugins, and
 @eslint/compat 2.1.1. 7 of 54 plugins block the upgrade, 5 of them rescuable.

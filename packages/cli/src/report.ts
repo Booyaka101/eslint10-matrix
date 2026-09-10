@@ -1,3 +1,4 @@
+import { displayPath } from './display-path.js';
 import type { Matrix, PluginRow, PluginRunResult, RescueResult } from './matrix.js';
 import { rowFor } from './matrix.js';
 import { satisfies } from './semver-lite.js';
@@ -299,7 +300,7 @@ export function renderReport(report: Report, options: { color?: boolean } = {}):
   const plural = total === 1 ? 'plugin' : 'plugins';
 
   out.push('');
-  out.push(bold(`ESLint ${report.eslintVersions.v10} readiness for ${report.projectDir} (${total} ${plural})`));
+  out.push(bold(`ESLint ${report.eslintVersions.v10} readiness for ${displayPath(report.projectDir)} (${total} ${plural})`));
   out.push(
     dim(
       report.measured

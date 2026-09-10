@@ -53,7 +53,7 @@ Run `check` to see where the ecosystem is. Run `scan` before you actually do the
 ```
 $ cd examples/react-app && npx eslint10-matrix scan
 
-ESLint 10.10.0 readiness for D:\Repos\ideas\eslint10-runtime-matrix\examples\react-app (5 plugins)
+ESLint 10.10.0 readiness for react-app (5 plugins)
 executed here against your installed versions on 7 files, baseline eslint 9.39.5
 
 BLOCKED (1)
@@ -140,7 +140,7 @@ What it refuses to do:
 ```
 $ cd examples/react-app && npx eslint10-matrix check --matrix ../../matrix.json
 
-ESLint 10.10.0 readiness for D:\Repos\ideas\eslint10-runtime-matrix\examples\react-app (5 plugins)
+ESLint 10.10.0 readiness for react-app (5 plugins)
 matrix generated 2026-09-10T01:34:04.617Z
 
 BLOCKED (1)
@@ -348,7 +348,7 @@ Each entry may carry `settings`, `parser` and `extraDeps`, the same configuratio
 npm ci
 npm run build                                    # both packages
 npm run lint                                     # this repo lints itself, on ESLint 10
-npm test                                         # 108 tests, vitest (build first: the end-to-end tests drive the built CLI)
+npm test                                         # 111 tests, vitest (build first: the end-to-end tests drive the built CLI)
 node packages/runner/dist/run.js --only eslint-plugin-react   # one plugin
 node packages/runner/dist/run.js                 # full pass, ~4 minutes at concurrency 6
 node site/build.mjs --in matrix.json --out site/dist
