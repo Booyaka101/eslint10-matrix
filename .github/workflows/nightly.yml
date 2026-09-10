@@ -30,9 +30,9 @@ jobs:
       matrix:
         shard: [0, 1, 2, 3]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
@@ -44,7 +44,7 @@ jobs:
       - name: Execute plugins against ESLint 9 and 10
         run: node packages/runner/dist/run.js --shard ${{ matrix.shard }}/4 --concurrency 4 --out shards/shard-${{ matrix.shard }}.json
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: shard-${{ matrix.shard }}
           path: shards/shard-${{ matrix.shard }}.json
@@ -56,16 +56,16 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
 
       - run: npm ci
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           path: shards
           pattern: shard-*
@@ -91,10 +91,12 @@ jobs:
             git push
           fi
 
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/configure-pages@v6
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: site/dist
+          # site/build.mjs writes .nojekyll, and v4 stopped packing dotfiles.
+          include-hidden-files: true
 
   deploy:
     name: deploy pages
@@ -105,4 +107,4 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5

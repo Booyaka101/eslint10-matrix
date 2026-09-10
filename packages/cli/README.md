@@ -361,9 +361,11 @@ The runner takes `--shard i/n` so the nightly workflow can fan out across four j
 
 ### Releasing
 
-Tag the commit CI is green on, then run the `publish` workflow from the Actions tab with that tag.
-It refuses a tag whose version does not match `packages/cli/package.json`, runs build, lint and the
-full suite on the tagged tree, and publishes with npm provenance through OIDC. There is no
+Tag the commit CI is green on, then run the `publish` workflow from the Actions tab. Leave "Use
+workflow from" on `main` and put the tag in the input box: the definition comes from the ref you
+dispatch, the published code comes from the tag. It refuses a tag whose version does not match
+`packages/cli/package.json`, runs build, lint and the full suite on the tagged tree, and publishes
+with npm provenance through OIDC. There is no
 `NPM_TOKEN` anywhere in the repo, and there should not be: a token alongside `id-token: write`
 makes npm prefer the token and the publish loses its attestation.
 
