@@ -1,0 +1,63 @@
+name: publish
+
+# Publishing stays deliberate: this runs only when someone asks for it by tag.
+# It refuses a tag whose version does not match the manifest it would publish,
+# and it runs the full suite on the tagged tree before anything leaves the box.
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to publish, for example v1.2.1'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  # npm exchanges this for a short-lived credential. No NPM_TOKEN: a token
+  # alongside it makes npm prefer the token and the publish loses provenance.
+  id-token: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag }}
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+          cache: npm
+
+      # Node 22 bundles npm 10 and trusted publishing needs 11.5.1 or newer.
+      - name: Upgrade npm past the OIDC floor
+        run: |
+          npm install -g npm@latest
+          npm --version
+
+      - name: The tag and the manifest have to agree
+        run: |
+          manifest=$(node -p "require('./packages/cli/package.json').version")
+          if [ "${{ inputs.tag }}" != "v$manifest" ]; then
+            echo "::error::${{ inputs.tag }} does not match packages/cli/package.json ($manifest)"
+            exit 1
+          fi
+          echo "publishing eslint10-matrix@$manifest from ${{ inputs.tag }}"
+
+      - run: npm ci
+      - run: npm run build
+      - run: npm run lint
+      - run: npm test
+
+      - name: Publish to npm
+        working-directory: packages/cli
+        run: npm publish
+
+      - name: What to check
+        run: |
+          echo "The proof of success is the '+ eslint10-matrix@<version>' line above plus the"
+          echo "Sigstore entry, not a registry lookup: npm processes publishes asynchronously"
+          echo "and returns hard 404s for the version, the tarball and dist-tags for some"
+          echo "minutes afterwards. Do not read that as a failed publish."
