@@ -1,7 +1,8 @@
+import { displayPath } from './display-path.js';
 import type { Matrix, PluginRow, PluginRunResult, RescueResult } from './matrix.js';
 import { rowFor } from './matrix.js';
 import { satisfies } from './semver-lite.js';
-import { rescueSnippet } from './snippet.js';
+import { pluginNamespace, rescueSnippet } from './snippet.js';
 
 export type Bucket = 'blocked' | 'rescuable' | 'partial-rescue' | 'safe-to-force' | 'clean' | 'untested' | 'unknown';
 
@@ -30,6 +31,15 @@ export interface Report {
   untested: Entry[];
   unknown: Entry[];
   overrides: Record<string, { eslint: string }>;
+  /** Set by `scan`: what was executed here instead of read from the board. */
+  measured?: Measured;
+  /** Anything the reader needs to know about how the answer was reached. */
+  notes: string[];
+}
+
+export interface Measured {
+  files: number;
+  baseline: string;
 }
 
 const ISSUE_URL = 'https://github.com/Booyaka101/eslint10-matrix/issues/new';
@@ -95,7 +105,14 @@ export function verdictFor(
 
 export function buildReport(
   matrix: Matrix,
-  input: { plugins: string[]; unknown: string[]; projectDir: string; configPath: string }
+  input: {
+    plugins: string[];
+    unknown: string[];
+    projectDir: string;
+    configPath: string;
+    measured?: Measured;
+    notes?: string[];
+  }
 ): Report {
   const { v9, v10 } = matrix.eslintVersions;
   const report: Report = {
@@ -111,6 +128,8 @@ export function buildReport(
     untested: [],
     unknown: [],
     overrides: {},
+    ...(input.measured ? { measured: input.measured } : {}),
+    notes: input.notes ?? [],
   };
 
   for (const key of input.unknown) {
@@ -204,6 +223,22 @@ function clip(text: string, max = 96): string {
   return text.length > max ? `${text.slice(0, max - 1)}…` : text;
 }
 
+/**
+ * The file citation `scan` adds: the corpus board has no file to name, so this
+ * is empty for a report built from the published matrix.
+ */
+function crashEvidence(entry: Entry): string | null {
+  const crash = entry.result?.crashingRules.find((r) => r.file);
+  if (!crash?.file) return null;
+  const others = (crash.fileCount ?? 1) - 1;
+  const atLeast = crash.fileCountCapped ? 'at least ' : '';
+  const more = others > 0 ? ` (${atLeast}${others} more ${others === 1 ? 'file' : 'files'})` : '';
+  // The message is what gets clipped, never the file count: how much of the repo
+  // a rule breaks is the part a reader cannot reconstruct from anywhere else.
+  const head = `${pluginNamespace(entry.name)}/${crash.rule} crashed on ${crash.file}: `;
+  return `${head}${clip(crash.message, Math.max(40, 120 - head.length - more.length))}${more}`;
+}
+
 /** The one-line "why this is still blocked" note under a BLOCKED plugin. */
 function blockedRescueNote(rescue: RescueResult | undefined): string | null {
   if (!rescue) return null;
@@ -265,8 +300,14 @@ export function renderReport(report: Report, options: { color?: boolean } = {}):
   const plural = total === 1 ? 'plugin' : 'plugins';
 
   out.push('');
-  out.push(bold(`ESLint ${report.eslintVersions.v10} readiness for ${report.projectDir} (${total} ${plural})`));
-  out.push(dim(`matrix generated ${report.generatedAt}`));
+  out.push(bold(`ESLint ${report.eslintVersions.v10} readiness for ${displayPath(report.projectDir)} (${total} ${plural})`));
+  out.push(
+    dim(
+      report.measured
+        ? `executed here against your installed versions on ${report.measured.files} ${report.measured.files === 1 ? 'file' : 'files'}, baseline eslint ${report.measured.baseline}`
+        : `matrix generated ${report.generatedAt}`
+    )
+  );
   out.push('');
 
   if (report.blocked.length > 0) {
@@ -274,8 +315,9 @@ export function renderReport(report: Report, options: { color?: boolean } = {}):
     const width = Math.max(...report.blocked.map((e) => label(e).length));
     for (const entry of report.blocked) {
       out.push(`  ${pad(label(entry), width + 2)}${entry.reason}`);
-      const note = blockedRescueNote(entry.rescue);
-      if (note) out.push(dim(`  ${' '.repeat(width + 2)}${note}`));
+      for (const line of [crashEvidence(entry), blockedRescueNote(entry.rescue)]) {
+        if (line) out.push(dim(`  ${' '.repeat(width + 2)}${line}`));
+      }
     }
     out.push('');
   }
@@ -288,6 +330,8 @@ export function renderReport(report: Report, options: { color?: boolean } = {}):
     for (const entry of entries) {
       out.push('');
       out.push(`  ${label(entry)}  ${rescueLine(entry, report.eslintVersions.v10)}`);
+      const evidence = crashEvidence(entry);
+      if (evidence) out.push(dim(`    ${evidence}`));
       out.push('');
       out.push(
         entry
@@ -341,6 +385,11 @@ export function renderReport(report: Report, options: { color?: boolean } = {}):
     out.push('');
   }
 
+  if (report.notes.length > 0) {
+    for (const note of report.notes) out.push(dim(note));
+    out.push('');
+  }
+
   const blocking = report.blocked.length + report.rescuable.length + report.partialRescue.length;
   if (blocking === 0) {
     out.push(green(`Nothing blocks the upgrade to ESLint ${report.eslintVersions.v10}.`));
@@ -353,12 +402,15 @@ export function renderReport(report: Report, options: { color?: boolean } = {}):
       out.push(dim(`  ${worst[0]}`));
       out.push('');
     }
+    const rescued = report.rescuable.length + report.partialRescue.length;
     const rescueNote =
-      report.rescuable.length + report.partialRescue.length > 0
-        ? ` (${report.rescuable.length + report.partialRescue.length} of them rescuable with @eslint/compat)`
-        : '';
+      rescued === 0
+        ? ''
+        : blocking === 1
+          ? ' (rescuable with @eslint/compat)'
+          : ` (${rescued} of them rescuable with @eslint/compat)`;
     out.push(
-      `${blocking} of ${total} ${plural} block the upgrade to ESLint ${report.eslintVersions.v10}${rescueNote}.`
+      `${blocking} of ${total} ${plural} ${blocking === 1 ? 'blocks' : 'block'} the upgrade to ESLint ${report.eslintVersions.v10}${rescueNote}.`
     );
   }
   out.push('');

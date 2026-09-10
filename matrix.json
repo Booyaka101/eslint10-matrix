@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-09-09T03:31:00.640Z",
+  "generatedAt": "2026-09-10T01:34:04.617Z",
   "eslintVersions": {
     "v9": "9.39.5",
     "v10": "10.10.0"
@@ -248,7 +248,7 @@
       },
       "rescue": {
         "eslintVersion": "10.10.0",
-        "compatVersion": "2.1.0",
+        "compatVersion": "2.1.1",
         "attempted": true,
         "verdict": "rescuable",
         "crashingRulesBefore": 38,
@@ -288,10 +288,12 @@
       },
       "rescue": {
         "eslintVersion": "10.10.0",
-        "compatVersion": "2.1.0",
-        "attempted": false,
-        "verdict": "blocked",
-        "skipReason": "not a removed context API"
+        "compatVersion": "2.1.1",
+        "attempted": true,
+        "verdict": "rescuable",
+        "crashingRulesBefore": 3,
+        "fixupFunction": "fixupPluginRules",
+        "crashingRulesAfter": 0
       }
     },
     {
@@ -540,7 +542,7 @@
     },
     {
       "name": "eslint-plugin-jsdoc",
-      "version": "64.3.6",
+      "version": "64.3.8",
       "declaredPeerRange": "^7.0.0 || ^8.0.0 || ^9.0.0 || ^10.0.0",
       "weeklyDownloads": 5288500,
       "results": {
@@ -831,7 +833,7 @@
       },
       "rescue": {
         "eslintVersion": "10.10.0",
-        "compatVersion": "2.1.0",
+        "compatVersion": "2.1.1",
         "attempted": true,
         "verdict": "rescuable",
         "crashingRulesBefore": 8,
@@ -891,7 +893,7 @@
       },
       "rescue": {
         "eslintVersion": "10.10.0",
-        "compatVersion": "2.1.0",
+        "compatVersion": "2.1.1",
         "attempted": true,
         "verdict": "rescuable",
         "crashingRulesBefore": 8,
@@ -1289,7 +1291,7 @@
       },
       "rescue": {
         "eslintVersion": "10.10.0",
-        "compatVersion": "2.1.0",
+        "compatVersion": "2.1.1",
         "attempted": true,
         "verdict": "rescuable",
         "crashingRulesBefore": 1,
@@ -1317,7 +1319,7 @@
       },
       "rescue": {
         "eslintVersion": "10.10.0",
-        "compatVersion": "2.1.0",
+        "compatVersion": "2.1.1",
         "attempted": true,
         "verdict": "blocked",
         "detail": "still fails to load with @eslint/compat installed: Class extends value undefined is not a constructor or null"
@@ -1343,7 +1345,7 @@
       },
       "rescue": {
         "eslintVersion": "10.10.0",
-        "compatVersion": "2.1.0",
+        "compatVersion": "2.1.1",
         "attempted": true,
         "verdict": "blocked",
         "detail": "still fails to load with @eslint/compat installed: Class extends value undefined is not a constructor or null"

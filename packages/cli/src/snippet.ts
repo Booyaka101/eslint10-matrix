@@ -25,7 +25,18 @@ function objectKey(namespace: string): string {
   return /^[A-Za-z_$][\w$]*$/.test(namespace) ? namespace : `'${namespace}'`;
 }
 
-/** `jsx-a11y` -> jsxA11y, `@typescript-eslint` -> typescriptEslint. */
+/**
+ * Legal as an object key but not as a binding, which is how eslint-plugin-import
+ * used to produce `import import from 'eslint-plugin-import'`.
+ */
+const RESERVED = new Set([
+  'await', 'break', 'case', 'catch', 'class', 'const', 'continue', 'debugger', 'default', 'delete', 'do', 'else',
+  'enum', 'export', 'extends', 'false', 'finally', 'for', 'function', 'if', 'implements', 'import', 'in',
+  'instanceof', 'interface', 'let', 'new', 'null', 'package', 'private', 'protected', 'public', 'return', 'static',
+  'super', 'switch', 'this', 'throw', 'true', 'try', 'typeof', 'var', 'void', 'while', 'with', 'yield',
+]);
+
+/** `jsx-a11y` -> jsxA11y, `@typescript-eslint` -> typescriptEslint, `import` -> pluginImport. */
 export function importBinding(namespace: string): string {
   const camel = namespace
     .replace(/^@/, '')
@@ -33,7 +44,8 @@ export function importBinding(namespace: string): string {
     .filter(Boolean)
     .map((part, i) => (i === 0 ? part : part[0]!.toUpperCase() + part.slice(1)))
     .join('');
-  return /^[a-zA-Z_$]/.test(camel) ? camel : `plugin${camel}`;
+  if (/^[a-zA-Z_$]/.test(camel) && !RESERVED.has(camel)) return camel;
+  return `plugin${camel.charAt(0).toUpperCase()}${camel.slice(1)}`;
 }
 
 /**

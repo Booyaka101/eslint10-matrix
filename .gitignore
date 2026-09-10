@@ -7,6 +7,10 @@ test/.tmp/
 shards/
 *.log
 npm-debug.log*
+.env
+.cache/
+.idea/
+.vscode/
 .DS_Store
 Thumbs.db
 .vitest/
@@ -15,3 +19,6 @@ coverage/
 
 # Local build notes, not for the public repo
 PROGRESS.md
+
+# The scan fixture repo ships a hand-built node_modules: it is the input under test.
+!test/fixtures/scan-repo/node_modules/

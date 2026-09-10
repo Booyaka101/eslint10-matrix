@@ -1,6 +1,7 @@
 import { mkdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
-import { dirname, join, resolve } from 'node:path';
+import { join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 export const DEFAULT_MATRIX_URL = 'https://booyaka101.github.io/eslint10-matrix/matrix.json';
 
@@ -9,13 +10,24 @@ export type Status = 'clean' | 'rule-crash' | 'load-fail' | 'install-fail';
 export interface CrashingRule {
   rule: string;
   message: string;
+  /** `scan` only: the first repo file the rule crashed on, relative to the repo root. */
+  file?: string;
+  /** `scan` only: how many scanned files the rule crashed on, when more than one. */
+  fileCount?: number;
+  /** Set when the count above is a floor: attribution stopped at the evidence cap. */
+  fileCountCapped?: boolean;
 }
 
 export interface PluginRunResult {
   status: Status;
   crashingRules: CrashingRule[];
   totalRules: number;
+  /** Populated for install-fail and load-fail so the reader can see why. */
   detail?: string;
+  /** Set on rescue-pass results: which @eslint/compat function produced this run. */
+  fixupFunction?: FixupFunction;
+  /** Set when fixupConfigRules was used: the plugin config key it wrapped. */
+  fixupConfigKey?: string;
 }
 
 export type FixupFunction = 'fixupPluginRules' | 'fixupConfigRules';
@@ -112,6 +124,14 @@ async function writeCache(matrix: Matrix): Promise<void> {
   }
 }
 
+function isHttpUrl(source: string): boolean {
+  try {
+    return ['http:', 'https:'].includes(new URL(source).protocol);
+  } catch {
+    return false;
+  }
+}
+
 async function loadFromFile(path: string): Promise<MatrixLoad> {
   let raw: string;
   try {
@@ -141,12 +161,15 @@ export async function loadMatrix(options: {
 } = {}): Promise<MatrixLoad> {
   if (options.file) return loadFromFile(options.file);
 
-  const url = options.url ?? DEFAULT_MATRIX_URL;
+  const source = options.url ?? DEFAULT_MATRIX_URL;
   const timeoutMs = options.timeoutMs ?? 15_000;
 
-  if (/^(\.|[a-zA-Z]:[\\/]|\/)/.test(url) || url.startsWith('file:')) {
-    return loadFromFile(url.startsWith('file:') ? new URL(url).pathname : url);
-  }
+  if (source.startsWith('file:')) return loadFromFile(fileURLToPath(source));
+  // Anything that is not http(s) is a path. A bare `--matrix matrix.json` used to
+  // parse as a URL, fail to fetch, and fall back to the cached board without
+  // saying that the file had been ignored.
+  if (!isHttpUrl(source)) return loadFromFile(source);
+  const url = source;
 
   let networkError: string;
   try {
@@ -189,5 +212,3 @@ export async function loadMatrix(options: {
 export function rowFor(matrix: Matrix, packageName: string): PluginRow | undefined {
   return matrix.plugins.find((p) => p.name === packageName);
 }
-
-export { dirname };

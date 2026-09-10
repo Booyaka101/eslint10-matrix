@@ -1,7 +1,7 @@
 {
   "name": "eslint10-matrix",
-  "version": "1.1.0",
-  "description": "Can this repo upgrade to ESLint 10 yet? Answers from a nightly matrix of ESLint plugins actually executed against real ESLint 9 and 10 installs, not from declared peerDependencies.",
+  "version": "1.2.0",
+  "description": "Can this repo upgrade to ESLint 10 yet? `scan` executes your own installed plugin versions against ESLint 10 on your own source files. Answers come from execution, not from declared peerDependencies.",
   "keywords": [
     "eslint",
     "eslint10",
@@ -10,7 +10,8 @@
     "plugins",
     "peerdependencies",
     "upgrade",
-    "flat-config"
+    "flat-config",
+    "eslint-plugin"
   ],
   "homepage": "https://booyaka101.github.io/eslint10-matrix/",
   "bugs": {
@@ -25,7 +26,7 @@
   "author": "Christiaan Bosch <cbosch101@gmail.com>",
   "type": "module",
   "bin": {
-    "eslint10-matrix": "./dist/index.js"
+    "eslint10-matrix": "dist/index.js"
   },
   "main": "./dist/index.js",
   "exports": {
@@ -36,6 +37,7 @@
   },
   "files": [
     "dist",
+    "probe",
     "README.md",
     "LICENSE"
   ],

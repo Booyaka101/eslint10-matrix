@@ -1,4 +1,30 @@
-import type { CrashingRule, PluginRunResult, ProbeResult } from './types.js';
+import type { CrashingRule, FixupFunction, PluginRunResult } from './matrix.js';
+
+/** Raw shape written by probe/probe.mjs. */
+export interface ProbeResult {
+  phase:
+    | 'input'
+    | 'load'
+    | 'eslint-load'
+    | 'compat-load'
+    | 'collect'
+    | 'instantiate'
+    | 'lint'
+    | 'attribute'
+    | 'done'
+    | 'probe-internal';
+  ok: boolean;
+  totalRules: number;
+  crashingRules: CrashingRule[];
+  configInvalidRules?: CrashingRule[];
+  lintedFiles?: number;
+  totalMessages?: number;
+  parseErrors?: number;
+  tsParserLoaded?: boolean;
+  fixupFunction?: FixupFunction;
+  fixupConfigKey?: string;
+  error?: { message: string; stack: string } | null;
+}
 
 /** `Error while loading rule 'react/display-name': ...` */
 const QUOTED_RULE = /rule\s+['"`]([^'"`]+)['"`]/;
@@ -88,6 +114,9 @@ export function classify(probe: ProbeResult | null, childStderr = ''): PluginRun
   const crashingRules: CrashingRule[] = (probe.crashingRules ?? []).map((entry) => ({
     rule: stripNamespace(entry.rule),
     message: truncate(entry.message, 300),
+    ...(entry.file ? { file: entry.file } : {}),
+    ...(entry.fileCount && entry.fileCount > 1 ? { fileCount: entry.fileCount } : {}),
+    ...(entry.fileCountCapped ? { fileCountCapped: true } : {}),
   }));
 
   const fixup = probe.fixupFunction

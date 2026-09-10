@@ -1,11 +1,13 @@
 import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { describe, expect, it } from 'vitest';
+import { displayPath } from '../packages/cli/src/display-path.js';
 import { loadMatrix, MatrixError, type Matrix } from '../packages/cli/src/matrix.js';
+import { installArgs, run, unsafeSpecs } from '../packages/cli/src/probe-run.js';
 import { buildReport, renderOverrides, renderReport, verdictFor } from '../packages/cli/src/report.js';
-import { ConfigError, conventionalPackageNames, findConfigFile, resolveConfig } from '../packages/cli/src/resolve-config.js';
+import { ConfigError, conventionalPackageNames, findConfigFile, readWorkspaces, resolveConfig } from '../packages/cli/src/resolve-config.js';
 import { satisfies } from '../packages/cli/src/semver-lite.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -91,6 +93,33 @@ describe('resolve-config', () => {
     expect(resolved.configPath).toBe(join(REPO_FIXTURE, 'eslint.config.js'));
   });
 
+  it('prefers the conventional package over a meta.name that collides with a real dependency', async () => {
+    // eslint-plugin-vitest@0.5.4 reports meta.name 'vitest', and a repo that runs
+    // vitest depends on that name too. Trusting meta.name first scanned the test
+    // runner and told the user to force an eslint override onto it.
+    const dir = await mkdtemp(join(tmpdir(), 'e10m-meta-'));
+    try {
+      await writeFile(
+        join(dir, 'package.json'),
+        JSON.stringify({
+          name: 'x',
+          type: 'module',
+          devDependencies: { vitest: '^2.1.9', 'eslint-plugin-vitest': '0.5.4' },
+        })
+      );
+      await writeFile(join(dir, 'stub.mjs'), "export default { meta: { name: 'vitest' }, rules: {} };\n");
+      await writeFile(
+        join(dir, 'eslint.config.js'),
+        "import vitest from './stub.mjs';\nexport default [{ plugins: { vitest }, rules: {} }];\n"
+      );
+      const resolved = await resolveConfig(dir);
+      expect(resolved.plugins).toEqual(['eslint-plugin-vitest']);
+      expect(resolved.keys).toEqual({ vitest: 'eslint-plugin-vitest' });
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
   it('reports a plugin absent from package.json as unknown instead of guessing', async () => {
     const dir = await mkdtemp(join(tmpdir(), 'e10m-cfg-'));
     try {
@@ -102,6 +131,49 @@ describe('resolve-config', () => {
       const resolved = await resolveConfig(dir);
       expect(resolved.plugins).toEqual([]);
       expect(resolved.unknown).toEqual(['ghost']);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('hoists a global ignores block but leaves a files-scoped one alone', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'e10m-ign-'));
+    try {
+      await writeFile(join(dir, 'package.json'), JSON.stringify({ name: 'x', type: 'module', devDependencies: {} }));
+      await writeFile(
+        join(dir, 'eslint.config.js'),
+        'export default [{ ignores: ["dist/**"] }, { files: ["**/*.spec.js"], ignores: ["src/**"], rules: {} }];\n'
+      );
+      const resolved = await resolveConfig(dir);
+      expect(resolved.ignores).toEqual(['dist/**']);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('reads the shape globalIgnores() emits, where name sits beside ignores', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'e10m-gign-'));
+    try {
+      await writeFile(join(dir, 'package.json'), JSON.stringify({ name: 'x', type: 'module' }));
+      await writeFile(
+        join(dir, 'eslint.config.js'),
+        `export default [{ name: 'globalIgnores(["dist/**"])', ignores: ["dist/**"] }];\n`
+      );
+      expect((await resolveConfig(dir)).ignores).toEqual(['dist/**']);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('scopes a global ignores block to its basePath', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'e10m-base-'));
+    try {
+      await writeFile(join(dir, 'package.json'), JSON.stringify({ name: 'x', type: 'module' }));
+      await writeFile(
+        join(dir, 'eslint.config.js'),
+        'export default [{ basePath: "packages/a", ignores: ["dist/**"] }];\n'
+      );
+      expect((await resolveConfig(dir)).ignores).toEqual(['packages/a/dist/**']);
     } finally {
       await rm(dir, { recursive: true, force: true });
     }
@@ -121,6 +193,81 @@ describe('resolve-config', () => {
     expect(conventionalPackageNames('react')).toContain('eslint-plugin-react');
     expect(conventionalPackageNames('@typescript-eslint')).toContain('@typescript-eslint/eslint-plugin');
     expect(conventionalPackageNames('@next/next')).toContain('@next/eslint-plugin-next');
+  });
+
+  it('reads workspace globs from every manifest shape a monorepo root uses', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'e10m-ws-'));
+    try {
+      await writeFile(join(dir, 'package.json'), JSON.stringify({ workspaces: ['packages/*', 'apps/*'] }));
+      expect(await readWorkspaces(dir)).toEqual(['packages/*', 'apps/*']);
+
+      await writeFile(join(dir, 'package.json'), JSON.stringify({ workspaces: { packages: ['libs/*'] } }));
+      expect(await readWorkspaces(dir)).toEqual(['libs/*']);
+
+      const yaml = ['packages:', "  - 'packages/*'", '  - tools/* # a comment', ''].join('\n');
+      await writeFile(join(dir, 'pnpm-workspace.yaml'), yaml);
+      expect(await readWorkspaces(dir)).toEqual(['packages/*', 'tools/*']);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('reports no workspaces for an ordinary repo', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'e10m-nows-'));
+    try {
+      expect(await readWorkspaces(dir)).toEqual([]);
+      await writeFile(join(dir, 'package.json'), '{ not json');
+      expect(await readWorkspaces(dir)).toEqual([]);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+});
+
+describe('probe environment', () => {
+  it('quotes every install spec, because npm is spawned through a shell', () => {
+    expect(installArgs(['eslint@10.9.0', 'typescript@>=4.8.4 <5.9.0'])).toEqual([
+      'install',
+      '--no-audit',
+      '--no-fund',
+      '--no-package-lock',
+      '--legacy-peer-deps',
+      '--loglevel',
+      'error',
+      '"eslint@10.9.0"',
+      '"typescript@>=4.8.4 <5.9.0"',
+    ]);
+  });
+
+  it('passes every character a package name or semver range needs', () => {
+    expect(
+      unsafeSpecs(['eslint@10.10.0', '@typescript-eslint/parser@^8.67.0', 'typescript@>=4.8.4 <5.9.0 || ^6.0.0-beta.1', 'x@*'])
+    ).toEqual([]);
+  });
+
+  it('refuses a spec carrying shell syntax, because scan reads specs out of the caller tree', () => {
+    // A dependency's own manifest supplies these strings, and npm is spawned
+    // through a shell, so $(...) in a peer range would be sh syntax.
+    expect(unsafeSpecs(['react@$(id)', 'a@`id`', 'b@1;id', 'c@1&id', "d@'1'", 'e@%PATH%'])).toEqual([
+      'react@$(id)',
+      'a@`id`',
+      'b@1;id',
+      'c@1&id',
+      "d@'1'",
+      'e@%PATH%',
+    ]);
+  });
+
+  it('carries a peer range with spaces and || through a real shell intact', async () => {
+    const spec = 'typescript@>=4.8.4 <5.9.0 || ^6';
+    const result = await run(
+      'node',
+      ['-e', '"process.stdout.write(process.argv[1])"', `"${spec}"`],
+      tmpdir(),
+      30_000,
+      true
+    );
+    expect(result.stdout).toBe(spec);
   });
 });
 
@@ -155,6 +302,41 @@ describe('report', () => {
     expect(react.reason).toBe('3 rules crash on 10.9.0: display-name, prop-types, no-typos');
     const a11y = report.blocked.find((e) => e.name === 'eslint-plugin-jsx-a11y')!;
     expect(a11y.reason).toBe('fails to load on 10.9.0');
+  });
+
+  it('reads a capped file count as a floor, not a tally', () => {
+    const matrix: Matrix = {
+      ...MATRIX,
+      plugins: [
+        {
+          name: 'eslint-plugin-fixture',
+          version: '1.2.3',
+          declaredPeerRange: '^9',
+          weeklyDownloads: 0,
+          results: {
+            '9.39.5': result('clean', [], 4),
+            '10.9.0': {
+              status: 'rule-crash',
+              totalRules: 4,
+              crashingRules: [
+                {
+                  rule: 'no-lazy-import',
+                  message: 'sourceCode.getTokenOrCommentBefore is not a function',
+                  file: 'src/Card.jsx',
+                  fileCount: 25,
+                  fileCountCapped: true,
+                },
+              ],
+            },
+          },
+        },
+      ],
+    };
+    const text = renderReport(buildReport(matrix, { ...INPUT, plugins: ['eslint-plugin-fixture'], unknown: [] }), {
+      color: false,
+    });
+    expect(text).toContain('crashed on src/Card.jsx');
+    expect(text).toContain('(at least 24 more files)');
   });
 
   it('links untested plugins to an issue template', () => {
@@ -292,6 +474,35 @@ describe('matrix loading', () => {
     await expect(loadMatrix({ file: resolve('definitely-not-here.json') })).rejects.toThrow(/matrix file not found/);
   });
 
+  it('treats a bare relative --matrix value as a path, not a host', async () => {
+    // `--matrix matrix.json` used to parse as a URL, fail to fetch, and quietly
+    // report the cached board instead of the file the caller named.
+    const dir = await mkdtemp(join(tmpdir(), 'e10m-mx3-'));
+    const cwd = process.cwd();
+    try {
+      await writeFile(join(dir, 'local.json'), JSON.stringify(MATRIX));
+      process.chdir(dir);
+      const load = await loadMatrix({ url: 'local.json', timeoutMs: 1500 });
+      expect(load.source).toBe('file');
+      expect(load.matrix.plugins).toHaveLength(5);
+    } finally {
+      process.chdir(cwd);
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('reads a file: URL', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'e10m-mx4-'));
+    try {
+      const file = join(dir, 'matrix.json');
+      await writeFile(file, JSON.stringify(MATRIX));
+      const load = await loadMatrix({ url: pathToFileURL(file).href, timeoutMs: 1500 });
+      expect(load.source).toBe('file');
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
   it('rejects a future schema version with an upgrade hint', async () => {
     const dir = await mkdtemp(join(tmpdir(), 'e10m-mx2-'));
     try {
@@ -308,5 +519,22 @@ describe('matrix loading', () => {
     await expect(
       loadMatrix({ url: 'https://127.0.0.1:9/matrix.json', noCache: true, timeoutMs: 1500 })
     ).rejects.toThrowError(MatrixError);
+  });
+});
+
+describe('displayPath', () => {
+  const repo = resolve('repo');
+
+  it('names a directory relative to where the command ran', () => {
+    expect(displayPath(join(repo, 'examples', 'react-app'), repo)).toBe(join('examples', 'react-app'));
+  });
+
+  it('names the current directory by its own name rather than a bare dot', () => {
+    expect(displayPath(join(repo, 'my-app'), join(repo, 'my-app'))).toBe('my-app');
+  });
+
+  it('leaves a directory outside the current one absolute, because a trail of dot-dots is worse', () => {
+    const outside = resolve('elsewhere');
+    expect(displayPath(outside, join(repo, 'deep', 'inside'))).toBe(outside);
   });
 });
