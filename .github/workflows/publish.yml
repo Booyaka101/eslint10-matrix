@@ -37,14 +37,18 @@ jobs:
           npm install -g npm@latest
           npm --version
 
+      # Through env rather than interpolated into the script: a dispatch input
+      # expanded inline is a shell injection, however trusted the dispatcher.
       - name: The tag and the manifest have to agree
+        env:
+          TAG: ${{ inputs.tag }}
         run: |
           manifest=$(node -p "require('./packages/cli/package.json').version")
-          if [ "${{ inputs.tag }}" != "v$manifest" ]; then
-            echo "::error::${{ inputs.tag }} does not match packages/cli/package.json ($manifest)"
+          if [ "$TAG" != "v$manifest" ]; then
+            echo "::error::$TAG does not match packages/cli/package.json ($manifest)"
             exit 1
           fi
-          echo "publishing eslint10-matrix@$manifest from ${{ inputs.tag }}"
+          echo "publishing eslint10-matrix@$manifest from $TAG"
 
       - run: npm ci
       - run: npm run build
