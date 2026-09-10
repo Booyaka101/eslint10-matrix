@@ -23,6 +23,16 @@ const CONFIG_ERROR =
 
 const TS_EXTENSIONS = ['.ts', '.tsx', '.mts', '.cts'];
 
+/** Enough evidence to say how widely a rule breaks without linting every file against it. */
+const EVIDENCE_CAP = 25;
+
+/**
+ * Per-rule attribution is rules times files, so a large repo and a plugin with
+ * hundreds of rules can outlast the caller's timeout. Stopping early reports
+ * fewer rules; being killed reports none at all and reads as a load failure.
+ */
+const ATTRIBUTE_BUDGET_MS = 4 * 60_000;
+
 function errorInfo(err) {
   if (!(err instanceof Error)) return { message: String(err), stack: '' };
   return { message: String(err.message ?? err), stack: String(err.stack ?? '') };
@@ -320,6 +330,8 @@ async function main() {
     const linter = new Linter({ cwd: baseDir });
     const crashed = new Map();
     const configInvalid = new Map();
+    const deadline = Date.now() + ATTRIBUTE_BUDGET_MS;
+    let truncated = false;
 
     const note = (id, message, file) => {
       const seen = crashed.get(id);
@@ -328,12 +340,18 @@ async function main() {
     };
 
     for (const id of ruleNames) {
+      if (Date.now() > deadline) {
+        truncated = true;
+        break;
+      }
       const qualified = `${namespace}/${id}`;
       for (const [file, code] of await readSources()) {
         if (configInvalid.has(id)) break;
         // Without file evidence the first crash is the whole answer; with it the
-        // rule keeps going so the report can say how much of the repo it breaks.
-        if (!recordFiles && crashed.has(id)) break;
+        // rule keeps going, up to the cap, so the report can say how much of the
+        // repo it breaks.
+        const seen = crashed.get(id);
+        if (seen && (!recordFiles || seen.files.length >= EVIDENCE_CAP)) break;
         const single = buildConfig(pluginObject, { [qualified]: 'error' });
         try {
           const messages = linter.verify(code, single, file);
@@ -350,9 +368,22 @@ async function main() {
     outcome.crashingRules = [...crashed].map(([rule, { message, files }]) => ({
       rule,
       message,
-      ...(recordFiles ? { file: files[0], fileCount: files.length } : {}),
+      ...(recordFiles
+        ? {
+            file: files[0],
+            fileCount: files.length,
+            ...(files.length >= EVIDENCE_CAP ? { fileCountCapped: true } : {}),
+          }
+        : {}),
     }));
     outcome.configInvalidRules = [...configInvalid].map(([rule, message]) => ({ rule, message }));
+    if (truncated && crashed.size === 0) {
+      outcome.fatal = {
+        message: `the all-rules pass crashed, but naming the rule ran out of time after ${ATTRIBUTE_BUDGET_MS / 1000}s over ${ruleNames.length} rules and ${usableFiles.length} files`,
+        stack: '',
+      };
+      return outcome;
+    }
     outcome.phase = 'done';
     return outcome;
   }

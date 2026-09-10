@@ -127,7 +127,10 @@ function collectPluginEntries(value: unknown, out: ConfigContents, depth = 0): v
       if (!out.plugins.has(key)) out.plugins.set(key, mod);
     }
   }
-  if (Array.isArray(entry.ignores)) {
+  // A flat-config object whose only key is `ignores` is the global ignore list.
+  // Beside `files` it scopes that block instead, and hoisting it would skip
+  // files ESLint still lints.
+  if (Array.isArray(entry.ignores) && Object.keys(entry).length === 1) {
     for (const pattern of entry.ignores) {
       if (typeof pattern === 'string' && !out.ignores.includes(pattern)) out.ignores.push(pattern);
     }

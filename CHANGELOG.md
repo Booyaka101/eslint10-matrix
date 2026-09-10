@@ -44,14 +44,36 @@ Two measurement fixes changed published verdicts:
 - `--matrix matrix.json` (a bare relative path) parsed as a URL, failed to fetch, and silently
   reported the cached board instead. Anything that is not http(s) is now read as a file.
 
+Found in review before this shipped:
+
+- Install specs are quoted. npm is spawned through a shell, which joins the arguments with spaces
+  and quotes nothing, so a peer range such as `>=4.8.4 <5.9.0` or one containing `||` arrived as
+  several words and the plugin came back `install-fail`.
+- Each probe run gets its own scratch directory inside the cached environment. A run killed on
+  timeout used to leave its `probe-result.json` behind, and the next run over the same dependency
+  set read that stale file as its own answer.
+- An environment whose move into the cache failed is now used where it was built instead of after
+  being deleted, which had reported every plugin in that run as `install-fail`.
+- Per-rule attribution is bounded: 25 files of evidence per crashing rule, and a deadline that
+  reports what it found rather than letting the probe be killed and read as a load failure. A count
+  that stopped at the cap is marked, and the report says "at least 24 more files".
+- An `ignores` list beside `files` in a flat config block is scoped to that block. It was being
+  hoisted into the global ignore list, so `scan` skipped files ESLint would have linted.
+- `--json` now carries the `notes` array. The caveats the human report prints in grey (files left
+  unscanned, a version read from the lockfile, a workspace root whose packages were not walked) were
+  missing from the machine-readable output, so a CI consumer read a verdict with none of its
+  qualifications.
+- A workspace root scanned with `--plugins` printed "(--plugins) is a workspace root". The note names
+  the directory now.
+
 Board refreshed to ESLint 10.10.0 against the 9.39.5 maintenance line, 54 plugins, and
 @eslint/compat 2.1.1. 7 of 54 plugins block the upgrade, 5 of them rescuable.
 
 The closing summary line now agrees with itself when a single plugin blocks: "1 of 1 plugin blocks
 the upgrade to ESLint 10.10.0 (rescuable with @eslint/compat)".
 
-`matrix.json` is unchanged in shape: a `scan` row adds `file` and `fileCount` to each crashing
-rule, the schema version stays 1, and nothing was renamed or removed.
+`matrix.json` is unchanged in shape: a `scan` row adds `file`, `fileCount` and `fileCountCapped` to
+each crashing rule, the schema version stays 1, and nothing was renamed or removed.
 
 ## 1.1.0 - 2026-08-27
 

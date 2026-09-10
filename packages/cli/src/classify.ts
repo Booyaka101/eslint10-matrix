@@ -116,6 +116,7 @@ export function classify(probe: ProbeResult | null, childStderr = ''): PluginRun
     message: truncate(entry.message, 300),
     ...(entry.file ? { file: entry.file } : {}),
     ...(entry.fileCount && entry.fileCount > 1 ? { fileCount: entry.fileCount } : {}),
+    ...(entry.fileCountCapped ? { fileCountCapped: true } : {}),
   }));
 
   const fixup = probe.fixupFunction

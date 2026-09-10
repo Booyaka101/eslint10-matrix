@@ -99,6 +99,21 @@ describe('scan refuses to guess', () => {
     expect(attempt.stderr).toContain('found no JavaScript or TypeScript files');
   });
 
+  it('names the directory in the workspace note, not the --plugins placeholder', async () => {
+    const dir = await repo({
+      'package.json': JSON.stringify({ name: 'monorepo', private: true, workspaces: ['packages/*'] }),
+      'src/index.js': 'export const x = 1;\n',
+      'node_modules/.keep': '',
+    });
+    const attempt = await runCli(['scan', dir, '--plugins', 'eslint-plugin-react', '--json']);
+    expect(attempt.code).toBe(0);
+    const notes = (JSON.parse(attempt.stdout) as { notes: string[] }).notes;
+    expect(notes).toContain(
+      `${dir} is a workspace root (packages/*); scan measures the config here only and does not walk into the packages`
+    );
+    expect(notes).toContain('eslint-plugin-react is used by the config but has no installed version here, so it was not scanned');
+  });
+
   it('rejects nonsense flag values before doing any work', async () => {
     expect((await runCli(['scan', '--max-files', '0'])).code).toBe(2);
     expect((await runCli(['scan', '--concurrency', 'many'])).code).toBe(2);

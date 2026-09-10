@@ -2,6 +2,8 @@
 
 **Can this repo upgrade to ESLint 10 yet?** Answered by running the plugins, not by reading their manifests.
 
+![npx eslint10-matrix scan in a five-plugin React app: one plugin blocked, two rescuable with @eslint/compat, and the config to paste](https://raw.githubusercontent.com/Booyaka101/eslint10-matrix/main/docs/scan-terminal.png)
+
 Three facts, all verifiable at the npm registry right now:
 
 | package | latest version | declared `peerDependencies.eslint` |
@@ -269,6 +271,7 @@ eslint10-matrix plugins          list every plugin in the published matrix
 | flag | applies to | effect |
 | --- | --- | --- |
 | `--ci` | both | exit 1 when any plugin is BLOCKED, RESCUABLE or PARTIAL-RESCUE. Without it the command always exits 0. |
+| `--color` | both | force ANSI colour when the output is not a terminal |
 | `--json` | both | machine-readable output, including the `overrides` object |
 | `--no-cache` | both | never read or write `~/.cache/eslint10-matrix` |
 | `--no-color` | both | disable ANSI colour |
@@ -334,7 +337,7 @@ Each entry may carry `settings`, `parser` and `extraDeps`, the same configuratio
 
 - **Two ESLint versions**, the current `latest` (10.10.0) and the current `maintenance` (9.39.5). No sweep across the earlier 10.x minors. `scan --eslint <version>` measures a different 10.x release if you need one.
 - **Flat config only.** ESLint 10 removed eslintrc, so a repo still on `.eslintrc` has a bigger migration than this tool measures.
-- **`plugins` maps only.** Plugins pulled in through a shared config's `extends` are not attributed to a package name; use `check --plugins` to check those explicitly.
+- **`plugins` maps only.** Plugins pulled in through a shared config's `extends` are not attributed to a package name; pass `--plugins` with the package names to measure them anyway.
 - **Rules that exist only inside a plugin's exported flat config**, with no top-level `rules` map, are recorded as a config prerequisite rather than linted, so such a plugin reads as clean and never reaches the rescue pass.
 - **A config that default-exports a function** is resolved by the ESLint CLI, not by this tool. Export the array, or pass `--plugins` with the package names.
 - **One config per `scan`.** Workspaces are detected and reported, not walked.
@@ -345,11 +348,14 @@ Each entry may carry `settings`, `parser` and `extraDeps`, the same configuratio
 npm ci
 npm run build                                    # both packages
 npm run lint                                     # this repo lints itself, on ESLint 10
-npm test                                         # 98 tests, vitest (build first: the end-to-end tests drive the built CLI)
+npm test                                         # 103 tests, vitest (build first: the end-to-end tests drive the built CLI)
 node packages/runner/dist/run.js --only eslint-plugin-react   # one plugin
 node packages/runner/dist/run.js                 # full pass, ~4 minutes at concurrency 6
 node site/build.mjs --in matrix.json --out site/dist
 ```
+
+The README screenshots are generated, not drawn. `node scripts/terminal-shot.mjs --in <captured
+output> --out docs/scan-terminal.png` turns a real `--color` run into the terminal image above.
 
 The runner takes `--shard i/n` so the nightly workflow can fan out across four jobs and merge with `scripts/merge-shards.mjs`.
 
@@ -361,7 +367,9 @@ Add an entry to `packages/runner/src/plugins.json` with `name` and `weeklyDownlo
 
 This is the published `matrix.json`. `scan` builds the same structure in memory and reports from it,
 so the two commands share one vocabulary; `--json` prints the bucketed report rather than the raw
-matrix, and prints it identically for both.
+matrix, and prints it identically for both. Its `notes` array carries the same caveats the human
+report prints in grey: files left unscanned, a version read from the lockfile rather than
+`node_modules`, a workspace root whose packages were not walked.
 
 ```jsonc
 {
@@ -397,8 +405,10 @@ matrix, and prints it identically for both.
 ```
 
 A `scan` row adds `file` to each crashing rule, naming a file in your repo that triggered it, plus
-`fileCount` when more than one did. The `rescue` field is additive: nothing existing was
-renamed or removed and the schema version is still 1, so tools reading the old shape keep working.
+`fileCount` when more than one did. Attribution stops after 25 files per rule, and a count that hit
+that cap carries `fileCountCapped` and reads as "at least 24 more files" in the report. The `rescue`
+field is additive: nothing existing was renamed or removed and the schema version is still 1, so
+tools reading the old shape keep working.
 
 ## Telling people about it
 

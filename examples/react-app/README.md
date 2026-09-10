@@ -1,6 +1,6 @@
 # catalogue-ui
 
-A four-plugin React app kept here so `eslint10-matrix scan` has something real to
+A five-plugin React app kept here so `eslint10-matrix scan` has something real to
 measure. Install it, then scan it:
 
 ```

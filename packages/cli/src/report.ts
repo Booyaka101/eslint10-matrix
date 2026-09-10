@@ -230,7 +230,8 @@ function crashEvidence(entry: Entry): string | null {
   const crash = entry.result?.crashingRules.find((r) => r.file);
   if (!crash?.file) return null;
   const others = (crash.fileCount ?? 1) - 1;
-  const more = others > 0 ? ` (${others} more ${others === 1 ? 'file' : 'files'})` : '';
+  const atLeast = crash.fileCountCapped ? 'at least ' : '';
+  const more = others > 0 ? ` (${atLeast}${others} more ${others === 1 ? 'file' : 'files'})` : '';
   // The message is what gets clipped, never the file count: how much of the repo
   // a rule breaks is the part a reader cannot reconstruct from anywhere else.
   const head = `${pluginNamespace(entry.name)}/${crash.rule} crashed on ${crash.file}: `;

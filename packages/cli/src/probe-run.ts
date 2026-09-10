@@ -132,25 +132,40 @@ export async function pruneEnvs(maxAgeMs = ENV_MAX_AGE_MS): Promise<number> {
   return removed;
 }
 
+/**
+ * npm runs through a shell, and spawning through one joins the arguments with
+ * spaces and quotes nothing, so a peer range such as `>=4.8.4 <5.9.0` or one
+ * containing `||` would arrive as several words and fail to install. Double
+ * quotes are the one form both cmd.exe and sh honour.
+ */
+export function installArgs(deps: readonly string[]): string[] {
+  // The declared peer range is what we are testing, so a plain install would
+  // just refuse to resolve. --legacy-peer-deps installs past it deliberately.
+  return [
+    'install',
+    '--no-audit',
+    '--no-fund',
+    '--no-package-lock',
+    '--legacy-peer-deps',
+    '--loglevel',
+    'error',
+    ...deps.map((spec) => `"${spec.replace(/"/g, '')}"`),
+  ];
+}
+
 async function npmInstall(dir: string, deps: string[]): Promise<CommandResult> {
   await writeFile(
     join(dir, 'package.json'),
     JSON.stringify({ name: 'eslint10-matrix-probe', version: '0.0.0', private: true, type: 'module' }, null, 2)
   );
-  // The declared peer range is what we are testing, so a plain install would
-  // just refuse to resolve. --legacy-peer-deps installs past it deliberately.
-  return run(
-    'npm',
-    ['install', '--no-audit', '--no-fund', '--no-package-lock', '--legacy-peer-deps', '--loglevel', 'error', ...deps],
-    dir,
-    INSTALL_TIMEOUT_MS,
-    true
-  );
+  return run('npm', installArgs(deps), dir, INSTALL_TIMEOUT_MS, true);
 }
 
 interface Environment {
   dir: string;
   reused: boolean;
+  /** The directory is this run's alone, so it can be removed afterwards. */
+  temporary?: boolean;
   install?: CommandResult;
 }
 
@@ -162,7 +177,7 @@ interface Environment {
 async function prepareEnvironment(deps: string[], options: ProbeOptions): Promise<Environment> {
   if (!options.cache) {
     const dir = await mkdtemp(join(tmpdir(), 'e10m-'));
-    return { dir, reused: false, install: await npmInstall(dir, deps) };
+    return { dir, reused: false, temporary: true, install: await npmInstall(dir, deps) };
   }
 
   const target = join(envsDir(), envKey(deps));
@@ -178,10 +193,13 @@ async function prepareEnvironment(deps: string[], options: ProbeOptions): Promis
   try {
     await rename(staging, target);
   } catch {
-    // A parallel scan won the race, or the rename is not permitted here. Either
-    // way an existing target is a complete install, and a temp dir is a fallback.
+    // A parallel scan won the race, or the rename is not permitted here. An
+    // existing target is a complete install; otherwise staging is one already,
+    // so it is used in place and removed with the run.
+    if (!existsSync(join(target, 'node_modules'))) {
+      return { dir: staging, reused: false, temporary: true, install };
+    }
     await rm(staging, { recursive: true, force: true, maxRetries: 3 }).catch(() => {});
-    if (!existsSync(target)) return { dir: staging, reused: false, install };
   }
   return { dir: target, reused: false, install };
 }
@@ -190,7 +208,8 @@ async function prepareEnvironment(deps: string[], options: ProbeOptions): Promis
 export async function probe(plan: ProbePlan, options: ProbeOptions = {}): Promise<PluginRunResult> {
   const environment = await prepareEnvironment(plan.deps, options);
   const dir = environment.dir;
-  const disposable = !options.cache && !options.keepTemp;
+  const disposable = environment.temporary === true && !options.keepTemp;
+  let runDir: string | null = null;
   try {
     const install = environment.install;
     if (install && install.code !== 0) {
@@ -202,9 +221,14 @@ export async function probe(plan: ProbePlan, options: ProbeOptions = {}): Promis
     if (environment.reused) options.onLog?.(`reusing cached environment ${dir}`);
 
     await plan.prepare?.(dir);
-    await cp(PROBE, join(dir, 'probe.mjs'));
+    // The probe's scratch files live in a subdirectory of their own: the
+    // environment above is shared by every run with the same dependency set, and
+    // a probe-result.json left by a killed run would be read as this run's
+    // answer. Bare imports still resolve upwards into the environment.
+    runDir = await mkdtemp(join(dir, 'run-'));
+    await cp(PROBE, join(runDir, 'probe.mjs'));
     await writeFile(
-      join(dir, 'probe-input.json'),
+      join(runDir, 'probe-input.json'),
       JSON.stringify(
         {
           specifier: plan.specifier,
@@ -221,10 +245,10 @@ export async function probe(plan: ProbePlan, options: ProbeOptions = {}): Promis
       )
     );
 
-    const result = await run(process.execPath, ['probe.mjs'], dir, PROBE_TIMEOUT_MS);
+    const result = await run(process.execPath, ['probe.mjs'], runDir, PROBE_TIMEOUT_MS);
     let parsed: ProbeResult | null = null;
     try {
-      parsed = JSON.parse(await readFile(join(dir, 'probe-result.json'), 'utf8')) as ProbeResult;
+      parsed = JSON.parse(await readFile(join(runDir, 'probe-result.json'), 'utf8')) as ProbeResult;
     } catch {
       parsed = null;
     }
@@ -241,6 +265,9 @@ export async function probe(plan: ProbePlan, options: ProbeOptions = {}): Promis
     return installFail(err instanceof Error ? err.message : String(err));
   } finally {
     if (disposable) await rm(dir, { recursive: true, force: true, maxRetries: 3 }).catch(() => {});
+    else if (runDir && !options.keepTemp) {
+      await rm(runDir, { recursive: true, force: true, maxRetries: 3 }).catch(() => {});
+    }
   }
 }
 

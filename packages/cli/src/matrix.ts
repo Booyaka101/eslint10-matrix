@@ -14,6 +14,8 @@ export interface CrashingRule {
   file?: string;
   /** `scan` only: how many scanned files the rule crashed on, when more than one. */
   fileCount?: number;
+  /** Set when the count above is a floor: attribution stopped at the evidence cap. */
+  fileCountCapped?: boolean;
 }
 
 export interface PluginRunResult {

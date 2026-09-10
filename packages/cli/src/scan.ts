@@ -171,7 +171,7 @@ export async function scan(options: ScanOptions): Promise<ScanResult> {
   const workspaces = await readWorkspaces(projectDir);
   if (workspaces.length > 0) {
     notes.push(
-      `${configPath} is a workspace root (${workspaces.join(', ')}); scan measures this config only and does not walk into the packages`
+      `${projectDir} is a workspace root (${workspaces.join(', ')}); scan measures the config here only and does not walk into the packages`
     );
   }
 

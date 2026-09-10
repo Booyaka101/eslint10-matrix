@@ -19,13 +19,13 @@ USAGE
   eslint10-matrix --version
 
 OPTIONS
+  check and scan
   --ci                exit 1 when any plugin is BLOCKED, RESCUABLE or
                       PARTIAL-RESCUE (default: always exit 0)
+  --color             force ANSI colour when the output is not a terminal
   --json              print machine-readable JSON instead of the human report
   --no-cache          never read or write anything under ~/.cache/eslint10-matrix
   --no-color          disable ANSI colour
-
-  both commands
   --plugins <a,b>     skip config resolution and use these package names
 
   check only
@@ -40,7 +40,7 @@ OPTIONS
 
 EXIT CODES
   0  report printed
-  1  --ci and at least one plugin is BLOCKED
+  1  --ci and at least one plugin blocks the upgrade
   2  the command could not run (no flat config, no node_modules, bad arguments)
 `;
 
@@ -171,6 +171,7 @@ function jsonReport(report: Report, source: string, stale?: string): string {
       untested: report.untested,
       unknown: report.unknown,
       overrides: report.overrides,
+      notes: report.notes,
     },
     null,
     2

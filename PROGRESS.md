@@ -3,7 +3,9 @@
 Status at 2026-09-10: **v1.2.0 built and verified locally, not pushed and not published.** The
 working tree on branch `scan-command` carries the whole release: the new `scan` command, the shared
 classification and rescue modules both commands now call, the board refreshed to ESLint 10.10.0,
-and the docs and screenshots redrawn to match. v1.1.0 remains what is live on npm and Pages.
+and the docs and screenshots redrawn to match. It has been through a full review-and-fix round since:
+six defects found by reading the diff as a reviewer, all fixed, plus a pass over every user-facing
+string. v1.1.0 remains what is live on npm and Pages.
 
 ## Next steps for the owner
 
@@ -37,15 +39,18 @@ Every line below was executed on this machine on 2026-09-10.
 | --- | --- |
 | `npm run build` | clean, both workspaces |
 | `npm run lint` | clean, this repo lints itself on ESLint 10 |
-| `npm test` | **9 files, 98 tests passed**, 4.97s |
+| `npm test` | **9 files, 103 tests passed**, 3.95s |
 | pre-refactor tier regression | `test/tiers-regression.test.ts` replays `test/fixtures/tiers-before-refactor.json` through the extracted modules and reproduces all 54 verdicts and the rendered report byte for byte |
 | corpus vs repo disagreement | `test/scan-vs-corpus.test.ts` tiers the same plugin CLEAN over the fixture corpus and BLOCKED over the fixture repo, citing `src\Card.jsx` and `(1 more file)` |
 | `scan examples/react-app` | exit 0, 5 plugins, 7 files, BLOCKED 1 / RESCUABLE 2 / SAFE TO FORCE 1 / CLEAN 1 |
 | `scan` with no `node_modules` | exit 2, "no node_modules under ...", no stack trace |
 | `scan` on an `.eslintrc` repo | exit 2, names `@eslint/migrate-config` |
 | `scan --plugins` past an unreadable config | measured `eslint-plugin-react@7.37.5` in the example app with the config skipped, and said so in a note |
-| clean-path install | `npm pack` then `npm install ./eslint10-matrix-1.2.0.tgz` into an empty directory: `--version` prints 1.2.0, `--help` renders, `import('eslint10-matrix')` exposes `main` and `parseArgs`, and `scan` ran the full example-app report from the installed bin |
+| clean-path install, re-run after the review fixes | `npm pack` then `npm install ./eslint10-matrix-1.2.0.tgz` into an empty directory: `--version` prints 1.2.0, `--help` renders, `import('eslint10-matrix')` exposes `main` and `parseArgs`, and `scan` ran the full example-app report from the installed bin |
 | board refresh | `matrix.json` regenerated at ESLint 9.39.5 / 10.10.0, 54 plugins: 42 clean, 5 rescuable, 5 safe-to-force, 2 blocked |
+| README transcripts | both fenced blocks diffed against a fresh run, 52 and 50 lines, no differences |
+| `scan --json` | `ready: false`, counts 1/2/0/1/1, `notes: []` for a repo with nothing to qualify |
+| `scan --ci` | exit 1 on the example app, exit 0 without `--ci` |
 
 ## What the refreshed board measured
 
@@ -82,14 +87,20 @@ all three rules anyway. That is now a dated bullet in `LESSONS.md`.
 
 ## House-rule audit
 
-- **Clone check, difflib over function line lists.** 79 functions of 6+ lines. One pair sat in the
+- **Clone check, difflib over function line lists.** 101 functions of 6+ lines on the final tree
+  (79 at the first pass, before the tests and the screenshot script). One pair sat in the
   60% neighbourhood: `packages/runner/src/run.ts:corpusFiles` against
   `test/probe-sandbox.ts:corpusFiles` at **59%**, both reading `packages/runner/fixtures` and both
   producing `fixtures/<name>` paths. Extracted to `packages/runner/src/corpus.ts` and both callers
   converted. Re-run: **nothing at or above 57%**, and the remainder are five-line `try`/`catch`
   wrappers (`readJsonFile`, `isHttpUrl`, `readCache`, `writeCache`, `readVersion`) with no shared
   mechanism worth a module. `scan` deliberately does not clone the corpus runner: both call
-  `probe`, `classify`, `rescuePass` and `verdictFor` from the CLI package.
+  `probe`, `classify`, `rescuePass` and `verdictFor` from the CLI package. Re-run after the review
+  fixes: the highest real pair is 67%, still `readJsonFile` against `isHttpUrl`, both five-line
+  `try`/`catch` wrappers. The 68% reported for `collect-files.ts:collectFiles` against `walk` is the
+  extractor counting a nested function's lines twice, not a clone. Two six-line `result()` builders
+  in `test/cli.test.ts` and `test/rescue.test.ts` sit at 62%; they take different arguments and
+  sharing them would couple two suites for six lines, so that is where I stopped.
 - **Proof the extraction changed nothing.** `test/fixtures/tiers-before-refactor.json` was captured
   from the pre-refactor code and holds both the 54 verdicts and the full rendered report.
   `test/tiers-regression.test.ts` replays it and compares byte for byte.
@@ -100,13 +111,47 @@ all three rules anyway. That is now a dated bullet in `LESSONS.md`.
   values, why `meta.name` loses to the naming convention, why a crash is measured twice.
 - **Screenshots redrawn.** `docs/rescuable-tier.png` and `docs/react-rescue-detail.png` are new
   2680x2040 captures of the 10.10.0 board, showing five rescuable rows and the new footer that
-  points at `scan`.
+  points at `scan`. `docs/scan-terminal.png` is new: the README hero, a 2148x1276 render of a real
+  `scan --color` run produced by `scripts/terminal-shot.mjs`, so the terminal images are generated
+  from captured output rather than drawn.
+- **The two pasted transcripts are byte-identical to a fresh run.** Both fenced blocks in the README
+  were diffed line by line against `scan examples/react-app` and `check examples/react-app --matrix
+  matrix.json` after the last edit. 52 and 50 lines, no differences.
+
+## Review round two: what a reviewer objected to, and the fix
+
+Six defects came out of reading the diff as a reviewer, all fixed and all in the CHANGELOG:
+
+1. **Install specs were unquoted.** npm is spawned through a shell, which joins arguments with
+   spaces and quotes nothing, so a peer range such as `>=4.8.4 <5.9.0` or one containing `||`
+   arrived as several words and the plugin came back `install-fail`. `installArgs` now quotes each
+   spec, and a test spawns a real shell with such a range to prove it arrives as one argument.
+2. **Stale probe results.** Every run shared the cached environment's directory, so a run killed on
+   timeout left a `probe-result.json` that the next run over the same dependency set read as its own
+   answer. Each run now gets its own `run-` subdirectory, removed with the run.
+3. **A failed move into the cache deleted a good install.** The staging directory is now used where
+   it was built when the rename loses a race, instead of being removed and reported as
+   `install-fail` for every plugin in that run.
+4. **Per-rule attribution was unbounded.** Rules times files on a large repo could outlast the
+   caller's patience and be killed, which reads as a load failure. It now stops at 25 files of
+   evidence per rule and at a four-minute deadline, marks a capped count, and the report says
+   "at least 24 more files".
+5. **A block-scoped `ignores` was hoisted.** An `ignores` list beside `files` scopes that block, not
+   the whole config. Hoisting it made `scan` skip files ESLint would have linted.
+6. **`--json` dropped the notes.** The caveats the human report prints in grey were missing from the
+   machine-readable output, so a CI consumer read a verdict with none of its qualifications. The
+   `notes` array is now in the JSON, and a workspace root scanned with `--plugins` names the
+   directory rather than the literal `(--plugins)` placeholder.
+
+Prose and help pass: `--color` was a working flag documented nowhere, so it is in `--help` and in
+both README option tables. The exit-code line said "at least one plugin is BLOCKED" while `--ci`
+exits 1 for RESCUABLE and PARTIAL-RESCUE too.
 
 ## Acceptance checks from the brief
 
 | check | result |
 | --- | --- |
-| full existing suite green | **yes**, 98 tests, and every pre-existing test is unchanged |
+| full existing suite green | **yes**, 103 tests, and every pre-existing test is unchanged |
 | pre-refactor regression fixture reproduces byte for byte | **yes** |
 | `scan` on a repo pinned to `eslint-plugin-react@7.37.5` reports BLOCKED and cites a file path | **partly, and the difference is a measurement, not a gap.** react 7.37.5 measures **RESCUABLE**, not BLOCKED: every rule it breaks recovers under `fixupPluginRules()`, and the report cites `react/forward-ref-uses-ref crashed on eslint.config.js ... (6 more files)`. The BLOCKED-with-a-file-citation path is proven directly by `test/scan-vs-corpus.test.ts`, which cites `src\Card.jsx`. The example app's real BLOCKED row is `eslint-plugin-vitest@0.5.4`, and being a load failure it has no file to cite. |
 | `scan` with no `node_modules` exits non-zero with a readable message | **yes**, exit 2 |

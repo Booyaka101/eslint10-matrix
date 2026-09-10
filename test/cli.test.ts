@@ -4,6 +4,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { loadMatrix, MatrixError, type Matrix } from '../packages/cli/src/matrix.js';
+import { installArgs, run } from '../packages/cli/src/probe-run.js';
 import { buildReport, renderOverrides, renderReport, verdictFor } from '../packages/cli/src/report.js';
 import { ConfigError, conventionalPackageNames, findConfigFile, readWorkspaces, resolveConfig } from '../packages/cli/src/resolve-config.js';
 import { satisfies } from '../packages/cli/src/semver-lite.js';
@@ -134,6 +135,21 @@ describe('resolve-config', () => {
     }
   });
 
+  it('hoists a global ignores block but leaves a files-scoped one alone', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'e10m-ign-'));
+    try {
+      await writeFile(join(dir, 'package.json'), JSON.stringify({ name: 'x', type: 'module', devDependencies: {} }));
+      await writeFile(
+        join(dir, 'eslint.config.js'),
+        'export default [{ ignores: ["dist/**"] }, { files: ["**/*.spec.js"], ignores: ["src/**"], rules: {} }];\n'
+      );
+      const resolved = await resolveConfig(dir);
+      expect(resolved.ignores).toEqual(['dist/**']);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
   it('names flat config as the requirement when no config file exists', async () => {
     const dir = await mkdtemp(join(tmpdir(), 'e10m-empty-'));
     try {
@@ -179,6 +195,34 @@ describe('resolve-config', () => {
   });
 });
 
+describe('probe environment', () => {
+  it('quotes every install spec, because npm is spawned through a shell', () => {
+    expect(installArgs(['eslint@10.9.0', 'typescript@>=4.8.4 <5.9.0'])).toEqual([
+      'install',
+      '--no-audit',
+      '--no-fund',
+      '--no-package-lock',
+      '--legacy-peer-deps',
+      '--loglevel',
+      'error',
+      '"eslint@10.9.0"',
+      '"typescript@>=4.8.4 <5.9.0"',
+    ]);
+  });
+
+  it('carries a peer range with spaces and || through a real shell intact', async () => {
+    const spec = 'typescript@>=4.8.4 <5.9.0 || ^6';
+    const result = await run(
+      'node',
+      ['-e', '"process.stdout.write(process.argv[1])"', `"${spec}"`],
+      tmpdir(),
+      30_000,
+      true
+    );
+    expect(result.stdout).toBe(spec);
+  });
+});
+
 describe('semver-lite', () => {
   it('decides whether a declared peer range admits ESLint 10', () => {
     expect(satisfies('10.9.0', '^3 || ^4 || ^5 || ^6 || ^7 || ^8 || ^9.7')).toBe(false);
@@ -210,6 +254,41 @@ describe('report', () => {
     expect(react.reason).toBe('3 rules crash on 10.9.0: display-name, prop-types, no-typos');
     const a11y = report.blocked.find((e) => e.name === 'eslint-plugin-jsx-a11y')!;
     expect(a11y.reason).toBe('fails to load on 10.9.0');
+  });
+
+  it('reads a capped file count as a floor, not a tally', () => {
+    const matrix: Matrix = {
+      ...MATRIX,
+      plugins: [
+        {
+          name: 'eslint-plugin-fixture',
+          version: '1.2.3',
+          declaredPeerRange: '^9',
+          weeklyDownloads: 0,
+          results: {
+            '9.39.5': result('clean', [], 4),
+            '10.9.0': {
+              status: 'rule-crash',
+              totalRules: 4,
+              crashingRules: [
+                {
+                  rule: 'no-lazy-import',
+                  message: 'sourceCode.getTokenOrCommentBefore is not a function',
+                  file: 'src/Card.jsx',
+                  fileCount: 25,
+                  fileCountCapped: true,
+                },
+              ],
+            },
+          },
+        },
+      ],
+    };
+    const text = renderReport(buildReport(matrix, { ...INPUT, plugins: ['eslint-plugin-fixture'], unknown: [] }), {
+      color: false,
+    });
+    expect(text).toContain('crashed on src/Card.jsx');
+    expect(text).toContain('(at least 24 more files)');
   });
 
   it('links untested plugins to an issue template', () => {
