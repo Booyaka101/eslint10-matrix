@@ -359,6 +359,20 @@ output> --out docs/scan-terminal.png` turns a real `--color` run into the termin
 
 The runner takes `--shard i/n` so the nightly workflow can fan out across four jobs and merge with `scripts/merge-shards.mjs`.
 
+### Releasing
+
+Tag the commit CI is green on, then run the `publish` workflow from the Actions tab with that tag.
+It refuses a tag whose version does not match `packages/cli/package.json`, runs build, lint and the
+full suite on the tagged tree, and publishes with npm provenance through OIDC. There is no
+`NPM_TOKEN` anywhere in the repo, and there should not be: a token alongside `id-token: write`
+makes npm prefer the token and the publish loses its attestation.
+
+It needs one setup step only the package owner can do, since npmjs.com package settings sit behind
+that account's own 2FA. On npmjs.com, under settings for `eslint10-matrix`, add a trusted publisher
+for this repository and `publish.yml`, leaving the environment field blank. Until that exists the
+workflow fails at the publish step, which is the right failure: publishing from a laptop instead
+loses that version's provenance permanently.
+
 ### Adding a plugin
 
 Add an entry to `packages/runner/src/plugins.json` with `name` and `weeklyDownloads`, plus `parser`/`extraDeps`/`settings` if it needs them, then open a PR. Or open an issue and it will be added on the next pass.
