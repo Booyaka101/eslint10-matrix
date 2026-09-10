@@ -1,5 +1,58 @@
 # Changelog
 
+## 1.2.0 - 2026-09-10
+
+ESLint 9 went end of life on 2026-08-06 and ESLint 10.10.0 is now the release everyone is landing
+on, so the two gaps the README already admitted stopped being acceptable: the board measured each
+plugin's *latest* version against a *fixture corpus*, and neither of those is the repo you are
+actually trying to upgrade. `scan` closes both.
+
+- **`eslint10-matrix scan [dir]`** executes your installed plugin versions, read from
+  `node_modules` and falling back to the lockfile, against real ESLint 9 and ESLint 10 over your
+  own source files. Same five verdicts, same snippets, but a BLOCKED row now names the file in
+  your repo that triggered the crash. Flags: `--eslint`, `--max-files`, `--concurrency`,
+  `--quiet`, plus the shared `--ci`, `--json`, `--no-cache` and `--no-color`.
+- `scan` refuses to guess rather than quietly answering a different question. No `node_modules`
+  exits 2 and says to install rather than falling back to registry latest, a repo still on
+  `.eslintrc` is told ESLint 10 removed eslintrc, a workspace root is told its packages were not
+  walked, a plugin installed but unused by the config is skipped and named, and every regression
+  is measured twice so a crash that does not reproduce is not reported.
+- `--plugins` now applies to `scan` as well as `check`. A config that default-exports a function,
+  or a TypeScript config this Node cannot strip, used to end the scan; naming the packages gets a
+  measurement anyway, against your installed versions and your files, and the report says which
+  config's `ignores` and `settings` were skipped to get it.
+- Installs are cached under `~/.cache/eslint10-matrix/envs`, keyed by the exact dependency set and
+  pruned after 14 days, so a second `scan` is much faster than the first.
+- The crash classifier and the `@eslint/compat` rescue logic moved out of the nightly runner into
+  the CLI package, and both commands now call the same code. A regression fixture captured before
+  the move asserts the corpus still tiers every plugin exactly as it did.
+
+Two measurement fixes changed published verdicts:
+
+- The rescue pass no longer decides from the error text whether a wrapper could help. It only
+  skips causes no wrapper can touch: install failure, missing dependency, Node engine mismatch,
+  parser failure. `eslint-plugin-import@2.32.0` was the casualty of the old gate. Its crashes read
+  `Cannot use 'in' operator to search for 'sourceType' in undefined`, which does not look like a
+  removed `context` API, and `fixupPluginRules()` repairs all three rules. It moves from BLOCKED
+  to RESCUABLE. Board blocked count drops from 3 to 2, rescuable rises from 4 to 5.
+- The printed snippet used to emit `import import from 'eslint-plugin-import'`, which is not valid
+  JavaScript. Import bindings that collide with a reserved word are now prefixed. Every plugin on
+  the board is checked with `node --check` in CI.
+- A plugin's `meta.name` is no longer trusted ahead of the naming convention when it is not
+  plugin-shaped. `eslint-plugin-vitest@0.5.4` reports `meta.name: 'vitest'`, so in a repo that also
+  runs vitest the scan measured the test runner and suggested forcing an eslint override onto it.
+- `--matrix matrix.json` (a bare relative path) parsed as a URL, failed to fetch, and silently
+  reported the cached board instead. Anything that is not http(s) is now read as a file.
+
+Board refreshed to ESLint 10.10.0 against the 9.39.5 maintenance line, 54 plugins, and
+@eslint/compat 2.1.1. 7 of 54 plugins block the upgrade, 5 of them rescuable.
+
+The closing summary line now agrees with itself when a single plugin blocks: "1 of 1 plugin blocks
+the upgrade to ESLint 10.10.0 (rescuable with @eslint/compat)".
+
+`matrix.json` is unchanged in shape: a `scan` row adds `file` and `fileCount` to each crashing
+rule, the schema version stays 1, and nothing was renamed or removed.
+
 ## 1.1.0 - 2026-08-27
 
 ESLint 9 reached end of life on 2026-08-06, so "wait on 9" stopped being an answer, and

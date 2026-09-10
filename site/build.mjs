@@ -203,7 +203,7 @@ ${rows}
   <p class="empty" id="empty" hidden>No plugins match that filter.</p>
 
   <footer>
-    <p><strong>Can my repo upgrade?</strong> Run <code>npx eslint10-matrix check</code> in it.</p>
+    <p><strong>Can my repo upgrade?</strong> Run <code>npx eslint10-matrix scan</code> in it. That measures the plugin versions you actually have installed against your own source files, rather than looking your plugins up on this board.</p>
     <p>Built by executing plugins, not by reading manifests. <a href="https://github.com/Booyaka101/eslint10-matrix">Source and issue tracker</a>. MIT.</p>
   </footer>
 </main>

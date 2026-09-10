@@ -5,11 +5,15 @@ import { fileURLToPath } from 'node:url';
 import { loadMatrix, MatrixError, type Matrix } from './matrix.js';
 import { buildReport, renderReport, type Report } from './report.js';
 import { ConfigError, resolveConfig } from './resolve-config.js';
+import { scan, ScanError } from './scan.js';
+import { TESTED_ESLINT } from './versions.js';
 
 const HELP = `eslint10-matrix - can this repo upgrade to ESLint 10 yet?
 
 USAGE
-  eslint10-matrix check [dir]      report ESLint 10 readiness for a repo (default: .)
+  eslint10-matrix check [dir]      read the published board for a repo (default: .)
+  eslint10-matrix scan [dir]       execute your installed plugin versions against
+                                   ESLint 10 on your own source files
   eslint10-matrix plugins          list every plugin in the published matrix
   eslint10-matrix --help
   eslint10-matrix --version
@@ -18,20 +22,30 @@ OPTIONS
   --ci                exit 1 when any plugin is BLOCKED, RESCUABLE or
                       PARTIAL-RESCUE (default: always exit 0)
   --json              print machine-readable JSON instead of the human report
-  --matrix <src>      use a matrix.json path or URL instead of the published one
-  --no-cache          never read or write the ~/.cache/eslint10-matrix copy
-  --plugins <a,b>     skip config resolution and check these package names
-  --timeout <ms>      network timeout for fetching the matrix (default 15000)
+  --no-cache          never read or write anything under ~/.cache/eslint10-matrix
   --no-color          disable ANSI colour
+
+  both commands
+  --plugins <a,b>     skip config resolution and use these package names
+
+  check only
+  --matrix <src>      use a matrix.json path or URL instead of the published one
+  --timeout <ms>      network timeout for fetching the matrix (default 15000)
+
+  scan only
+  --eslint <version>  the ESLint 10 release to measure against (default ${TESTED_ESLINT.v10})
+  --max-files <n>     how many of the repo's files to lint (default 200)
+  --concurrency <n>   plugins measured in parallel (default 3)
+  --quiet             do not print progress to stderr
 
 EXIT CODES
   0  report printed
   1  --ci and at least one plugin is BLOCKED
-  2  the command could not run (no flat config, no matrix, bad arguments)
+  2  the command could not run (no flat config, no node_modules, bad arguments)
 `;
 
 interface Options {
-  command: 'check' | 'plugins' | 'help' | 'version';
+  command: 'check' | 'scan' | 'plugins' | 'help' | 'version';
   dir: string;
   ci: boolean;
   json: boolean;
@@ -40,9 +54,19 @@ interface Options {
   plugins: string[];
   timeoutMs: number;
   color: boolean;
+  eslintVersion: string;
+  maxFiles: number;
+  concurrency: number;
+  quiet: boolean;
 }
 
 class UsageError extends Error {}
+
+function positiveInteger(flag: string, value: string): number {
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed <= 0) throw new UsageError(`${flag} needs a positive whole number`);
+  return parsed;
+}
 
 export function parseArgs(argv: string[]): Options {
   const opts: Options = {
@@ -54,6 +78,10 @@ export function parseArgs(argv: string[]): Options {
     plugins: [],
     timeoutMs: 15_000,
     color: process.stdout.isTTY === true && !process.env.NO_COLOR,
+    eslintVersion: TESTED_ESLINT.v10,
+    maxFiles: 200,
+    concurrency: 3,
+    quiet: false,
   };
 
   const positional: string[] = [];
@@ -78,6 +106,10 @@ export function parseArgs(argv: string[]): Options {
         break;
       }
       case '--plugins': opts.plugins.push(...next().split(',').map((s) => s.trim()).filter(Boolean)); break;
+      case '--quiet': opts.quiet = true; break;
+      case '--eslint': opts.eslintVersion = next(); break;
+      case '--max-files': opts.maxFiles = positiveInteger(arg, next()); break;
+      case '--concurrency': opts.concurrency = positiveInteger(arg, next()); break;
       case '-h': case '--help': opts.command = 'help'; return opts;
       case '-v': case '--version': opts.command = 'version'; return opts;
       default:
@@ -89,8 +121,8 @@ export function parseArgs(argv: string[]): Options {
   const [command, target] = positional;
   if (command === undefined) {
     opts.command = 'help';
-  } else if (command === 'check') {
-    opts.command = 'check';
+  } else if (command === 'check' || command === 'scan') {
+    opts.command = command;
     if (target) opts.dir = resolve(target);
   } else if (command === 'plugins') {
     opts.command = 'plugins';
@@ -167,6 +199,33 @@ async function commandPlugins(opts: Options): Promise<number> {
   return 0;
 }
 
+async function commandScan(opts: Options): Promise<number> {
+  const result = await scan({
+    dir: opts.dir,
+    plugins: opts.plugins,
+    eslintVersion: opts.eslintVersion,
+    maxFiles: opts.maxFiles,
+    concurrency: opts.concurrency,
+    cache: !opts.noCache,
+    onLog: opts.quiet || opts.json ? undefined : (message) => console.error(`  ${message}`),
+  });
+
+  const report = buildReport(result.matrix, {
+    plugins: result.plugins,
+    unknown: result.unknown,
+    projectDir: result.projectDir,
+    configPath: result.configPath,
+    measured: { files: result.files, baseline: result.baseline },
+    notes: result.notes,
+  });
+
+  if (opts.json) console.log(jsonReport(report, 'scan'));
+  else process.stdout.write(renderReport(report, { color: opts.color }));
+
+  const blocking = report.blocked.length + report.rescuable.length + report.partialRescue.length;
+  return opts.ci && blocking > 0 ? 1 : 0;
+}
+
 async function commandCheck(opts: Options): Promise<number> {
   let plugins: string[];
   let unknown: string[];
@@ -229,10 +288,11 @@ export async function main(argv: string[]): Promise<number> {
     return 0;
   }
 
+  const commands = { plugins: commandPlugins, scan: commandScan, check: commandCheck };
   try {
-    return opts.command === 'plugins' ? await commandPlugins(opts) : await commandCheck(opts);
+    return await commands[opts.command](opts);
   } catch (err) {
-    if (err instanceof ConfigError || err instanceof MatrixError) {
+    if (err instanceof ConfigError || err instanceof MatrixError || err instanceof ScanError) {
       console.error(`error: ${err.message}`);
       if (err.hint) console.error(`\n${err.hint}`);
       return 2;

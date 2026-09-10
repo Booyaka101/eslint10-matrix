@@ -12,3 +12,6 @@ Thumbs.db
 .vitest/
 coverage/
 *.tgz
+
+# The scan fixture repo ships a hand-built node_modules: it is the input under test.
+!test/fixtures/scan-repo/node_modules/

@@ -1,12 +1,13 @@
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
-import { cp, mkdir, rm, writeFile } from 'node:fs/promises';
+import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { classify } from '../packages/runner/src/classify.js';
+import { classify } from '../packages/cli/src/classify.js';
 import { validateMatrix } from '../packages/runner/src/emit.js';
-import { deriveRescue, rescueEligibility, skippedRescue } from '../packages/runner/src/rescue.js';
-import type { PluginRunResult, RescueResult } from '../packages/runner/src/types.js';
+import { deriveRescue, rescueEligibility, skippedRescue } from '../packages/cli/src/rescue.js';
+import type { PluginRunResult, RescueResult } from '../packages/cli/src/matrix.js';
 import type { Matrix, PluginRow } from '../packages/cli/src/matrix.js';
 import { buildReport, renderReport, verdictFor } from '../packages/cli/src/report.js';
 import { importBinding, rescueSnippet } from '../packages/cli/src/snippet.js';
@@ -63,7 +64,7 @@ describe('rescue eligibility', () => {
     expect(rescueEligibility(result('load-fail'), result('load-fail')).kind).toBe('not-blocked');
   });
 
-  it('attempts a crash caused by a removed context API', () => {
+  it('attempts a newly crashing rule', () => {
     const eligibility = rescueEligibility(result('clean'), result('rule-crash', ['display-name']));
     expect(eligibility.kind).toBe('attempt');
     if (eligibility.kind === 'attempt') expect(eligibility.newlyBroken).toEqual(['display-name']);
@@ -74,15 +75,19 @@ describe('rescue eligibility', () => {
     expect(rescueEligibility(result('clean'), onTen).kind).toBe('attempt');
   });
 
+  it('attempts a crash whose message says nothing about a removed context API', () => {
+    // Measured, not guessed: eslint-plugin-import 2.32.0 fails this way on
+    // ESLint 10 and fixupPluginRules recovers all four of its crashing rules.
+    // An earlier message-shape gate called it unrescuable and was wrong.
+    const onTen = result('rule-crash', ['no-default-export'], 46, "Cannot use 'in' operator to search for 'sourceType' in undefined");
+    expect(rescueEligibility(result('clean'), onTen).kind).toBe('attempt');
+  });
+
   it('skips crash causes @eslint/compat cannot touch, each with a short classification', () => {
     const cases: Array<[PluginRunResult, string]> = [
       [result('install-fail', [], 0, 'npm ERR! code EBADENGINE'), 'install failure, and @eslint/compat wraps rules rather than installs'],
       [result('load-fail', [], 0, "Cannot find module 'missing-peer'"), 'missing dependency'],
       [result('load-fail', [], 0, 'Error while loading parser some-parser'), 'parser failure'],
-      [
-        result('rule-crash', ['no-default-export'], 46, "Cannot use 'in' operator to search for 'sourceType' in undefined"),
-        'not a removed context API',
-      ],
     ];
     for (const [onTen, reason] of cases) {
       const eligibility = rescueEligibility(result('clean'), onTen);
@@ -292,7 +297,7 @@ describe('report and snippet', () => {
     const text = renderReport(report);
     expect(text).toContain('RESCUABLE (1)');
     expect(text).toContain("import { fixupPluginRules } from '@eslint/compat';");
-    expect(text).toContain('1 of 1 plugin block the upgrade to ESLint 10.9.0 (1 of them rescuable with @eslint/compat).');
+    expect(text).toContain('1 of 1 plugin blocks the upgrade to ESLint 10.9.0 (rescuable with @eslint/compat).');
   });
 
   it('renders PARTIAL-RESCUE with the rules the user must disable', () => {
@@ -395,6 +400,31 @@ describe('report and snippet', () => {
     expect(importBinding('jsx-a11y')).toBe('jsxA11y');
     expect(importBinding('@typescript-eslint')).toBe('typescriptEslint');
     expect(importBinding('@next/next')).toBe('nextNext');
+    expect(importBinding('import')).toBe('pluginImport');
+  });
+
+  it('emits snippets node can parse, for every plugin on the published board', async () => {
+    const matrix = JSON.parse(await readFile(join(REPO_ROOT, 'matrix.json'), 'utf8')) as Matrix;
+    const names = [...new Set([...matrix.plugins.map((p) => p.name), 'eslint-plugin-import', 'eslint-plugin-new'])];
+    const dir = await mkdtemp(join(tmpdir(), 'e10m-snippet-'));
+    try {
+      for (const name of names) {
+        const rescue: RescueResult = {
+          eslintVersion: V.v10,
+          compatVersion: '2.1.1',
+          attempted: true,
+          verdict: 'partial-rescue',
+          fixupFunction: 'fixupPluginRules',
+          residualRules: [{ rule: 'some-rule', message: 'boom' }],
+        };
+        const file = join(dir, 'snippet.mjs');
+        await writeFile(file, rescueSnippet({ name }, rescue, V.v10));
+        const check = spawnSync(process.execPath, ['--check', file], { encoding: 'utf8' });
+        expect(`${name}: ${check.stderr}`).toBe(`${name}: `);
+      }
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
   });
 });
 

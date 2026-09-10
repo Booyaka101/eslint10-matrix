@@ -1,0 +1,750 @@
+{
+  "capturedFrom": "matrix.json at HEAD 42bbcdb, eslint10-matrix 1.1.0, before the shared-module extraction",
+  "eslintVersions": {
+    "v9": "9.39.5",
+    "v10": "10.9.1"
+  },
+  "matrixGeneratedAt": "2026-08-27T01:37:29.515Z",
+  "verdicts": [
+    {
+      "name": "@typescript-eslint/eslint-plugin",
+      "version": "8.68.0",
+      "verdict": "clean",
+      "regressedRules": []
+    },
+    {
+      "name": "eslint-plugin-react-hooks",
+      "version": "7.1.1",
+      "verdict": "clean",
+      "regressedRules": []
+    },
+    {
+      "name": "eslint-plugin-react",
+      "version": "7.37.5",
+      "verdict": "rescuable",
+      "regressedRules": [
+        "boolean-prop-naming",
+        "default-props-match-prop-types",
+        "destructuring-assignment",
+        "display-name",
+        "forward-ref-uses-ref",
+        "function-component-definition",
+        "hook-use-state",
+        "jsx-curly-spacing",
+        "jsx-equals-spacing",
+        "jsx-filename-extension",
+        "jsx-no-constructed-context-values",
+        "jsx-one-expression-per-line",
+        "jsx-tag-spacing",
+        "no-arrow-function-lifecycle",
+        "no-did-mount-set-state",
+        "no-did-update-set-state",
+        "no-direct-mutation-state",
+        "no-multi-comp",
+        "no-set-state",
+        "no-string-refs",
+        "no-render-return-value",
+        "no-this-in-sfc",
+        "no-typos",
+        "no-unknown-property",
+        "no-unsafe",
+        "no-unstable-nested-components",
+        "no-unused-prop-types",
+        "no-object-type-as-default-prop",
+        "no-will-update-set-state",
+        "prefer-exact-props",
+        "prefer-read-only-props",
+        "prefer-stateless-function",
+        "prop-types",
+        "require-default-props",
+        "require-optimization",
+        "require-render-return",
+        "sort-comp",
+        "static-property-placement"
+      ]
+    },
+    {
+      "name": "eslint-plugin-import",
+      "version": "2.32.0",
+      "verdict": "blocked",
+      "regressedRules": [
+        "no-default-export",
+        "no-named-export",
+        "unambiguous"
+      ]
+    },
+    {
+      "name": "eslint-plugin-jsx-a11y",
+      "version": "6.10.2",
+      "verdict": "force",
+      "regressedRules": []
+    },
+    {
+      "name": "eslint-plugin-prettier",
+      "version": "5.5.6",
+      "verdict": "clean",
+      "regressedRules": []
+    },
+    {
+      "name": "eslint-plugin-react-refresh",
+      "version": "0.5.5",
+      "verdict": "clean",
+      "regressedRules": []
+    },
+    {
+      "name": "@next/eslint-plugin-next",
+      "version": "16.3.3",
+      "verdict": "force",
+      "regressedRules": []
+    },
+    {
+      "name": "eslint-plugin-jest",
+      "version": "29.16.2",
+      "verdict": "clean",
+      "regressedRules": []
+    },
+    {
+      "name": "eslint-plugin-storybook",
+      "version": "10.5.10",
+      "verdict": "clean",
+      "regressedRules": []
+    },
+    {
+      "name": "eslint-plugin-testing-library",
+      "version": "7.16.2",
+      "verdict": "clean",
+      "regressedRules": []
+    },
+    {
+      "name": "eslint-plugin-n",
+      "version": "18.3.0",
+      "verdict": "clean",
+      "regressedRules": []
+    },
+    {
+      "name": "eslint-plugin-unicorn",
+      "version": "73.0.0",
+      "verdict": "clean",
+      "regressedRules": []
+    },
+    {
+      "name": "eslint-plugin-es-x",
+      "version": "10.0.0",
+      "verdict": "clean",
+      "regressedRules": []
+    },
+    {
+      "name": "eslint-plugin-promise",
+      "version": "7.3.0",
+      "verdict": "clean",
+      "regressedRules": []
+    },
+    {
+      "name": "eslint-plugin-vue",
+      "version": "10.10.0",
+      "verdict": "clean",
+      "regressedRules": []
+    },
+    {
+      "name": "@stylistic/eslint-plugin",
+      "version": "5.10.0",
+      "verdict": "clean",
+      "regressedRules": []
+    },
+    {
+      "name": "eslint-plugin-jsdoc",
+      "version": "64.2.1",
+      "verdict": "clean",
+      "regressedRules": []
+    },
+    {
+      "name": "eslint-plugin-import-x",
+      "version": "4.17.1",
+      "verdict": "clean",
+      "regressedRules": []
+    },
+    {
+      "name": "eslint-plugin-simple-import-sort",
+      "version": "14.0.0",
+      "verdict": "clean",
+      "regressedRules": []
+    },
+    {
+      "name": "eslint-plugin-playwright",
+      "version": "2.11.0",
+      "verdict": "clean",
+      "regressedRules": []
+    },
+    {
+      "name": "eslint-plugin-security",
+      "version": "4.0.1",
+      "verdict": "force",
+      "regressedRules": []
+    },
+    {
+      "name": "eslint-plugin-sonarjs",
+      "version": "4.2.0",
+      "verdict": "clean",
+      "regressedRules": []
+    },
+    {
+      "name": "eslint-plugin-cypress",
+      "version": "7.0.1",
+      "verdict": "clean",
+      "regressedRules": []
+    },
+    {
+      "name": "@vitest/eslint-plugin",
+      "version": "1.6.27",
+      "verdict": "clean",
+      "regressedRules": []
+    },
+    {
+      "name": "eslint-plugin-node",
+      "version": "11.1.0",
+      "verdict": "rescuable",
+      "regressedRules": [
+        "callback-return",
+        "file-extension-in-import",
+        "no-extraneous-import",
+        "no-missing-import",
+        "no-restricted-import",
+        "no-unpublished-bin",
+        "no-unpublished-import",
+        "shebang"
+      ]
+    },
+    {
+      "name": "eslint-plugin-eslint-comments",
+      "version": "3.2.0",
+      "verdict": "rescuable",
+      "regressedRules": [
+        "disable-enable-pair",
+        "no-aggregating-enable",
+        "no-duplicate-disable",
+        "no-restricted-disable",
+        "no-unlimited-disable",
+        "no-unused-enable",
+        "no-use",
+        "require-description"
+      ]
+    },
+    {
+      "name": "@angular-eslint/eslint-plugin",
+      "version": "22.1.0",
+      "verdict": "clean",
+      "regressedRules": []
+    },
+    {
+      "name": "@tanstack/eslint-plugin-query",
+      "version": "5.102.6",
+      "verdict": "clean",
+      "regressedRules": []
+    },
+    {
+      "name": "eslint-plugin-perfectionist",
+      "version": "5.10.1",
+      "verdict": "clean",
+      "regressedRules": []
+    },
+    {
+      "name": "eslint-plugin-turbo",
+      "version": "2.10.12",
+      "verdict": "clean",
+      "regressedRules": []
+    },
+    {
+      "name": "eslint-plugin-no-only-tests",
+      "version": "3.4.0",
+      "verdict": "force",
+      "regressedRules": []
+    },
+    {
+      "name": "@eslint-community/eslint-plugin-eslint-comments",
+      "version": "4.7.2",
+      "verdict": "clean",
+      "regressedRules": []
+    },
+    {
+      "name": "eslint-plugin-regexp",
+      "version": "3.2.0",
+      "verdict": "clean",
+      "regressedRules": []
+    },
+    {
+      "name": "eslint-plugin-jest-dom",
+      "version": "5.10.1",
+      "verdict": "clean",
+      "regressedRules": []
+    },
+    {
+      "name": "@eslint-react/eslint-plugin",
+      "version": "5.18.6",
+      "verdict": "clean",
+      "regressedRules": []
+    },
+    {
+      "name": "eslint-plugin-mocha",
+      "version": "12.0.2",
+      "verdict": "clean",
+      "regressedRules": []
+    },
+    {
+      "name": "eslint-plugin-tailwindcss",
+      "version": "4.4.0",
+      "verdict": "clean",
+      "regressedRules": []
+    },
+    {
+      "name": "eslint-plugin-boundaries",
+      "version": "7.2.0",
+      "verdict": "clean",
+      "regressedRules": []
+    },
+    {
+      "name": "eslint-plugin-svelte",
+      "version": "3.23.0",
+      "verdict": "clean",
+      "regressedRules": []
+    },
+    {
+      "name": "eslint-plugin-react-compiler",
+      "version": "19.1.0-rc.2",
+      "verdict": "clean",
+      "regressedRules": []
+    },
+    {
+      "name": "eslint-plugin-jsonc",
+      "version": "3.4.2",
+      "verdict": "clean",
+      "regressedRules": []
+    },
+    {
+      "name": "eslint-plugin-compat",
+      "version": "7.0.2",
+      "verdict": "clean",
+      "regressedRules": []
+    },
+    {
+      "name": "eslint-plugin-i18next",
+      "version": "6.1.5",
+      "verdict": "force",
+      "regressedRules": []
+    },
+    {
+      "name": "eslint-plugin-yml",
+      "version": "3.8.1",
+      "verdict": "clean",
+      "regressedRules": []
+    },
+    {
+      "name": "eslint-plugin-lodash",
+      "version": "8.0.0",
+      "verdict": "rescuable",
+      "regressedRules": [
+        "prefer-lodash-method"
+      ]
+    },
+    {
+      "name": "eslint-plugin-vitest",
+      "version": "0.5.4",
+      "verdict": "blocked",
+      "regressedRules": []
+    },
+    {
+      "name": "eslint-plugin-deprecation",
+      "version": "3.0.0",
+      "verdict": "blocked",
+      "regressedRules": []
+    },
+    {
+      "name": "eslint-plugin-markdown",
+      "version": "5.1.0",
+      "verdict": "clean",
+      "regressedRules": []
+    },
+    {
+      "name": "eslint-plugin-toml",
+      "version": "1.5.0",
+      "verdict": "clean",
+      "regressedRules": []
+    },
+    {
+      "name": "eslint-plugin-eslint-plugin",
+      "version": "7.6.2",
+      "verdict": "clean",
+      "regressedRules": []
+    },
+    {
+      "name": "@html-eslint/eslint-plugin",
+      "version": "0.65.0",
+      "verdict": "clean",
+      "regressedRules": []
+    },
+    {
+      "name": "eslint-plugin-depend",
+      "version": "1.5.0",
+      "verdict": "clean",
+      "regressedRules": []
+    },
+    {
+      "name": "@ternaus/eslint-plugin-react",
+      "version": "8.0.0",
+      "verdict": "clean",
+      "regressedRules": []
+    }
+  ],
+  "buckets": {
+    "blocked": [
+      {
+        "name": "eslint-plugin-deprecation",
+        "bucket": "blocked",
+        "reason": "fails to load on 10.9.1",
+        "snippet": null
+      },
+      {
+        "name": "eslint-plugin-import",
+        "bucket": "blocked",
+        "reason": "3 rules crash on 10.9.1: no-default-export, no-named-export, unambiguous",
+        "snippet": null
+      },
+      {
+        "name": "eslint-plugin-vitest",
+        "bucket": "blocked",
+        "reason": "fails to load on 10.9.1",
+        "snippet": null
+      }
+    ],
+    "rescuable": [
+      {
+        "name": "eslint-plugin-eslint-comments",
+        "bucket": "rescuable",
+        "reason": "8 rules crash on 10.9.1: disable-enable-pair, no-aggregating-enable, no-duplicate-disable, +5 more",
+        "snippet": "import { fixupPluginRules } from '@eslint/compat';\nimport eslintComments from 'eslint-plugin-eslint-comments';\n\nexport default [\n  // ...the rest of your config\n  {\n    plugins: { 'eslint-comments': fixupPluginRules(eslintComments) },\n  },\n];\n"
+      },
+      {
+        "name": "eslint-plugin-lodash",
+        "bucket": "rescuable",
+        "reason": "1 rule crashes on 10.9.1: prefer-lodash-method",
+        "snippet": "import { fixupPluginRules } from '@eslint/compat';\nimport lodash from 'eslint-plugin-lodash';\n\nexport default [\n  // ...the rest of your config\n  {\n    plugins: { lodash: fixupPluginRules(lodash) },\n  },\n];\n"
+      },
+      {
+        "name": "eslint-plugin-node",
+        "bucket": "rescuable",
+        "reason": "8 rules crash on 10.9.1: callback-return, file-extension-in-import, no-extraneous-import, +5 more",
+        "snippet": "import { fixupPluginRules } from '@eslint/compat';\nimport node from 'eslint-plugin-node';\n\nexport default [\n  // ...the rest of your config\n  {\n    plugins: { node: fixupPluginRules(node) },\n  },\n];\n"
+      },
+      {
+        "name": "eslint-plugin-react",
+        "bucket": "rescuable",
+        "reason": "38 rules crash on 10.9.1: boolean-prop-naming, default-props-match-prop-types, destructuring-assignment, +35 more",
+        "snippet": "import { fixupPluginRules } from '@eslint/compat';\nimport react from 'eslint-plugin-react';\n\nexport default [\n  // ...the rest of your config\n  {\n    plugins: { react: fixupPluginRules(react) },\n  },\n];\n"
+      }
+    ],
+    "partialRescue": [],
+    "safeToForce": [
+      {
+        "name": "@next/eslint-plugin-next",
+        "bucket": "safe-to-force",
+        "reason": "declares no eslint peer range, verified clean on 10.9.1 with all 22 rules enabled",
+        "snippet": null
+      },
+      {
+        "name": "eslint-plugin-i18next",
+        "bucket": "safe-to-force",
+        "reason": "declares no eslint peer range, verified clean on 10.9.1 with all 1 rules enabled",
+        "snippet": null
+      },
+      {
+        "name": "eslint-plugin-jsx-a11y",
+        "bucket": "safe-to-force",
+        "reason": "declares ^3 || ^4 || ^5 || ^6 || ^7 || ^8 || ^9, verified clean on 10.9.1 with all 39 rules enabled",
+        "snippet": null
+      },
+      {
+        "name": "eslint-plugin-no-only-tests",
+        "bucket": "safe-to-force",
+        "reason": "declares no eslint peer range, verified clean on 10.9.1 with all 1 rules enabled",
+        "snippet": null
+      },
+      {
+        "name": "eslint-plugin-security",
+        "bucket": "safe-to-force",
+        "reason": "declares no eslint peer range, verified clean on 10.9.1 with all 14 rules enabled",
+        "snippet": null
+      }
+    ],
+    "clean": [
+      {
+        "name": "@angular-eslint/eslint-plugin",
+        "bucket": "clean",
+        "reason": "already declares support for ESLint 10",
+        "snippet": null
+      },
+      {
+        "name": "@eslint-community/eslint-plugin-eslint-comments",
+        "bucket": "clean",
+        "reason": "already declares support for ESLint 10",
+        "snippet": null
+      },
+      {
+        "name": "@eslint-react/eslint-plugin",
+        "bucket": "clean",
+        "reason": "already declares support for ESLint 10",
+        "snippet": null
+      },
+      {
+        "name": "@html-eslint/eslint-plugin",
+        "bucket": "clean",
+        "reason": "already declares support for ESLint 10",
+        "snippet": null
+      },
+      {
+        "name": "@stylistic/eslint-plugin",
+        "bucket": "clean",
+        "reason": "already declares support for ESLint 10",
+        "snippet": null
+      },
+      {
+        "name": "@tanstack/eslint-plugin-query",
+        "bucket": "clean",
+        "reason": "already declares support for ESLint 10",
+        "snippet": null
+      },
+      {
+        "name": "@ternaus/eslint-plugin-react",
+        "bucket": "clean",
+        "reason": "already declares support for ESLint 10",
+        "snippet": null
+      },
+      {
+        "name": "@typescript-eslint/eslint-plugin",
+        "bucket": "clean",
+        "reason": "already declares support for ESLint 10 (its rule-crash reproduces on 9.39.5 too, so the upgrade is not what breaks it)",
+        "snippet": null
+      },
+      {
+        "name": "@vitest/eslint-plugin",
+        "bucket": "clean",
+        "reason": "already declares support for ESLint 10",
+        "snippet": null
+      },
+      {
+        "name": "eslint-plugin-boundaries",
+        "bucket": "clean",
+        "reason": "already declares support for ESLint 10",
+        "snippet": null
+      },
+      {
+        "name": "eslint-plugin-compat",
+        "bucket": "clean",
+        "reason": "already declares support for ESLint 10",
+        "snippet": null
+      },
+      {
+        "name": "eslint-plugin-cypress",
+        "bucket": "clean",
+        "reason": "already declares support for ESLint 10",
+        "snippet": null
+      },
+      {
+        "name": "eslint-plugin-depend",
+        "bucket": "clean",
+        "reason": "already declares support for ESLint 10",
+        "snippet": null
+      },
+      {
+        "name": "eslint-plugin-es-x",
+        "bucket": "clean",
+        "reason": "already declares support for ESLint 10",
+        "snippet": null
+      },
+      {
+        "name": "eslint-plugin-eslint-plugin",
+        "bucket": "clean",
+        "reason": "already declares support for ESLint 10",
+        "snippet": null
+      },
+      {
+        "name": "eslint-plugin-import-x",
+        "bucket": "clean",
+        "reason": "already declares support for ESLint 10",
+        "snippet": null
+      },
+      {
+        "name": "eslint-plugin-jest",
+        "bucket": "clean",
+        "reason": "already declares support for ESLint 10 (its rule-crash reproduces on 9.39.5 too, so the upgrade is not what breaks it)",
+        "snippet": null
+      },
+      {
+        "name": "eslint-plugin-jest-dom",
+        "bucket": "clean",
+        "reason": "already declares support for ESLint 10",
+        "snippet": null
+      },
+      {
+        "name": "eslint-plugin-jsdoc",
+        "bucket": "clean",
+        "reason": "already declares support for ESLint 10",
+        "snippet": null
+      },
+      {
+        "name": "eslint-plugin-jsonc",
+        "bucket": "clean",
+        "reason": "already declares support for ESLint 10",
+        "snippet": null
+      },
+      {
+        "name": "eslint-plugin-markdown",
+        "bucket": "clean",
+        "reason": "already declares support for ESLint 10",
+        "snippet": null
+      },
+      {
+        "name": "eslint-plugin-mocha",
+        "bucket": "clean",
+        "reason": "already declares support for ESLint 10",
+        "snippet": null
+      },
+      {
+        "name": "eslint-plugin-n",
+        "bucket": "clean",
+        "reason": "already declares support for ESLint 10",
+        "snippet": null
+      },
+      {
+        "name": "eslint-plugin-perfectionist",
+        "bucket": "clean",
+        "reason": "already declares support for ESLint 10",
+        "snippet": null
+      },
+      {
+        "name": "eslint-plugin-playwright",
+        "bucket": "clean",
+        "reason": "already declares support for ESLint 10",
+        "snippet": null
+      },
+      {
+        "name": "eslint-plugin-prettier",
+        "bucket": "clean",
+        "reason": "already declares support for ESLint 10",
+        "snippet": null
+      },
+      {
+        "name": "eslint-plugin-promise",
+        "bucket": "clean",
+        "reason": "already declares support for ESLint 10",
+        "snippet": null
+      },
+      {
+        "name": "eslint-plugin-react-compiler",
+        "bucket": "clean",
+        "reason": "already declares support for ESLint 10",
+        "snippet": null
+      },
+      {
+        "name": "eslint-plugin-react-hooks",
+        "bucket": "clean",
+        "reason": "already declares support for ESLint 10",
+        "snippet": null
+      },
+      {
+        "name": "eslint-plugin-react-refresh",
+        "bucket": "clean",
+        "reason": "already declares support for ESLint 10",
+        "snippet": null
+      },
+      {
+        "name": "eslint-plugin-regexp",
+        "bucket": "clean",
+        "reason": "already declares support for ESLint 10",
+        "snippet": null
+      },
+      {
+        "name": "eslint-plugin-simple-import-sort",
+        "bucket": "clean",
+        "reason": "already declares support for ESLint 10",
+        "snippet": null
+      },
+      {
+        "name": "eslint-plugin-sonarjs",
+        "bucket": "clean",
+        "reason": "already declares support for ESLint 10",
+        "snippet": null
+      },
+      {
+        "name": "eslint-plugin-storybook",
+        "bucket": "clean",
+        "reason": "already declares support for ESLint 10",
+        "snippet": null
+      },
+      {
+        "name": "eslint-plugin-svelte",
+        "bucket": "clean",
+        "reason": "already declares support for ESLint 10",
+        "snippet": null
+      },
+      {
+        "name": "eslint-plugin-tailwindcss",
+        "bucket": "clean",
+        "reason": "already declares support for ESLint 10 (its rule-crash reproduces on 9.39.5 too, so the upgrade is not what breaks it)",
+        "snippet": null
+      },
+      {
+        "name": "eslint-plugin-testing-library",
+        "bucket": "clean",
+        "reason": "already declares support for ESLint 10",
+        "snippet": null
+      },
+      {
+        "name": "eslint-plugin-toml",
+        "bucket": "clean",
+        "reason": "already declares support for ESLint 10",
+        "snippet": null
+      },
+      {
+        "name": "eslint-plugin-turbo",
+        "bucket": "clean",
+        "reason": "already declares support for ESLint 10",
+        "snippet": null
+      },
+      {
+        "name": "eslint-plugin-unicorn",
+        "bucket": "clean",
+        "reason": "already declares support for ESLint 10",
+        "snippet": null
+      },
+      {
+        "name": "eslint-plugin-vue",
+        "bucket": "clean",
+        "reason": "already declares support for ESLint 10",
+        "snippet": null
+      },
+      {
+        "name": "eslint-plugin-yml",
+        "bucket": "clean",
+        "reason": "already declares support for ESLint 10",
+        "snippet": null
+      }
+    ]
+  },
+  "overrides": {
+    "eslint-plugin-jsx-a11y": {
+      "eslint": "$eslint"
+    },
+    "@next/eslint-plugin-next": {
+      "eslint": "$eslint"
+    },
+    "eslint-plugin-security": {
+      "eslint": "$eslint"
+    },
+    "eslint-plugin-no-only-tests": {
+      "eslint": "$eslint"
+    },
+    "eslint-plugin-i18next": {
+      "eslint": "$eslint"
+    }
+  },
+  "rendered": "\nESLint 10.9.1 readiness for /regression (54 plugins)\nmatrix generated 2026-08-27T01:37:29.515Z\n\nBLOCKED (3)\n  eslint-plugin-deprecation@3.0.0  fails to load on 10.9.1\n                                   @eslint/compat did not help: still fails to load with @eslint/compat installed: Class extends v…\n  eslint-plugin-import@2.32.0      3 rules crash on 10.9.1: no-default-export, no-named-export, unambiguous\n                                   @eslint/compat not attempted: not a removed context API\n  eslint-plugin-vitest@0.5.4       fails to load on 10.9.1\n                                   @eslint/compat did not help: still fails to load with @eslint/compat installed: Class extends v…\n\nRESCUABLE (4)  crashes as published, verified clean when wrapped with @eslint/compat\n  npm install --save-dev @eslint/compat, then in eslint.config.js:\n\n  eslint-plugin-eslint-comments@3.2.0  8 rules crash on 10.9.1, all recover wrapped in fixupPluginRules()\n\n    import { fixupPluginRules } from '@eslint/compat';\n    import eslintComments from 'eslint-plugin-eslint-comments';\n\n    export default [\n      // ...the rest of your config\n      {\n        plugins: { 'eslint-comments': fixupPluginRules(eslintComments) },\n      },\n    ];\n\n  eslint-plugin-lodash@8.0.0  1 rule crashes on 10.9.1, all recover wrapped in fixupPluginRules()\n\n    import { fixupPluginRules } from '@eslint/compat';\n    import lodash from 'eslint-plugin-lodash';\n\n    export default [\n      // ...the rest of your config\n      {\n        plugins: { lodash: fixupPluginRules(lodash) },\n      },\n    ];\n\n  eslint-plugin-node@11.1.0  8 rules crash on 10.9.1, all recover wrapped in fixupPluginRules()\n\n    import { fixupPluginRules } from '@eslint/compat';\n    import node from 'eslint-plugin-node';\n\n    export default [\n      // ...the rest of your config\n      {\n        plugins: { node: fixupPluginRules(node) },\n      },\n    ];\n\n  eslint-plugin-react@7.37.5  38 rules crash on 10.9.1, all recover wrapped in fixupPluginRules()\n\n    import { fixupPluginRules } from '@eslint/compat';\n    import react from 'eslint-plugin-react';\n\n    export default [\n      // ...the rest of your config\n      {\n        plugins: { react: fixupPluginRules(react) },\n      },\n    ];\n\nSAFE TO FORCE (5)  declared below ^10, verified clean on 10.9.1 with all rules enabled\n  @next/eslint-plugin-next@16.3.3, eslint-plugin-i18next@6.1.5, eslint-plugin-jsx-a11y@6.10.2, eslint-plugin-no-only-tests@3.4.0, eslint-plugin-security@4.0.1\n\n  Add to package.json to install them against ESLint 10 anyway:\n    {\n      \"overrides\": {\n        \"eslint-plugin-jsx-a11y\": {\n          \"eslint\": \"$eslint\"\n        },\n        \"@next/eslint-plugin-next\": {\n          \"eslint\": \"$eslint\"\n        },\n        \"eslint-plugin-security\": {\n          \"eslint\": \"$eslint\"\n        },\n        \"eslint-plugin-no-only-tests\": {\n          \"eslint\": \"$eslint\"\n        },\n        \"eslint-plugin-i18next\": {\n          \"eslint\": \"$eslint\"\n        }\n      }\n    }\n\nCLEAN (42)  already declares ^10\n  @angular-eslint/eslint-plugin@22.1.0, @eslint-community/eslint-plugin-eslint-comments@4.7.2, @eslint-react/eslint-plugin@5.18.6, @html-eslint/eslint-plugin@0.65.0, @stylistic/eslint-plugin@5.10.0, @tanstack/eslint-plugin-query@5.102.6, @ternaus/eslint-plugin-react@8.0.0, @typescript-eslint/eslint-plugin@8.68.0, @vitest/eslint-plugin@1.6.27, eslint-plugin-boundaries@7.2.0, eslint-plugin-compat@7.0.2, eslint-plugin-cypress@7.0.1, eslint-plugin-depend@1.5.0, eslint-plugin-es-x@10.0.0, eslint-plugin-eslint-plugin@7.6.2, eslint-plugin-import-x@4.17.1, eslint-plugin-jest@29.16.2, eslint-plugin-jest-dom@5.10.1, eslint-plugin-jsdoc@64.2.1, eslint-plugin-jsonc@3.4.2, eslint-plugin-markdown@5.1.0, eslint-plugin-mocha@12.0.2, eslint-plugin-n@18.3.0, eslint-plugin-perfectionist@5.10.1, eslint-plugin-playwright@2.11.0, eslint-plugin-prettier@5.5.6, eslint-plugin-promise@7.3.0, eslint-plugin-react-compiler@19.1.0-rc.2, eslint-plugin-react-hooks@7.1.1, eslint-plugin-react-refresh@0.5.5, eslint-plugin-regexp@3.2.0, eslint-plugin-simple-import-sort@14.0.0, eslint-plugin-sonarjs@4.2.0, eslint-plugin-storybook@10.5.10, eslint-plugin-svelte@3.23.0, eslint-plugin-tailwindcss@4.4.0, eslint-plugin-testing-library@7.16.2, eslint-plugin-toml@1.5.0, eslint-plugin-turbo@2.10.12, eslint-plugin-unicorn@73.0.0, eslint-plugin-vue@10.10.0, eslint-plugin-yml@3.8.1\n\nFirst crash observed:\n  eslint-plugin-import/no-default-export: Error while loading rule 'import/no-default-export': Cannot use 'in' operator to search for 'sourceType' in undefined\n\n7 of 54 plugins block the upgrade to ESLint 10.9.1 (4 of them rescuable with @eslint/compat).\n"
+}

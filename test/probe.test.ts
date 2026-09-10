@@ -1,6 +1,6 @@
 import { mkdir, rm } from 'node:fs/promises';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { classify } from '../packages/runner/src/classify.js';
+import { classify } from '../packages/cli/src/classify.js';
 import { probeFixturePlugin, SANDBOX } from './probe-sandbox.js';
 
 describe('probe + classify against real ESLint', () => {

@@ -1,11 +1,14 @@
 /**
  * Runs inside a freshly-installed temp directory so that bare specifiers resolve
- * against that directory's own node_modules. Reads probe-input.json, writes
- * probe-result.json, and never throws out of the top level: every failure mode is
- * a recorded phase, because the caller classifies from the file, not the exit code.
+ * against that directory's own node_modules, while the files it lints are read
+ * and reported relative to `cwd`, which is the corpus fixture directory for the
+ * nightly board and the caller's own repository for `scan`. Reads
+ * probe-input.json, writes probe-result.json, and never throws out of the top
+ * level: every failure mode is a recorded phase, because the caller classifies
+ * from the file, not the exit code.
  */
-import { readFile, writeFile, readdir } from 'node:fs/promises';
-import { join } from 'node:path';
+import { readFile, writeFile } from 'node:fs/promises';
+import { isAbsolute, join, resolve } from 'node:path';
 
 const INPUT = 'probe-input.json';
 const OUTPUT = 'probe-result.json';
@@ -18,7 +21,6 @@ const OUTPUT = 'probe-result.json';
 const CONFIG_ERROR =
   /Configuration for rule|should NOT have|must NOT have|Value ".*" should be|Unexpected top-level property|Key "rules"|requires? type information|parserOptions\.project|EXPERIMENTAL_useProjectService/i;
 
-const JS_EXTENSIONS = ['.js', '.jsx', '.mjs', '.cjs'];
 const TS_EXTENSIONS = ['.ts', '.tsx', '.mts', '.cts'];
 
 function errorInfo(err) {
@@ -49,14 +51,6 @@ function collectRuleNames(plugin) {
   const known = plugin.rules ? new Set(Object.keys(plugin.rules)) : null;
   const usable = known ? bare.filter((id) => known.has(id)) : bare;
   return [...new Set(usable)];
-}
-
-async function listFixtures(dir) {
-  const names = await readdir(dir);
-  return names
-    .filter((n) => [...JS_EXTENSIONS, ...TS_EXTENSIONS].some((e) => n.endsWith(e)))
-    .sort()
-    .map((n) => join(dir, n));
 }
 
 function isTsFile(file) {
@@ -115,9 +109,12 @@ async function main() {
     namespace,
     settings = null,
     parserSpecifier = null,
-    fixturesDir = 'fixtures',
+    cwd = process.cwd(),
+    files = [],
     fixup = false,
+    recordFiles = false,
   } = input;
+  const baseDir = resolve(cwd);
 
   // --- load phase -----------------------------------------------------------
   let plugin;
@@ -130,6 +127,9 @@ async function main() {
     if (!plugin || typeof plugin !== 'object') {
       throw new Error(`plugin module did not export an object (got ${typeof plugin})`);
     }
+    // typescript-eslint and other meta-packages export the plugin beside their
+    // configs and parser rather than being one.
+    if (!plugin.rules && plugin.plugin?.rules) plugin = plugin.plugin;
     if (!plugin.rules && !plugin.configs) {
       throw new Error('plugin module exports neither "rules" nor "configs"');
     }
@@ -216,9 +216,9 @@ async function main() {
     }
   }
 
-  const files = await listFixtures(fixturesDir);
-  const jsFiles = files.filter((f) => !isTsFile(f));
-  const usableFiles = tsParser ? files : jsFiles;
+  // TypeScript sources are skipped rather than reported as parse noise when the
+  // target has no parser for them.
+  const usableFiles = tsParser ? files : files.filter((f) => !isTsFile(f));
 
   const rules = Object.fromEntries(ruleNames.map((id) => [`${namespace}/${id}`, 'error']));
   const jsLanguageOptions = {
@@ -254,7 +254,7 @@ async function main() {
     sources = new Map();
     for (const file of usableFiles) {
       try {
-        sources.set(file, await readFile(file, 'utf8'));
+        sources.set(file, await readFile(isAbsolute(file) ? file : join(baseDir, file), 'utf8'));
       } catch {
         /* unreadable fixture: skip */
       }
@@ -282,6 +282,7 @@ async function main() {
     let eslint;
     try {
       eslint = new ESLint({
+        cwd: baseDir,
         overrideConfigFile: true,
         overrideConfig: buildConfig(pluginObject, rules),
         errorOnUnmatchedPattern: false,
@@ -316,28 +317,41 @@ async function main() {
     }
 
     outcome.phase = 'attribute';
-    const linter = new Linter();
+    const linter = new Linter({ cwd: baseDir });
     const crashed = new Map();
     const configInvalid = new Map();
+
+    const note = (id, message, file) => {
+      const seen = crashed.get(id);
+      if (seen) seen.files.push(file);
+      else crashed.set(id, { message, files: [file] });
+    };
 
     for (const id of ruleNames) {
       const qualified = `${namespace}/${id}`;
       for (const [file, code] of await readSources()) {
-        if (crashed.has(id) || configInvalid.has(id)) break;
+        if (configInvalid.has(id)) break;
+        // Without file evidence the first crash is the whole answer; with it the
+        // rule keeps going so the report can say how much of the repo it breaks.
+        if (!recordFiles && crashed.has(id)) break;
         const single = buildConfig(pluginObject, { [qualified]: 'error' });
         try {
           const messages = linter.verify(code, single, file);
           const fatal = messages.find((m) => m.fatal && m.ruleId);
-          if (fatal) crashed.set(id, firstLine(fatal.message));
+          if (fatal) note(id, firstLine(fatal.message), file);
         } catch (err) {
           const message = firstLine(err?.message ?? err);
           if (CONFIG_ERROR.test(message)) configInvalid.set(id, message);
-          else crashed.set(id, message);
+          else note(id, message, file);
         }
       }
     }
 
-    outcome.crashingRules = [...crashed].map(([rule, message]) => ({ rule, message }));
+    outcome.crashingRules = [...crashed].map(([rule, { message, files }]) => ({
+      rule,
+      message,
+      ...(recordFiles ? { file: files[0], fileCount: files.length } : {}),
+    }));
     outcome.configInvalidRules = [...configInvalid].map(([rule, message]) => ({ rule, message }));
     outcome.phase = 'done';
     return outcome;

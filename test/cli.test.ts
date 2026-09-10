@@ -1,11 +1,11 @@
 import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { loadMatrix, MatrixError, type Matrix } from '../packages/cli/src/matrix.js';
 import { buildReport, renderOverrides, renderReport, verdictFor } from '../packages/cli/src/report.js';
-import { ConfigError, conventionalPackageNames, findConfigFile, resolveConfig } from '../packages/cli/src/resolve-config.js';
+import { ConfigError, conventionalPackageNames, findConfigFile, readWorkspaces, resolveConfig } from '../packages/cli/src/resolve-config.js';
 import { satisfies } from '../packages/cli/src/semver-lite.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -91,6 +91,33 @@ describe('resolve-config', () => {
     expect(resolved.configPath).toBe(join(REPO_FIXTURE, 'eslint.config.js'));
   });
 
+  it('prefers the conventional package over a meta.name that collides with a real dependency', async () => {
+    // eslint-plugin-vitest@0.5.4 reports meta.name 'vitest', and a repo that runs
+    // vitest depends on that name too. Trusting meta.name first scanned the test
+    // runner and told the user to force an eslint override onto it.
+    const dir = await mkdtemp(join(tmpdir(), 'e10m-meta-'));
+    try {
+      await writeFile(
+        join(dir, 'package.json'),
+        JSON.stringify({
+          name: 'x',
+          type: 'module',
+          devDependencies: { vitest: '^2.1.9', 'eslint-plugin-vitest': '0.5.4' },
+        })
+      );
+      await writeFile(join(dir, 'stub.mjs'), "export default { meta: { name: 'vitest' }, rules: {} };\n");
+      await writeFile(
+        join(dir, 'eslint.config.js'),
+        "import vitest from './stub.mjs';\nexport default [{ plugins: { vitest }, rules: {} }];\n"
+      );
+      const resolved = await resolveConfig(dir);
+      expect(resolved.plugins).toEqual(['eslint-plugin-vitest']);
+      expect(resolved.keys).toEqual({ vitest: 'eslint-plugin-vitest' });
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
   it('reports a plugin absent from package.json as unknown instead of guessing', async () => {
     const dir = await mkdtemp(join(tmpdir(), 'e10m-cfg-'));
     try {
@@ -121,6 +148,34 @@ describe('resolve-config', () => {
     expect(conventionalPackageNames('react')).toContain('eslint-plugin-react');
     expect(conventionalPackageNames('@typescript-eslint')).toContain('@typescript-eslint/eslint-plugin');
     expect(conventionalPackageNames('@next/next')).toContain('@next/eslint-plugin-next');
+  });
+
+  it('reads workspace globs from every manifest shape a monorepo root uses', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'e10m-ws-'));
+    try {
+      await writeFile(join(dir, 'package.json'), JSON.stringify({ workspaces: ['packages/*', 'apps/*'] }));
+      expect(await readWorkspaces(dir)).toEqual(['packages/*', 'apps/*']);
+
+      await writeFile(join(dir, 'package.json'), JSON.stringify({ workspaces: { packages: ['libs/*'] } }));
+      expect(await readWorkspaces(dir)).toEqual(['libs/*']);
+
+      const yaml = ['packages:', "  - 'packages/*'", '  - tools/* # a comment', ''].join('\n');
+      await writeFile(join(dir, 'pnpm-workspace.yaml'), yaml);
+      expect(await readWorkspaces(dir)).toEqual(['packages/*', 'tools/*']);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('reports no workspaces for an ordinary repo', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'e10m-nows-'));
+    try {
+      expect(await readWorkspaces(dir)).toEqual([]);
+      await writeFile(join(dir, 'package.json'), '{ not json');
+      expect(await readWorkspaces(dir)).toEqual([]);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
   });
 });
 
@@ -290,6 +345,35 @@ describe('matrix loading', () => {
 
   it('gives a clear error for a missing matrix file', async () => {
     await expect(loadMatrix({ file: resolve('definitely-not-here.json') })).rejects.toThrow(/matrix file not found/);
+  });
+
+  it('treats a bare relative --matrix value as a path, not a host', async () => {
+    // `--matrix matrix.json` used to parse as a URL, fail to fetch, and quietly
+    // report the cached board instead of the file the caller named.
+    const dir = await mkdtemp(join(tmpdir(), 'e10m-mx3-'));
+    const cwd = process.cwd();
+    try {
+      await writeFile(join(dir, 'local.json'), JSON.stringify(MATRIX));
+      process.chdir(dir);
+      const load = await loadMatrix({ url: 'local.json', timeoutMs: 1500 });
+      expect(load.source).toBe('file');
+      expect(load.matrix.plugins).toHaveLength(5);
+    } finally {
+      process.chdir(cwd);
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('reads a file: URL', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'e10m-mx4-'));
+    try {
+      const file = join(dir, 'matrix.json');
+      await writeFile(file, JSON.stringify(MATRIX));
+      const load = await loadMatrix({ url: pathToFileURL(file).href, timeoutMs: 1500 });
+      expect(load.source).toBe('file');
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
   });
 
   it('rejects a future schema version with an upgrade hint', async () => {

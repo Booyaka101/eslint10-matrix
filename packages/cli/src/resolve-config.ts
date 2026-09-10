@@ -1,7 +1,8 @@
 import { readFile, realpath } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
-import { dirname, join, parse, resolve } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { findUp } from './find-up.js';
 
 const CONFIG_NAMES = [
   'eslint.config.js',
@@ -19,6 +20,8 @@ export class ConfigError extends Error {
   }
 }
 
+const ESLINTRC_NAMES = ['.eslintrc.js', '.eslintrc.cjs', '.eslintrc.yaml', '.eslintrc.yml', '.eslintrc.json', '.eslintrc'];
+
 export interface ResolvedConfig {
   configPath: string;
   projectDir: string;
@@ -26,24 +29,19 @@ export interface ResolvedConfig {
   plugins: string[];
   /** Config keys whose package could not be identified in package.json. */
   unknown: string[];
+  /** Config keys mapped to the package they resolved to, for reporting. */
+  keys: Record<string, string>;
+  /** Every `ignores` pattern in the config, in declaration order. */
+  ignores: string[];
+  /** Merged `settings`, minus anything that will not survive JSON. */
+  settings: Record<string, unknown>;
 }
 
 export function findConfigFile(startDir: string): string | null {
-  let dir = resolve(startDir);
-  const { root } = parse(dir);
-  for (;;) {
-    for (const name of CONFIG_NAMES) {
-      const candidate = join(dir, name);
-      if (existsSync(candidate)) return candidate;
-    }
-    if (dir === root) return null;
-    const parent = dirname(dir);
-    if (parent === dir) return null;
-    dir = parent;
-  }
+  return findUp(startDir, ...CONFIG_NAMES);
 }
 
-async function readDependencies(projectDir: string): Promise<Record<string, string>> {
+export async function readDependencies(projectDir: string): Promise<Record<string, string>> {
   const manifestPath = join(projectDir, 'package.json');
   if (!existsSync(manifestPath)) return {};
   try {
@@ -54,7 +52,41 @@ async function readDependencies(projectDir: string): Promise<Record<string, stri
   }
 }
 
-function looksLikePluginPackage(name: string): boolean {
+/**
+ * npm/yarn/pnpm workspace globs. `scan` measures one config, so a monorepo root
+ * needs to be told that the packages under it were not walked.
+ */
+export async function readWorkspaces(projectDir: string): Promise<string[]> {
+  const pnpm = join(projectDir, 'pnpm-workspace.yaml');
+  if (existsSync(pnpm)) {
+    try {
+      const text = await readFile(pnpm, 'utf8');
+      const globs: string[] = [];
+      let inPackages = false;
+      for (const raw of text.split('\n')) {
+        const line = raw.replace(/#.*$/, '').trimEnd();
+        if (/^\S/.test(line)) inPackages = line.trim() === 'packages:';
+        else if (inPackages && line.trim().startsWith('- ')) {
+          globs.push(line.trim().slice(2).trim().replace(/^['"]|['"]$/g, ''));
+        }
+      }
+      if (globs.length > 0) return globs;
+    } catch {
+      /* an unreadable workspace file is not worth failing a scan over */
+    }
+  }
+  try {
+    const doc = JSON.parse(await readFile(join(projectDir, 'package.json'), 'utf8')) as {
+      workspaces?: string[] | { packages?: string[] };
+    };
+    const globs = Array.isArray(doc.workspaces) ? doc.workspaces : doc.workspaces?.packages;
+    return (globs ?? []).filter((g) => typeof g === 'string');
+  } catch {
+    return [];
+  }
+}
+
+export function looksLikePluginPackage(name: string): boolean {
   return (
     name.includes('eslint-plugin') ||
     name === 'typescript-eslint' ||
@@ -75,20 +107,54 @@ export function conventionalPackageNames(configKey: string): string[] {
   return [`eslint-plugin-${configKey}`, configKey];
 }
 
+interface ConfigContents {
+  plugins: Map<string, unknown>;
+  ignores: string[];
+  settings: Record<string, unknown>;
+}
+
 /** Walks arrays, nested arrays and single objects; flat config permits all three. */
-function collectPluginEntries(value: unknown, out: Map<string, unknown>, depth = 0): void {
+function collectPluginEntries(value: unknown, out: ConfigContents, depth = 0): void {
   if (!value || depth > 8) return;
   if (Array.isArray(value)) {
     for (const item of value) collectPluginEntries(item, out, depth + 1);
     return;
   }
   if (typeof value !== 'object') return;
-  const plugins = (value as { plugins?: unknown }).plugins;
-  if (plugins && typeof plugins === 'object' && !Array.isArray(plugins)) {
-    for (const [key, mod] of Object.entries(plugins as Record<string, unknown>)) {
-      if (!out.has(key)) out.set(key, mod);
+  const entry = value as { plugins?: unknown; ignores?: unknown; settings?: unknown };
+  if (entry.plugins && typeof entry.plugins === 'object' && !Array.isArray(entry.plugins)) {
+    for (const [key, mod] of Object.entries(entry.plugins as Record<string, unknown>)) {
+      if (!out.plugins.has(key)) out.plugins.set(key, mod);
     }
   }
+  if (Array.isArray(entry.ignores)) {
+    for (const pattern of entry.ignores) {
+      if (typeof pattern === 'string' && !out.ignores.includes(pattern)) out.ignores.push(pattern);
+    }
+  }
+  if (entry.settings && typeof entry.settings === 'object') {
+    Object.assign(out.settings, jsonSafe(entry.settings) as Record<string, unknown>);
+  }
+}
+
+/**
+ * Settings travel to the probe as JSON, and real configs put functions and
+ * regexes in there. Dropping those is better than failing the whole scan, and
+ * the settings that matter for compatibility (react.version and friends) are
+ * plain data.
+ */
+function jsonSafe(value: unknown, depth = 0): unknown {
+  if (value === null || depth > 6) return null;
+  if (Array.isArray(value)) return value.map((item) => jsonSafe(item, depth + 1));
+  if (typeof value === 'object') {
+    const out: Record<string, unknown> = {};
+    for (const [key, item] of Object.entries(value)) {
+      const safe = jsonSafe(item, depth + 1);
+      if (safe !== undefined) out[key] = safe;
+    }
+    return out;
+  }
+  return ['string', 'number', 'boolean'].includes(typeof value) ? value : undefined;
 }
 
 /**
@@ -96,6 +162,11 @@ function collectPluginEntries(value: unknown, out: Map<string, unknown>, depth =
  * back to matching the loaded object against each dependency's own export and
  * finally to the naming convention. A key we cannot pin to an installed package
  * is reported as unknown rather than guessed at.
+ *
+ * meta.name is not always the package name. eslint-plugin-vitest@0.5.4 reports
+ * `vitest`, which in a repo that also depends on the test runner would resolve
+ * to the wrong package entirely, so a declared name that is not plugin-shaped
+ * only counts once the naming convention has had its turn.
  */
 async function identifyPackage(
   configKey: string,
@@ -105,7 +176,7 @@ async function identifyPackage(
 ): Promise<string | null> {
   const meta = (pluginModule as { meta?: { name?: unknown } } | null)?.meta;
   const declared = typeof meta?.name === 'string' ? meta.name : null;
-  if (declared && deps[declared]) return declared;
+  if (declared && deps[declared] && looksLikePluginPackage(declared)) return declared;
 
   for (const candidate of conventionalPackageNames(configKey)) {
     if (deps[candidate]) return candidate;
@@ -137,6 +208,14 @@ async function resolveFrom(specifier: string, fromDir: string): Promise<string> 
 export async function resolveConfig(startDir: string): Promise<ResolvedConfig> {
   const configPath = findConfigFile(startDir);
   if (!configPath) {
+    const legacy = findEslintrc(startDir);
+    if (legacy) {
+      throw new ConfigError(
+        `${legacy} is a legacy eslintrc config, and ESLint 10 removed eslintrc entirely`,
+        'Migrate to flat config first: npx @eslint/migrate-config .eslintrc. Until then no plugin version can make this repo run on ESLint 10, ' +
+          'so the answer to "can I upgrade" is no for a reason this tool cannot measure.'
+      );
+    }
     throw new ConfigError(
       `no ESLint flat config found in ${resolve(startDir)} or any parent directory`,
       `eslint10-matrix reads flat config only. Create one of ${CONFIG_NAMES.join(', ')}. ` +
@@ -166,21 +245,36 @@ export async function resolveConfig(startDir: string): Promise<ResolvedConfig> {
     );
   }
 
-  const entries = new Map<string, unknown>();
-  collectPluginEntries(exported, entries);
+  const contents: ConfigContents = { plugins: new Map(), ignores: [], settings: {} };
+  collectPluginEntries(exported, contents);
 
   const plugins: string[] = [];
   const unknown: string[] = [];
-  for (const [key, mod] of entries) {
+  const keys: Record<string, string> = {};
+  for (const [key, mod] of contents.plugins) {
     const pkg = await identifyPackage(key, mod, deps, projectDir);
     if (pkg) {
+      keys[key] = pkg;
       if (!plugins.includes(pkg)) plugins.push(pkg);
     } else if (!unknown.includes(key)) {
       unknown.push(key);
     }
   }
 
-  return { configPath, projectDir, plugins: plugins.sort(), unknown: unknown.sort() };
+  return {
+    configPath,
+    projectDir,
+    plugins: plugins.sort(),
+    unknown: unknown.sort(),
+    keys,
+    ignores: contents.ignores,
+    settings: contents.settings,
+  };
+}
+
+/** Reported as a blocking answer of its own: eslintrc cannot run on ESLint 10 at all. */
+export function findEslintrc(startDir: string): string | null {
+  return findUp(startDir, ...ESLINTRC_NAMES);
 }
 
 function importHint(configPath: string, message: string): string {

@@ -1,14 +1,14 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-27T01:37:29.515Z",
+  "generatedAt": "2026-09-10T01:34:04.617Z",
   "eslintVersions": {
     "v9": "9.39.5",
-    "v10": "10.9.1"
+    "v10": "10.10.0"
   },
   "plugins": [
     {
       "name": "@typescript-eslint/eslint-plugin",
-      "version": "8.68.0",
+      "version": "8.70.0",
       "declaredPeerRange": "^8.57.0 || ^9.0.0 || ^10.0.0",
       "weeklyDownloads": 114433858,
       "results": {
@@ -32,9 +32,9 @@
               "message": "Cannot read properties of undefined (reading 'length')"
             }
           ],
-          "totalRules": 125
+          "totalRules": 126
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "rule-crash",
           "crashingRules": [
             {
@@ -54,7 +54,7 @@
               "message": "Cannot read properties of undefined (reading 'length')"
             }
           ],
-          "totalRules": 125
+          "totalRules": 126
         }
       }
     },
@@ -69,7 +69,7 @@
           "crashingRules": [],
           "totalRules": 29
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 29
@@ -87,7 +87,7 @@
           "crashingRules": [],
           "totalRules": 101
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "rule-crash",
           "crashingRules": [
             {
@@ -247,8 +247,8 @@
         }
       },
       "rescue": {
-        "eslintVersion": "10.9.1",
-        "compatVersion": "2.1.0",
+        "eslintVersion": "10.10.0",
+        "compatVersion": "2.1.1",
         "attempted": true,
         "verdict": "rescuable",
         "crashingRulesBefore": 38,
@@ -267,7 +267,7 @@
           "crashingRules": [],
           "totalRules": 46
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "rule-crash",
           "crashingRules": [
             {
@@ -287,11 +287,13 @@
         }
       },
       "rescue": {
-        "eslintVersion": "10.9.1",
-        "compatVersion": "2.1.0",
-        "attempted": false,
-        "verdict": "blocked",
-        "skipReason": "not a removed context API"
+        "eslintVersion": "10.10.0",
+        "compatVersion": "2.1.1",
+        "attempted": true,
+        "verdict": "rescuable",
+        "crashingRulesBefore": 3,
+        "fixupFunction": "fixupPluginRules",
+        "crashingRulesAfter": 0
       }
     },
     {
@@ -305,7 +307,7 @@
           "crashingRules": [],
           "totalRules": 39
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 39
@@ -323,7 +325,7 @@
           "crashingRules": [],
           "totalRules": 1
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 1
@@ -332,7 +334,7 @@
     },
     {
       "name": "eslint-plugin-react-refresh",
-      "version": "0.5.5",
+      "version": "0.5.6",
       "declaredPeerRange": "^9 || ^10",
       "weeklyDownloads": 35346714,
       "results": {
@@ -341,7 +343,7 @@
           "crashingRules": [],
           "totalRules": 1
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 1
@@ -350,7 +352,7 @@
     },
     {
       "name": "@next/eslint-plugin-next",
-      "version": "16.3.3",
+      "version": "16.3.4",
       "declaredPeerRange": null,
       "weeklyDownloads": 29073121,
       "results": {
@@ -359,7 +361,7 @@
           "crashingRules": [],
           "totalRules": 22
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 22
@@ -368,7 +370,7 @@
     },
     {
       "name": "eslint-plugin-jest",
-      "version": "29.16.2",
+      "version": "29.16.6",
       "declaredPeerRange": "^8.57.0 || ^9.0.0 || ^10.0.0",
       "weeklyDownloads": 12463399,
       "results": {
@@ -382,7 +384,7 @@
           ],
           "totalRules": 71
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "rule-crash",
           "crashingRules": [
             {
@@ -396,7 +398,7 @@
     },
     {
       "name": "eslint-plugin-storybook",
-      "version": "10.5.10",
+      "version": "10.6.0",
       "declaredPeerRange": ">=8",
       "weeklyDownloads": 7567976,
       "results": {
@@ -405,7 +407,7 @@
           "crashingRules": [],
           "totalRules": 16
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 16
@@ -423,7 +425,7 @@
           "crashingRules": [],
           "totalRules": 29
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 29
@@ -441,7 +443,7 @@
           "crashingRules": [],
           "totalRules": 30
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 30
@@ -450,7 +452,7 @@
     },
     {
       "name": "eslint-plugin-unicorn",
-      "version": "73.0.0",
+      "version": "74.0.0",
       "declaredPeerRange": ">=10.4",
       "weeklyDownloads": 5908364,
       "results": {
@@ -459,7 +461,7 @@
           "crashingRules": [],
           "totalRules": 337
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 337
@@ -477,7 +479,7 @@
           "crashingRules": [],
           "totalRules": 369
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 369
@@ -495,7 +497,7 @@
           "crashingRules": [],
           "totalRules": 17
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 17
@@ -504,19 +506,19 @@
     },
     {
       "name": "eslint-plugin-vue",
-      "version": "10.10.0",
+      "version": "10.11.0",
       "declaredPeerRange": "^8.57.0 || ^9.0.0 || ^10.0.0",
       "weeklyDownloads": 5322623,
       "results": {
         "9.39.5": {
           "status": "clean",
           "crashingRules": [],
-          "totalRules": 252
+          "totalRules": 253
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "clean",
           "crashingRules": [],
-          "totalRules": 252
+          "totalRules": 253
         }
       }
     },
@@ -531,7 +533,7 @@
           "crashingRules": [],
           "totalRules": 67
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 67
@@ -540,19 +542,19 @@
     },
     {
       "name": "eslint-plugin-jsdoc",
-      "version": "64.2.1",
+      "version": "64.3.8",
       "declaredPeerRange": "^7.0.0 || ^8.0.0 || ^9.0.0 || ^10.0.0",
       "weeklyDownloads": 5288500,
       "results": {
         "9.39.5": {
           "status": "clean",
           "crashingRules": [],
-          "totalRules": 76
+          "totalRules": 77
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "clean",
           "crashingRules": [],
-          "totalRules": 76
+          "totalRules": 77
         }
       }
     },
@@ -567,7 +569,7 @@
           "crashingRules": [],
           "totalRules": 47
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 47
@@ -585,7 +587,7 @@
           "crashingRules": [],
           "totalRules": 2
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 2
@@ -603,7 +605,7 @@
           "crashingRules": [],
           "totalRules": 59
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 59
@@ -621,7 +623,7 @@
           "crashingRules": [],
           "totalRules": 14
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 14
@@ -639,7 +641,7 @@
           "crashingRules": [],
           "totalRules": 279
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 279
@@ -648,7 +650,7 @@
     },
     {
       "name": "eslint-plugin-cypress",
-      "version": "7.0.1",
+      "version": "7.0.2",
       "declaredPeerRange": ">=10",
       "weeklyDownloads": 2959808,
       "results": {
@@ -657,7 +659,7 @@
           "crashingRules": [],
           "totalRules": 13
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 13
@@ -675,7 +677,7 @@
           "crashingRules": [],
           "totalRules": 79
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 79
@@ -742,7 +744,7 @@
           ],
           "totalRules": 27
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "rule-crash",
           "crashingRules": [
             {
@@ -830,8 +832,8 @@
         }
       },
       "rescue": {
-        "eslintVersion": "10.9.1",
-        "compatVersion": "2.1.0",
+        "eslintVersion": "10.10.0",
+        "compatVersion": "2.1.1",
         "attempted": true,
         "verdict": "rescuable",
         "crashingRulesBefore": 8,
@@ -850,7 +852,7 @@
           "crashingRules": [],
           "totalRules": 9
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "rule-crash",
           "crashingRules": [
             {
@@ -890,8 +892,8 @@
         }
       },
       "rescue": {
-        "eslintVersion": "10.9.1",
-        "compatVersion": "2.1.0",
+        "eslintVersion": "10.10.0",
+        "compatVersion": "2.1.1",
         "attempted": true,
         "verdict": "rescuable",
         "crashingRulesBefore": 8,
@@ -901,25 +903,25 @@
     },
     {
       "name": "@angular-eslint/eslint-plugin",
-      "version": "22.1.0",
+      "version": "22.5.0",
       "declaredPeerRange": "^9.0.0 || ^10.0.0",
       "weeklyDownloads": 2725772,
       "results": {
         "9.39.5": {
           "status": "clean",
           "crashingRules": [],
-          "totalRules": 50
+          "totalRules": 51
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "clean",
           "crashingRules": [],
-          "totalRules": 50
+          "totalRules": 51
         }
       }
     },
     {
       "name": "@tanstack/eslint-plugin-query",
-      "version": "5.102.6",
+      "version": "5.102.8",
       "declaredPeerRange": "^8.57.0 || ^9.0.0 || ^10.0.0",
       "weeklyDownloads": 2571766,
       "results": {
@@ -928,7 +930,7 @@
           "crashingRules": [],
           "totalRules": 8
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 8
@@ -937,7 +939,7 @@
     },
     {
       "name": "eslint-plugin-perfectionist",
-      "version": "5.10.1",
+      "version": "5.11.0",
       "declaredPeerRange": "^8.45.0 || ^9.0.0 || ^10.0.0",
       "weeklyDownloads": 2337389,
       "results": {
@@ -946,7 +948,7 @@
           "crashingRules": [],
           "totalRules": 23
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 23
@@ -964,7 +966,7 @@
           "crashingRules": [],
           "totalRules": 1
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 1
@@ -982,7 +984,7 @@
           "crashingRules": [],
           "totalRules": 1
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 1
@@ -991,7 +993,7 @@
     },
     {
       "name": "@eslint-community/eslint-plugin-eslint-comments",
-      "version": "4.7.2",
+      "version": "4.8.0",
       "declaredPeerRange": "^6.0.0 || ^7.0.0 || ^8.0.0 || ^9.0.0 || ^10.0.0",
       "weeklyDownloads": 2026635,
       "results": {
@@ -1000,7 +1002,7 @@
           "crashingRules": [],
           "totalRules": 9
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 9
@@ -1009,7 +1011,7 @@
     },
     {
       "name": "eslint-plugin-regexp",
-      "version": "3.2.0",
+      "version": "3.3.0",
       "declaredPeerRange": ">=9.38.0",
       "weeklyDownloads": 1622145,
       "results": {
@@ -1018,7 +1020,7 @@
           "crashingRules": [],
           "totalRules": 82
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 82
@@ -1036,7 +1038,7 @@
           "crashingRules": [],
           "totalRules": 12
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 12
@@ -1045,7 +1047,7 @@
     },
     {
       "name": "@eslint-react/eslint-plugin",
-      "version": "5.18.6",
+      "version": "5.19.0",
       "declaredPeerRange": "*",
       "weeklyDownloads": 1502554,
       "results": {
@@ -1054,7 +1056,7 @@
           "crashingRules": [],
           "totalRules": 82
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 82
@@ -1072,7 +1074,7 @@
           "crashingRules": [],
           "totalRules": 33
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 33
@@ -1111,7 +1113,7 @@
           ],
           "totalRules": 9
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "rule-crash",
           "crashingRules": [
             {
@@ -1150,7 +1152,7 @@
           "crashingRules": [],
           "totalRules": 10
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 10
@@ -1168,7 +1170,7 @@
           "crashingRules": [],
           "totalRules": 84
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 84
@@ -1186,7 +1188,7 @@
           "crashingRules": [],
           "totalRules": 1
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 1
@@ -1204,7 +1206,7 @@
           "crashingRules": [],
           "totalRules": 42
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 42
@@ -1222,7 +1224,7 @@
           "crashingRules": [],
           "totalRules": 1
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 1
@@ -1240,7 +1242,7 @@
           "crashingRules": [],
           "totalRules": 1
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 1
@@ -1258,7 +1260,7 @@
           "crashingRules": [],
           "totalRules": 29
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 29
@@ -1276,7 +1278,7 @@
           "crashingRules": [],
           "totalRules": 42
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "rule-crash",
           "crashingRules": [
             {
@@ -1288,8 +1290,8 @@
         }
       },
       "rescue": {
-        "eslintVersion": "10.9.1",
-        "compatVersion": "2.1.0",
+        "eslintVersion": "10.10.0",
+        "compatVersion": "2.1.1",
         "attempted": true,
         "verdict": "rescuable",
         "crashingRulesBefore": 1,
@@ -1308,7 +1310,7 @@
           "crashingRules": [],
           "totalRules": 44
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "load-fail",
           "crashingRules": [],
           "totalRules": 0,
@@ -1316,8 +1318,8 @@
         }
       },
       "rescue": {
-        "eslintVersion": "10.9.1",
-        "compatVersion": "2.1.0",
+        "eslintVersion": "10.10.0",
+        "compatVersion": "2.1.1",
         "attempted": true,
         "verdict": "blocked",
         "detail": "still fails to load with @eslint/compat installed: Class extends value undefined is not a constructor or null"
@@ -1334,7 +1336,7 @@
           "crashingRules": [],
           "totalRules": 1
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "load-fail",
           "crashingRules": [],
           "totalRules": 0,
@@ -1342,8 +1344,8 @@
         }
       },
       "rescue": {
-        "eslintVersion": "10.9.1",
-        "compatVersion": "2.1.0",
+        "eslintVersion": "10.10.0",
+        "compatVersion": "2.1.1",
         "attempted": true,
         "verdict": "blocked",
         "detail": "still fails to load with @eslint/compat installed: Class extends value undefined is not a constructor or null"
@@ -1360,7 +1362,7 @@
           "crashingRules": [],
           "totalRules": 0
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 0
@@ -1378,7 +1380,7 @@
           "crashingRules": [],
           "totalRules": 22
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 22
@@ -1396,7 +1398,7 @@
           "crashingRules": [],
           "totalRules": 38
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 38
@@ -1414,7 +1416,7 @@
           "crashingRules": [],
           "totalRules": 65
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 65
@@ -1432,7 +1434,7 @@
           "crashingRules": [],
           "totalRules": 1
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 1
@@ -1441,19 +1443,19 @@
     },
     {
       "name": "@ternaus/eslint-plugin-react",
-      "version": "8.0.0",
+      "version": "8.0.1",
       "declaredPeerRange": "^10.0.0",
       "weeklyDownloads": 575,
       "results": {
         "9.39.5": {
           "status": "clean",
           "crashingRules": [],
-          "totalRules": 11
+          "totalRules": 16
         },
-        "10.9.1": {
+        "10.10.0": {
           "status": "clean",
           "crashingRules": [],
-          "totalRules": 11
+          "totalRules": 16
         }
       }
     }

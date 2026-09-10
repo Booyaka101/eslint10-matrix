@@ -13,6 +13,8 @@ export default [
       'site/dist/',
       'packages/runner/fixtures/',
       'test/fixtures/',
+      'test/.tmp/',
+      'examples/',
       'matrix.json',
     ],
   },

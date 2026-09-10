@@ -1,21 +1,10 @@
-// The CLI ships standalone and owns the definition of "blocked"; the site
-// imports its verdict the same way. Requires the CLI to be built first, which
-// `npm run build` and both workflows do.
-import { regressionOnTen } from '../../cli/dist/report.js';
-import type { CrashingRule, PluginRunResult, RescueResult } from './types.js';
+import type { CrashingRule, PluginRunResult, RescueResult } from './matrix.js';
+import { regressionOnTen } from './report.js';
 
-export const COMPAT_VERSION = '2.1.0';
+export const COMPAT_VERSION = '2.1.1';
 export const COMPAT_SPEC = `@eslint/compat@${COMPAT_VERSION}`;
 
-/**
- * The failure signatures @eslint/compat exists to paper over: context and
- * sourceCode methods that ESLint 10 removed, plus the eslintrc-era APIs that
- * went with them. Anything else is skipped, never attempted.
- */
-const REMOVED_API =
-  /is not a function|is not a constructor|LegacyESLint|FlatESLint|eslintrc|getFilename|getPhysicalFilename|getScope\b|getAncestors|getDeclaredVariables|markVariableAsUsed|getSourceCode|getCwd/i;
-
-/** Causes a rule wrapper cannot touch, matched before the removed-API check. */
+/** Causes a rule wrapper cannot touch: nothing else is guessed at. */
 const NOT_RESCUABLE: ReadonlyArray<readonly [RegExp, string]> = [
   [/cannot find (module|package)|ERR_MODULE_NOT_FOUND|MODULE_NOT_FOUND/i, 'missing dependency'],
   [/unsupported engine|EBADENGINE|requires node/i, 'node engine mismatch'],
@@ -29,8 +18,11 @@ export type Eligibility =
 
 /**
  * Decides whether the rescue pass runs. Clean, safe-to-force and pre-existing
- * breakage never reach it; a blocked plugin only reaches it when at least one
- * of its new failures looks like a removed context API.
+ * breakage never reach it. Everything else does: whether the wrap helps is
+ * measured, not predicted from the message text. Reading the message was wrong
+ * for eslint-plugin-import, whose "Cannot use 'in' operator to search for
+ * 'sourceType' in undefined" does not look like a removed context API and is
+ * fixed by fixupPluginRules anyway.
  */
 export function rescueEligibility(onNine: PluginRunResult | undefined, onTen: PluginRunResult): Eligibility {
   const newlyBroken = regressionOnTen(onNine, onTen);
@@ -48,17 +40,16 @@ export function rescueEligibility(onNine: PluginRunResult | undefined, onTen: Pl
       ? onTen.crashingRules.filter((r) => newlyBroken.includes(r.rule)).map((r) => r.message)
       : [onTen.detail ?? ''];
 
-  // One rescuable crash is enough to be worth measuring: a plugin that breaks
-  // both ways is what PARTIAL-RESCUE is for, so the removed-API signal is
-  // checked before the causes a wrapper cannot touch.
-  if (messages.some((m) => REMOVED_API.test(m))) return { kind: 'attempt', newlyBroken };
+  // A plugin that breaks both ways is what PARTIAL-RESCUE is for, so the pass is
+  // skipped only when every new failure has a cause a wrapper cannot touch.
+  const reasons = messages.map((message) => {
+    const match = NOT_RESCUABLE.find(([pattern]) => pattern.test(message));
+    return match?.[1] ?? null;
+  });
+  const blocking = reasons.find((reason) => reason !== null);
+  if (blocking && reasons.every((reason) => reason !== null)) return { kind: 'skip', reason: blocking };
 
-  for (const message of messages) {
-    for (const [pattern, reason] of NOT_RESCUABLE) {
-      if (pattern.test(message)) return { kind: 'skip', reason };
-    }
-  }
-  return { kind: 'skip', reason: 'not a removed context API' };
+  return { kind: 'attempt', newlyBroken };
 }
 
 export function skippedRescue(eslintVersion: string, reason: string): RescueResult {

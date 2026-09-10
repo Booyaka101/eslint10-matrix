@@ -1,6 +1,6 @@
 {
   "name": "eslint10-matrix-workspace",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "private": true,
   "type": "module",
   "description": "Nightly-executed ESLint 10 compatibility matrix for popular ESLint plugins",
@@ -24,7 +24,8 @@
     "@eslint/compat": "^2.1.0",
     "@eslint/js": "^10.0.1",
     "@types/node": "^22.10.2",
-    "eslint": "^10.9.0",
+    "eslint": "^10.10.0",
+    "eslint9": "npm:eslint@^9.39.5",
     "typescript": "^5.7.2",
     "typescript-eslint": "^8.67.0",
     "vitest": "^2.1.8"
