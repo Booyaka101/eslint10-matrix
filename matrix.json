@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-09-11T03:30:40.850Z",
+  "generatedAt": "2026-09-12T03:05:18.364Z",
   "eslintVersions": {
     "v9": "9.39.5",
     "v10": "10.10.0"
@@ -13,47 +13,13 @@
       "weeklyDownloads": 114433858,
       "results": {
         "9.39.5": {
-          "status": "rule-crash",
-          "crashingRules": [
-            {
-              "rule": "explicit-function-return-type",
-              "message": "Cannot read properties of undefined (reading 'length')"
-            },
-            {
-              "rule": "explicit-member-accessibility",
-              "message": "Cannot read properties of undefined (reading 'length')"
-            },
-            {
-              "rule": "explicit-module-boundary-types",
-              "message": "Cannot read properties of undefined (reading 'length')"
-            },
-            {
-              "rule": "no-useless-constructor",
-              "message": "Cannot read properties of undefined (reading 'length')"
-            }
-          ],
+          "status": "clean",
+          "crashingRules": [],
           "totalRules": 126
         },
         "10.10.0": {
-          "status": "rule-crash",
-          "crashingRules": [
-            {
-              "rule": "explicit-function-return-type",
-              "message": "Cannot read properties of undefined (reading 'length')"
-            },
-            {
-              "rule": "explicit-member-accessibility",
-              "message": "Cannot read properties of undefined (reading 'length')"
-            },
-            {
-              "rule": "explicit-module-boundary-types",
-              "message": "Cannot read properties of undefined (reading 'length')"
-            },
-            {
-              "rule": "no-useless-constructor",
-              "message": "Cannot read properties of undefined (reading 'length')"
-            }
-          ],
+          "status": "clean",
+          "crashingRules": [],
           "totalRules": 126
         }
       }
@@ -352,7 +318,7 @@
     },
     {
       "name": "@next/eslint-plugin-next",
-      "version": "16.3.4",
+      "version": "16.3.5",
       "declaredPeerRange": null,
       "weeklyDownloads": 29073121,
       "results": {
@@ -375,23 +341,13 @@
       "weeklyDownloads": 12463399,
       "results": {
         "9.39.5": {
-          "status": "rule-crash",
-          "crashingRules": [
-            {
-              "rule": "no-deprecated-functions",
-              "message": "Error while loading rule 'jest/no-deprecated-functions': Unable to detect Jest version - please ensure jest package is installed, or otherwise set version explicitly"
-            }
-          ],
+          "status": "clean",
+          "crashingRules": [],
           "totalRules": 71
         },
         "10.10.0": {
-          "status": "rule-crash",
-          "crashingRules": [
-            {
-              "rule": "no-deprecated-functions",
-              "message": "Error while loading rule 'jest/no-deprecated-functions': Unable to detect Jest version - please ensure jest package is installed, or otherwise set version explicitly"
-            }
-          ],
+          "status": "clean",
+          "crashingRules": [],
           "totalRules": 71
         }
       }
