@@ -1,5 +1,21 @@
 # Changelog
 
+## Unreleased
+
+- Two board rows were measuring the environment rather than ESLint 10. Both reported the same
+  failure on ESLint 9 and ESLint 10, which is the tell.
+  - Each plugin's parser now parses every file, not only the TypeScript ones.
+    `@typescript-eslint/eslint-plugin` was being run under espree on the `.js`, `.jsx`, `.mjs` and
+    `.cjs` fixtures, and four of its rules read fields espree never produces, so they threw
+    `Cannot read properties of undefined (reading 'length')` on both majors. It is clean on both
+    now. `scan` picks up the same change, and resolves `@typescript-eslint/parser` whenever the
+    repo has it installed rather than only when the repo contains `.ts` files.
+    ([#10](https://github.com/Booyaka101/eslint10-matrix/issues/10))
+  - `eslint-plugin-jest` is measured with `jest` installed, the way a repo that lints jest tests
+    has it. `no-deprecated-functions` reads a version out of the jest package and threw
+    `Unable to detect Jest version` without it, again on both majors. Clean on both now.
+    ([#11](https://github.com/Booyaka101/eslint10-matrix/issues/11))
+
 ## 1.2.1 - 2026-09-10
 
 - Fixes a probe hang introduced in 1.2.0. The probe got a scratch directory of its own so that a

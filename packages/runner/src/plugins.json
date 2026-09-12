@@ -1,5 +1,5 @@
 {
-  "_comment": "Hand-reviewed from https://registry.npmjs.org/-/v1/search?text=eslint-plugin&size=250 plus explicit weekly-download lookups via https://api.npmjs.org/downloads/point/last-week/<pkg>. weeklyDownloads captured 2026-08-22. 'settings', 'parser' and 'extraDeps' are real configuration that ordinary repos supply; without them some rules never reach the code paths that break (eslint-plugin-react only calls the removed context.getFilename() API when it is asked to detect the React version).",
+  "_comment": "Hand-reviewed from https://registry.npmjs.org/-/v1/search?text=eslint-plugin&size=250 plus explicit weekly-download lookups via https://api.npmjs.org/downloads/point/last-week/<pkg>. weeklyDownloads captured 2026-08-22. 'settings', 'parser' and 'extraDeps' are real configuration that ordinary repos supply, and a row measured without them is wrong in both directions: some rules never reach the code paths that break (eslint-plugin-react only calls the removed context.getFilename() API when it is asked to detect the React version), and others fail for a reason no upgrade would ever hit (eslint-plugin-jest's no-deprecated-functions throws when it cannot find jest to read a version from).",
   "plugins": [
     {
       "name": "@typescript-eslint/eslint-plugin",
@@ -52,7 +52,10 @@
     },
     {
       "name": "eslint-plugin-jest",
-      "weeklyDownloads": 12463399
+      "weeklyDownloads": 12463399,
+      "extraDeps": [
+        "jest@^30.0.0"
+      ]
     },
     {
       "name": "eslint-plugin-storybook",

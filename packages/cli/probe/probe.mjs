@@ -115,7 +115,7 @@ async function main() {
     lintedFiles: 0,
     totalMessages: 0,
     parseErrors: 0,
-    tsParserLoaded: false,
+    parserLoaded: false,
     error: null,
   };
   const emit = () => writeFile(OUTPUT, JSON.stringify(result, null, 2));
@@ -231,47 +231,36 @@ async function main() {
     return;
   }
 
-  let tsParser = null;
+  // The parser covers every extension, not just the TypeScript ones:
+  // typescript-eslint rules read fields espree never produces, and espree on a
+  // .js file crashes them for a reason no ESLint 10 upgrade would hit.
+  let parser = null;
   if (parserSpecifier) {
     try {
       const mod = await import(parserSpecifier);
-      tsParser = mod.default ?? mod;
-      result.tsParserLoaded = true;
+      parser = mod.default ?? mod;
+      result.parserLoaded = true;
     } catch {
-      tsParser = null; // TypeScript fixtures get skipped rather than reported as parse noise
+      parser = null; // TypeScript fixtures get skipped rather than reported as parse noise
     }
   }
 
   // TypeScript sources are skipped rather than reported as parse noise when the
   // target has no parser for them.
-  const usableFiles = tsParser ? files : files.filter((f) => !isTsFile(f));
+  const usableFiles = parser ? files : files.filter((f) => !isTsFile(f));
 
   const rules = Object.fromEntries(ruleNames.map((id) => [`${namespace}/${id}`, 'error']));
-  const jsLanguageOptions = {
+  const languageOptions = {
+    ...(parser ? { parser } : {}),
     ecmaVersion: 'latest',
     sourceType: 'module',
     parserOptions: { ecmaFeatures: { jsx: true } },
   };
+  const lintableGlob = parser ? '**/*.{js,jsx,mjs,cjs,ts,tsx,mts,cts}' : '**/*.{js,jsx,mjs,cjs}';
 
   function buildConfig(pluginObject, activeRules) {
     const common = { plugins: { [namespace]: pluginObject }, ...(settings ? { settings } : {}) };
-    const config = [
-      { ...common, files: ['**/*.{js,jsx,mjs,cjs}'], languageOptions: jsLanguageOptions, rules: activeRules },
-    ];
-    if (tsParser) {
-      config.push({
-        ...common,
-        files: ['**/*.{ts,tsx,mts,cts}'],
-        languageOptions: {
-          parser: tsParser,
-          ecmaVersion: 'latest',
-          sourceType: 'module',
-          parserOptions: { ecmaFeatures: { jsx: true } },
-        },
-        rules: activeRules,
-      });
-    }
-    return config;
+    return [{ ...common, files: [lintableGlob], languageOptions, rules: activeRules }];
   }
 
   let sources = null;
