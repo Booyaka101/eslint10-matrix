@@ -9,6 +9,7 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 export const REPO_ROOT = resolve(HERE, '..');
 const PROBE = join(REPO_ROOT, 'packages', 'cli', 'probe', 'probe.mjs');
 export const PLUGINS = join(HERE, 'fixtures', 'plugins');
+export const PARSERS = join(HERE, 'fixtures', 'parsers');
 
 /** The 9.x line, installed under an alias so both majors are testable offline. */
 export const ESLINT_9 = join(REPO_ROOT, 'node_modules', 'eslint9');
@@ -41,6 +42,8 @@ export interface SandboxOptions {
    * starting the process in the case root, as production does.
    */
   scratch?: string;
+  /** A file name under test/fixtures/parsers, imported by URL as plugins are. */
+  parser?: string;
 }
 
 /**
@@ -78,7 +81,7 @@ export async function probeFixturePlugin(
       specifier,
       namespace,
       settings: null,
-      parserSpecifier: null,
+      parserSpecifier: options.parser ? pathToFileURL(join(PARSERS, options.parser)).href : null,
       cwd: options.cwd ?? dir,
       files: options.files ?? (await corpusFiles()),
       recordFiles: options.recordFiles ?? false,

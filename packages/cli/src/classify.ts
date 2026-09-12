@@ -20,7 +20,7 @@ export interface ProbeResult {
   lintedFiles?: number;
   totalMessages?: number;
   parseErrors?: number;
-  tsParserLoaded?: boolean;
+  parserLoaded?: boolean;
   fixupFunction?: FixupFunction;
   fixupConfigKey?: string;
   error?: { message: string; stack: string } | null;

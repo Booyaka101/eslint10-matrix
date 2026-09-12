@@ -2,6 +2,7 @@ import { mkdir, readFile, rm } from 'node:fs/promises';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { classify } from '../packages/cli/src/classify.js';
+import { CORPUS_DIR } from '../packages/runner/src/corpus.js';
 import { probeFixturePlugin, REPO_ROOT, SANDBOX } from './probe-sandbox.js';
 
 describe('probe + classify against real ESLint', () => {
@@ -12,7 +13,7 @@ describe('probe + classify against real ESLint', () => {
   // Only this file's case dirs: rescue.test.ts shares the sandbox root and the
   // two files run in parallel workers.
   afterAll(async () => {
-    for (const dir of ['crashing', 'reporting', 'import-throws', 'scratch-dir']) {
+    for (const dir of ['crashing', 'reporting', 'import-throws', 'scratch-dir', 'parser-absent', 'parser-supplied']) {
       await rm(`${SANDBOX}/${dir}`, { recursive: true, force: true });
     }
   });
@@ -52,6 +53,27 @@ describe('probe + classify against real ESLint', () => {
     expect(result.status).toBe('rule-crash');
     expect(result.crashingRules[0]!.message).toContain(`ran in ${join(SANDBOX, 'scratch-dir')}`);
     expect(result.crashingRules[0]!.message).not.toContain('run-1');
+  });
+
+  it("parses the JavaScript files with the plugin's own parser too, not only the TypeScript ones", async () => {
+    // typescript-eslint's rules read fields espree never produces. Reaching for
+    // one on a .js file is the false failure of issue #10, not an ESLint 10
+    // incompatibility, so the parser has to cover every extension.
+    const js = ['react-component.jsx', 'esm-imports.mjs', 'node-cjs.cjs'];
+    const absent = await probeFixturePlugin('parser-absent', 'parser-field-plugin.mjs', 'fixture', {
+      cwd: CORPUS_DIR,
+      files: js,
+    });
+    expect(classify(absent.probe, absent.stderr).status).toBe('rule-crash');
+
+    const supplied = await probeFixturePlugin('parser-supplied', 'parser-field-plugin.mjs', 'fixture', {
+      cwd: CORPUS_DIR,
+      files: js,
+      parser: 'tagging-parser.mjs',
+    });
+    expect(classify(supplied.probe, supplied.stderr).status).toBe('clean');
+    expect(supplied.probe!.parserLoaded).toBe(true);
+    expect(supplied.probe!.lintedFiles).toBe(js.length);
   });
 
   it('classifies a plugin that throws at import time as load-fail', async () => {

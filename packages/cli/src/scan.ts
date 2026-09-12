@@ -162,8 +162,11 @@ export async function scan(options: ScanOptions): Promise<ScanResult> {
     notes.push(`${collected.skipped} more files matched and were not scanned (raise --max-files to include them)`);
   }
 
+  // The probe parses every file with this parser, so a repo with no .ts in it
+  // still wants it installed: typescript-eslint's rules crash under espree for
+  // a reason no ESLint 10 upgrade would hit.
   const typescriptFiles = collected.files.some(isTsFile);
-  const parser = typescriptFiles ? await resolveInstalled(TS_PARSER, projectDir, lockfile) : null;
+  const parser = await resolveInstalled(TS_PARSER, projectDir, lockfile);
   const typescript = parser ? await resolveInstalled('typescript', projectDir, lockfile) : null;
   if (typescriptFiles && !parser) {
     notes.push(`no ${TS_PARSER} installed, so the TypeScript files here were skipped`);
