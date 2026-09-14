@@ -70,34 +70,55 @@ function missingPeer(name: string, ctx: HarnessContext): HarnessFinding {
   };
 }
 
-/** A plugin that cannot find its own files has a genuine load failure, not our environment. */
-function isOwnModule(module: string, plugin: string): boolean {
-  return module === plugin || module.startsWith(`${plugin}/`);
+/** `jest/package.json` needs `jest` installed; the subpath is not the dependency. */
+function packageRoot(specifier: string): string {
+  const parts = specifier.split('/');
+  return specifier.startsWith('@') ? parts.slice(0, 2).join('/') : parts[0]!;
+}
+
+/**
+ * Something we could actually install. `./resolve`, `../lib/x` and an absolute
+ * path are files inside the plugin, so failing to resolve one is the plugin
+ * shipping something broken; `node:fs` is a builtin. None of them is a peer.
+ */
+const PACKAGE_SPECIFIER = /^(?:@[a-z0-9][\w.-]*\/)?[a-z0-9][\w.-]*(?:\/[\w.-]+)*$/;
+
+/**
+ * Naming the package is not optional, in either direction: a fix nobody can act
+ * on is worse than leaving the crash where the reader can at least see it, and a
+ * plugin is never its own missing peer.
+ */
+function peerNamed(captured: string | undefined, ctx: HarnessContext): HarnessFinding | null {
+  const specifier = captured?.trim().toLowerCase();
+  if (!specifier || !PACKAGE_SPECIFIER.test(specifier)) return null;
+  const name = packageRoot(specifier);
+  return name === ctx.plugin ? null : missingPeer(name, ctx);
 }
 
 function detectMissingPeer(message: string, ctx: HarnessContext): HarnessFinding | null {
-  const ensured = ENSURE_INSTALLED.exec(message)?.[1]?.trim();
-  if (ensured) return missingPeer(ensured, ctx);
-
-  const detected = DETECT_VERSION.exec(message)?.[1];
-  if (detected) return missingPeer(detected.toLowerCase(), ctx);
-
+  const named =
+    peerNamed(ENSURE_INSTALLED.exec(message)?.[1], ctx) ?? peerNamed(DETECT_VERSION.exec(message)?.[1], ctx);
+  if (named) return named;
   if (!MISSING_MODULE.test(message) && !MODULE_NOT_FOUND.test(message)) return null;
-  // Naming the package is not optional: a fix nobody can act on is worse than
-  // leaving the crash where the reader can at least see it.
-  const module = MISSING_MODULE.exec(message)?.[1];
-  if (!module || isOwnModule(module, ctx.plugin)) return null;
-  return missingPeer(module, ctx);
+  return peerNamed(MISSING_MODULE.exec(message)?.[1], ctx);
 }
 
-function detectParserUnavailable(
-  message: string,
-  result: PluginRunResult,
-  ctx: HarnessContext
-): HarnessFinding | null {
-  const askedAndMissing = result.parserRequested === true && result.parserLoaded === false;
-  if (!askedAndMissing && !PARSER_LOAD_FAILED.test(message)) return null;
-  return {
+/**
+ * Not a per-rule cause, which is why it is absent from `detectHarness` below. A
+ * probe whose parser never loaded read every file with the wrong one, so nothing
+ * it collected is evidence about either ESLint version and every crash in it is
+ * an artifact. Voiding the run whole is what "environment-wide" actually means.
+ * Attributing rule by rule and waiving the gate for this one cause instead let a
+ * crash that happened only on ESLint 10 be rewritten to `clean`.
+ */
+function parserMissing(result: PluginRunResult): boolean {
+  if (result.parserRequested === true && result.parserLoaded === false) return true;
+  return result.crashingRules.some((rule) => PARSER_LOAD_FAILED.test(rule.message));
+}
+
+function voidRun(result: PluginRunResult, ctx: HarnessContext): PluginRunResult | null {
+  if (result.status !== 'rule-crash' || !parserMissing(result)) return null;
+  const finding: HarnessFinding = {
     cause: 'parser-unavailable',
     subject: ctx.plugin,
     detail: 'the run asked for a parser and did not get one, so every file was parsed by the wrong one',
@@ -106,6 +127,12 @@ function detectParserUnavailable(
       `repair the "parser" field for ${ctx.plugin} in packages/runner/src/plugins.json`,
       `install the parser ${ctx.plugin} needs, or point this repo's config at one that loads`
     ),
+  };
+  return {
+    ...result,
+    status: 'harness-misconfig',
+    crashingRules: [],
+    harness: { rules: result.crashingRules.map((rule) => ({ ...rule, ...finding })) },
   };
 }
 
@@ -143,21 +170,16 @@ function detectCorpusUnparsed(result: PluginRunResult, ctx: HarnessContext): Har
 }
 
 /**
- * Most specific cause wins. A named missing package beats "the parser is gone",
- * which beats "a field was missing", which beats "nothing parsed at all",
- * because that is also the order in which the fixes get vaguer.
+ * Most specific cause wins. A named missing package beats "a field was missing",
+ * which beats "nothing parsed at all", because that is also the order in which
+ * the fixes get vaguer. Every cause reachable from here faces the gate below.
  */
 export function detectHarness(
   message: string,
   result: PluginRunResult,
   ctx: HarnessContext
 ): HarnessFinding | null {
-  return (
-    detectMissingPeer(message, ctx) ??
-    detectParserUnavailable(message, result, ctx) ??
-    detectAstShape(message, ctx) ??
-    detectCorpusUnparsed(result, ctx)
-  );
+  return detectMissingPeer(message, ctx) ?? detectAstShape(message, ctx) ?? detectCorpusUnparsed(result, ctx);
 }
 
 function findingsFor(result: PluginRunResult | undefined, ctx: HarnessContext): Map<string, HarnessFinding> {
@@ -171,22 +193,18 @@ function findingsFor(result: PluginRunResult | undefined, ctx: HarnessContext): 
 }
 
 /**
- * THE GATE. A crash that appears only on ESLint 10 is an ESLint 10 finding
- * whatever its message looks like, so a rule is attributed to the harness only
- * when both majors crash it for the same cause. `eslint-plugin-react`'s
- * `contextOrFilename.getFilename is not a function` matches the ast-shape
- * pattern exactly and has to stay a crash, because ESLint 9 runs it fine.
- *
- * parser-unavailable is the one exception, and it is one by construction rather
- * than by choice: the run it came from had no parser, so nothing it measured
- * says anything about either ESLint version.
+ * THE GATE, and it has no exceptions. A crash that appears only on ESLint 10 is
+ * an ESLint 10 finding whatever its message looks like, so a rule is attributed
+ * to the harness only when both majors crash it for the same cause.
+ * `eslint-plugin-react`'s `contextOrFilename.getFilename is not a function`
+ * matches the ast-shape pattern exactly and has to stay a crash, because ESLint
+ * 9 runs it fine. A run that had no parser at all never reaches here: it is
+ * voided whole, above.
  */
-function agreed(finding: HarnessFinding, rule: string, other: Map<string, HarnessFinding>): boolean {
-  return finding.cause === 'parser-unavailable' || other.get(rule)?.cause === finding.cause;
-}
-
 function agreeingRules(own: Map<string, HarnessFinding>, other: Map<string, HarnessFinding>): Set<string> {
-  return new Set([...own].filter(([rule, finding]) => agreed(finding, rule, other)).map(([rule]) => rule));
+  return new Set(
+    [...own].filter(([rule, finding]) => other.get(rule)?.cause === finding.cause).map(([rule]) => rule)
+  );
 }
 
 function split(result: PluginRunResult, found: Map<string, HarnessFinding>, keep: Set<string>): PluginRunResult {
@@ -224,16 +242,21 @@ export function partitionHarness(
   onTen: PluginRunResult,
   ctx: HarnessContext
 ): Partitioned {
-  const nine = findingsFor(onNine, ctx);
-  const ten = findingsFor(onTen, ctx);
-  if (nine.size === 0 && ten.size === 0) return { onNine, onTen };
+  // Each major can lose its parser without the other, so this is per side and it
+  // happens before the gate rather than through it.
+  const nineRun = (onNine ? voidRun(onNine, ctx) : null) ?? onNine;
+  const tenRun = voidRun(onTen, ctx) ?? onTen;
+
+  const nine = findingsFor(nineRun, ctx);
+  const ten = findingsFor(tenRun, ctx);
+  if (nine.size === 0 && ten.size === 0) return { onNine: nineRun, onTen: tenRun };
 
   const keptNine = agreeingRules(nine, ten);
   const keptTen = agreeingRules(ten, nine);
-  if (keptNine.size === 0 && keptTen.size === 0) return { onNine, onTen };
+  if (keptNine.size === 0 && keptTen.size === 0) return { onNine: nineRun, onTen: tenRun };
 
-  const splitNine = onNine ? split(onNine, nine, keptNine) : undefined;
-  const splitTen = split(onTen, ten, keptTen);
+  const splitNine = nineRun ? split(nineRun, nine, keptNine) : undefined;
+  const splitTen = split(tenRun, ten, keptTen);
 
   const bothMisconfigured =
     splitNine !== undefined &&

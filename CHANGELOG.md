@@ -16,18 +16,26 @@ next one is reported as our problem instead of being published as a plugin failu
   verdict reads "not measured": it is counted in the plugin total, and deliberately not in the
   blocking total or the `--ci` exit code, because we have not measured the plugin. A row that keeps
   a real crash stays a `rule-crash` and prints one dim line naming what was excluded.
-- **The gate.** Apart from a parser that did not load, which is environment-wide by construction, a
-  rule is only attributed to the harness when *both* majors crash it for the *same* cause. A crash
-  that appears only on ESLint 10 is an ESLint 10 finding whatever its message looks like.
-  `eslint-plugin-react`'s `contextOrFilename.getFilename is not a function` matches the AST-shape
-  pattern exactly and stays RESCUABLE with its 38 rules, because ESLint 9 runs it fine.
+- **The gate, which has no exceptions.** A rule is only attributed to the harness when *both*
+  majors crash it for the *same* cause. A crash that appears only on ESLint 10 is an ESLint 10
+  finding whatever its message looks like. `eslint-plugin-react`'s
+  `contextOrFilename.getFilename is not a function` matches the AST-shape pattern exactly and stays
+  RESCUABLE with its 38 rules, because ESLint 9 runs it fine.
+- A probe whose parser never loaded is handled as a whole rather than rule by rule. It read every
+  file with the wrong parser, so nothing it collected is evidence about either ESLint version, and
+  the run is marked "not measured" entire. Each major installs separately and can lose its parser
+  without the other, so this is decided per major, and it is the one way a row can be "not
+  measured" on one major and something else on the other.
 - A method missing on `context` or `sourceCode` is never called a harness problem. Those are the
   APIs ESLint 9 and 10 deleted, which is the plugin's problem and the one the rescue pass exists to
   fix. `eslint-plugin-node` fails that way on both majors, so only this keeps its 20 crashing rules
   and its RESCUABLE verdict intact.
 - `scripts/check-harness.mjs` prints every row carrying harness data with its suggested fix and
   exits 1, and runs as a new `harness-guard` job in the nightly. The board stops being able to
-  publish a broken measurement quietly.
+  publish a broken measurement quietly. It also fails a row whose fixtures never parsed at all,
+  whatever status that row ended on: a plugin reported CLEAN on a run where no rule saw a line of
+  code is not a measurement either. The status is left alone there, because rewriting a published
+  verdict on that evidence is a maintainer's call rather than the tool's.
 - The static site gains a "not measured" pill, verdict, summary card and filter, and each such row
   expands to the excluded rules and the fix.
 - Replaying the board 1.2.1 published through the new code moves no row into the new bucket and

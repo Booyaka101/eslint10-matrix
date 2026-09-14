@@ -19,6 +19,12 @@ export function buildMatrix(
   };
 }
 
+/** The one harness cause a single major can reach on its own. */
+function voidedByParser(result: PluginRunResult): boolean {
+  const rules = result.harness?.rules ?? [];
+  return rules.length > 0 && rules.every((rule) => rule.cause === 'parser-unavailable');
+}
+
 function harnessProblems(at: string, result: PluginRunResult | undefined): string[] {
   const problems: string[] = [];
   if (result?.status === 'harness-misconfig' && (result.harness?.rules.length ?? 0) === 0) {
@@ -85,12 +91,14 @@ export function validateMatrix(value: unknown): string[] {
       problems.push(...harnessProblems(rat, result));
     }
 
-    // A harness misconfiguration is a fact about this environment, so it cannot
-    // hold on one major and not the other. partitionHarness only ever sets the
-    // status on both results at once; anything else means a hand-edited board.
+    // Rule-level attribution needs both majors to agree, so a row attributed that
+    // way cannot be a misconfiguration on one major and not the other; anything
+    // else means a hand-edited board. The exception is a probe whose parser never
+    // loaded, which voids its own major's run without the other one's help, and
+    // which is recognisable because every rule it carries names that one cause.
     const ten = m.eslintVersions && row.results[m.eslintVersions.v10];
     const nine = m.eslintVersions && row.results[m.eslintVersions.v9];
-    if (ten?.status === 'harness-misconfig' && nine?.status !== 'harness-misconfig') {
+    if (ten?.status === 'harness-misconfig' && nine?.status !== 'harness-misconfig' && !voidedByParser(ten)) {
       problems.push(`${at} is harness-misconfig on eslint 10 but ${nine?.status ?? 'untested'} on eslint 9`);
     }
 

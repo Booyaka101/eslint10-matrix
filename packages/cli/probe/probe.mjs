@@ -115,7 +115,6 @@ async function main() {
     lintedFiles: 0,
     totalMessages: 0,
     parseErrors: 0,
-    parserLoaded: false,
     error: null,
   };
   const emit = () => writeFile(OUTPUT, JSON.stringify(result, null, 2));
@@ -234,6 +233,9 @@ async function main() {
   // The parser covers every extension, not just the TypeScript ones:
   // typescript-eslint rules read fields espree never produces, and espree on a
   // .js file crashes them for a reason no ESLint 10 upgrade would hit.
+  // Absent until the import is attempted, so that `parserLoaded === false` means
+  // "asked for one and did not get it" rather than "died before reaching this".
+  // The caller voids a whole run on that distinction.
   let parser = null;
   if (parserSpecifier) {
     try {
@@ -242,6 +244,7 @@ async function main() {
       result.parserLoaded = true;
     } catch {
       parser = null; // TypeScript fixtures get skipped rather than reported as parse noise
+      result.parserLoaded = false;
     }
   }
 

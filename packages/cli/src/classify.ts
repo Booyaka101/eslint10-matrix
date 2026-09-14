@@ -74,8 +74,12 @@ function truncate(text: string, max = 400): string {
  * Absent fields stay absent: a `false` on every row of the board is noise.
  */
 function probeFacts(probe: ProbeResult | null, parserRequested: boolean): Partial<PluginRunResult> {
+  // `parserLoaded` is left absent when the probe never reached its parser import,
+  // because a probe that died in an earlier phase has nothing to say about the
+  // parser and a `false` here would void the whole run on no evidence.
   return {
-    ...(parserRequested ? { parserRequested: true, parserLoaded: probe?.parserLoaded === true } : {}),
+    ...(parserRequested ? { parserRequested: true } : {}),
+    ...(parserRequested && probe?.parserLoaded !== undefined ? { parserLoaded: probe.parserLoaded } : {}),
     ...(probe?.parseErrors ? { parseErrors: probe.parseErrors, lintedFiles: probe.lintedFiles ?? 0 } : {}),
   };
 }

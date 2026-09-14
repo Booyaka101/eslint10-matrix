@@ -157,18 +157,57 @@ describe('the gate', () => {
     expect(partitioned.onTen).toBe(ten);
   });
 
-  it('attributes a missing parser from one side alone, because it is environment-wide', () => {
-    const withoutParser: PluginRunResult = {
-      status: 'rule-crash',
-      crashingRules: [{ rule: 'x', message: 'boom' }],
-      totalRules: 5,
-      parserRequested: true,
-      parserLoaded: false,
-    };
-    const { onNine, onTen } = partitionHarness(withoutParser, { ...withoutParser }, { plugin: 'p', ...CORPUS });
+});
+
+/**
+ * A run with no parser read every file with the wrong one, so it is void whole
+ * rather than rule by rule. Getting this wrong is how a genuine ESLint 10 crash
+ * came out as `clean`: attributing per rule and waiving the gate for this one
+ * cause emptied the crash list on the side that had crashed, while the other
+ * side, which had no harness rules at all, kept the pair out of harness-misconfig.
+ */
+describe('a run whose parser never loaded', () => {
+  const crashed = (extra: Partial<PluginRunResult> = {}): PluginRunResult => ({
+    status: 'rule-crash',
+    crashingRules: [{ rule: 'x', message: 'boom' }],
+    totalRules: 5,
+    parserRequested: true,
+    ...extra,
+  });
+
+  it('is void on both majors when both lost it', () => {
+    const { onNine, onTen } = partitionHarness(
+      crashed({ parserLoaded: false }),
+      crashed({ parserLoaded: false }),
+      { plugin: 'p', ...CORPUS }
+    );
     expect(onNine!.status).toBe('harness-misconfig');
     expect(onTen.status).toBe('harness-misconfig');
     expect(onTen.harness!.rules[0]!.cause).toBe('parser-unavailable');
+  });
+
+  it('never turns a one-sided crash into a clean run', () => {
+    const nine: PluginRunResult = { status: 'clean', crashingRules: [], totalRules: 5, parserRequested: true, parserLoaded: true };
+    const { onNine, onTen } = partitionHarness(nine, crashed({ parserLoaded: false }), { plugin: 'p', ...CORPUS });
+    expect(onTen.status).toBe('harness-misconfig');
+    expect(onTen.status).not.toBe('clean');
+    expect(onNine).toBe(nine);
+  });
+
+  it('leaves the other major its own crashes', () => {
+    const nine = crashed({ parserLoaded: true });
+    const { onNine, onTen } = partitionHarness(nine, crashed({ parserLoaded: false }), { plugin: 'p', ...CORPUS });
+    expect(onNine!.crashingRules).toHaveLength(1);
+    expect(onTen.status).toBe('harness-misconfig');
+  });
+
+  it('says nothing when the probe died before it ever reached the parser', () => {
+    // parserLoaded absent, not false: probe.mjs only records it once the import
+    // is attempted, so an earlier crash is not evidence about the parser.
+    const ten = crashed();
+    const { onTen } = partitionHarness({ status: 'clean', crashingRules: [], totalRules: 5 }, ten, { plugin: 'p', ...CORPUS });
+    expect(onTen).toBe(ten);
+    expect(onTen.crashingRules).toHaveLength(1);
   });
 });
 
@@ -194,6 +233,30 @@ describe('detectHarness', () => {
 
   it('does call a missing method on an AST node an AST shape problem', () => {
     expect(detectHarness('node.getTypeAnnotation is not a function', result, ctx)?.cause).toBe('ast-shape');
+  });
+
+  /**
+   * A peer has to be something the reader can install. A relative or absolute
+   * specifier is a file inside the plugin, so failing to resolve it is a genuine
+   * load failure, and printing `add "./resolve" to extraDeps` would be advice
+   * nobody can act on attached to a crash that had been hidden from them.
+   */
+  it.each([
+    "Cannot find module './resolve'",
+    "Cannot find module '../lib/rules/x'",
+    "Cannot find module '/usr/lib/node_modules/x'",
+    "Cannot find module 'node:sqlite'",
+    "Cannot find module 'eslint-plugin-x/rules/no-y'",
+    'Unable to detect eslint-plugin-x version - please ensure eslint-plugin-x package is installed',
+  ])('will not call an uninstallable specifier a missing peer: %s', (message) => {
+    expect(detectHarness(message, result, ctx)).toBeNull();
+  });
+
+  it.each([
+    ["Cannot find module 'jest/package.json'", 'jest'],
+    ["Cannot find module '@scope/thing/lib/x'", '@scope/thing'],
+  ])('names the package rather than the subpath: %s', (message, subject) => {
+    expect(detectHarness(message, result, ctx)?.subject).toBe(subject);
   });
 
   it('will not name a missing module that is the plugin itself', () => {
@@ -285,6 +348,20 @@ describe('the board the runner would write', () => {
     expect(validateMatrix(board)).toEqual([
       'plugins[2] is harness-misconfig on eslint 10 but clean on eslint 9',
     ]);
+  });
+
+  /**
+   * The one-sided shape the validator has to allow, because partitionHarness
+   * produces it: each major installs separately, so one can lose its parser
+   * while the other keeps it, and that major's run is void on its own evidence.
+   */
+  it('accepts a board voided on one major only when the cause is the parser', async () => {
+    const board = await readJson<Matrix>('matrix-harness.json');
+    const { v9, v10 } = board.eslintVersions;
+    const row = rowFor(board, 'eslint-plugin-jest');
+    row.results[v9] = { status: 'clean', crashingRules: [], totalRules: 71 };
+    for (const rule of row.results[v10]!.harness!.rules) rule.cause = 'parser-unavailable';
+    expect(validateMatrix(board)).toEqual([]);
   });
 
   it('rejects a harness-misconfig status with nothing to explain it', async () => {
