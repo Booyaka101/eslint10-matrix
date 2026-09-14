@@ -36,6 +36,16 @@ next one is reported as our problem instead of being published as a plugin failu
   whatever status that row ended on: a plugin reported CLEAN on a run where no rule saw a line of
   code is not a measurement either. The status is left alone there, because rewriting a published
   verdict on that evidence is a maintainer's call rather than the tool's.
+- **A plugin can bring a fixture only its own parser reads**, through a `corpusExtensions` field in
+  `packages/runner/src/plugins.json`. `eslint-plugin-svelte` was the reason: `svelte-eslint-parser`
+  reads none of the six shared JavaScript and TypeScript fixtures, so all 84 of its rules were
+  publishing CLEAN on both majors without having seen a line of code. It now gets a Svelte
+  component alongside the shared corpus, and the CLEAN is a measurement. The extra file stays out
+  of every other plugin's list, where it would only ever be parse noise.
+- The config block the probe builds now takes its `files` glob from the files in front of it rather
+  than a fixed list of extensions, which is what lets the above be linted at all. Every other row
+  is unaffected: a five-plugin run before and after is identical field for field, including
+  `eslint-plugin-react`'s 38 crashing rules and `eslint-plugin-vue`'s 2 unparsed fixtures.
 - The static site gains a "not measured" pill, verdict, summary card and filter, and each such row
   expands to the excluded rules and the fix.
 - Replaying the board 1.2.1 published through the new code moves no row into the new bucket and

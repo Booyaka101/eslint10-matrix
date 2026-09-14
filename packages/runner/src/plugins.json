@@ -207,6 +207,9 @@
       "extraDeps": [
         "svelte-eslint-parser",
         "svelte@^5.0.0"
+      ],
+      "corpusExtensions": [
+        ".svelte"
       ]
     },
     {

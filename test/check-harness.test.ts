@@ -26,10 +26,28 @@ async function guard(board: string): Promise<{ code: number; out: string }> {
 }
 
 describe('the nightly harness guard', () => {
+  /**
+   * A captured board rather than the repo's own `matrix.json`: the nightly
+   * rewrites that file, so asserting on it here would make `npm test` fail for
+   * whatever last night's run measured. The live board is the `harness-guard`
+   * job's business, and that job is where a real one gets caught.
+   */
   it('passes a board nothing is wrong with', async () => {
-    const { code, out } = await guard(join(ROOT, 'matrix.json'));
+    const { code, out } = await guard(join(FIXTURES, 'matrix-measured.json'));
     expect(code).toBe(0);
     expect(out).toContain('none measured with a broken environment');
+  });
+
+  /**
+   * Both of these rows are real: vue's parser rejects 2 of the 6 shared
+   * fixtures, and svelte reads only the one file it brought. Partial is normal
+   * and must stay quiet, or the guard cries wolf every night.
+   */
+  it('stays quiet on rows where some fixtures parsed and some did not', async () => {
+    const { code, out } = await guard(join(FIXTURES, 'matrix-measured.json'));
+    expect(code).toBe(0);
+    expect(out).not.toContain('eslint-plugin-vue');
+    expect(out).not.toContain('eslint-plugin-svelte');
   });
 
   it('fails a board carrying harness rules, naming the edit for each', async () => {
@@ -52,6 +70,8 @@ describe('the nightly harness guard', () => {
     expect(out).toContain('measured on nothing');
     expect(out).toContain('none of the 6 fixture files parsed');
     expect(out).toContain('without the rules having seen any code');
+    // The fix names the literal edit, as every other harness finding does.
+    expect(out).toContain('"corpusExtensions" for eslint-plugin-svelte in packages/runner/src/plugins.json');
   });
 
   it('does not report the same corpus twice when the CLI already attributed it', async () => {

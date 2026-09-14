@@ -72,7 +72,7 @@ async function corpusPlan(spec: PluginSpec, eslintVersion: string): Promise<Prob
     namespace: spec.namespace ?? pluginNamespace(spec.name),
     settings: spec.settings ?? null,
     parserSpecifier: spec.parser ?? null,
-    files: await corpusFiles(),
+    files: await corpusFiles(spec.corpusExtensions),
     prepare: (dir) => cp(CORPUS_DIR, join(dir, 'fixtures'), { recursive: true }),
   };
 }

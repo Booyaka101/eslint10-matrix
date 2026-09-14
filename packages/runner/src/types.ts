@@ -24,4 +24,6 @@ export interface PluginSpec {
   settings?: Record<string, unknown>;
   parser?: string;
   extraDeps?: string[];
+  /** Extensions only this plugin's parser can read, added to its copy of the corpus. */
+  corpusExtensions?: string[];
 }

@@ -1,0 +1,5 @@
+export function mount(root, props) {
+  const node = root.querySelector('[data-widget]');
+  node.textContent = props.label;
+  return () => node.remove();
+}

@@ -5,6 +5,8 @@ import { classify } from '../packages/cli/src/classify.js';
 import { CORPUS_DIR } from '../packages/runner/src/corpus.js';
 import { probeFixturePlugin, REPO_ROOT, SANDBOX } from './probe-sandbox.js';
 
+const EXOTIC = join(REPO_ROOT, 'test', 'fixtures', 'exotic');
+
 describe('probe + classify against real ESLint', () => {
   beforeAll(async () => {
     await mkdir(SANDBOX, { recursive: true });
@@ -13,7 +15,17 @@ describe('probe + classify against real ESLint', () => {
   // Only this file's case dirs: rescue.test.ts shares the sandbox root and the
   // two files run in parallel workers.
   afterAll(async () => {
-    for (const dir of ['crashing', 'reporting', 'import-throws', 'scratch-dir', 'parser-absent', 'parser-supplied']) {
+    const cases = [
+      'crashing',
+      'reporting',
+      'import-throws',
+      'scratch-dir',
+      'parser-absent',
+      'parser-supplied',
+      'exotic-one',
+      'exotic-several',
+    ];
+    for (const dir of cases) {
       await rm(`${SANDBOX}/${dir}`, { recursive: true, force: true });
     }
   });
@@ -74,6 +86,39 @@ describe('probe + classify against real ESLint', () => {
     expect(classify(supplied.probe, supplied.stderr).status).toBe('clean');
     expect(supplied.probe!.parserLoaded).toBe(true);
     expect(supplied.probe!.lintedFiles).toBe(js.length);
+  });
+
+  /**
+   * The config block's `files` glob is derived from the list in front of the
+   * probe rather than a fixed set of extensions, so a plugin that brings a
+   * fixture only its own parser can read gets it linted instead of skipped.
+   * A single extension has to be spelled out without braces, because minimatch
+   * reads `{custom}` with no comma as those literal characters.
+   */
+  it('lints one file whose extension is not a JavaScript one', async () => {
+    const { probe, stderr } = await probeFixturePlugin('exotic-one', 'crashing-plugin.mjs', 'fixture', {
+      cwd: EXOTIC,
+      files: ['widget.custom'],
+      parser: 'tagging-parser.mjs',
+    });
+    expect(probe!.parserLoaded).toBe(true);
+    // A file no config block matches is reported as ignored rather than linted,
+    // and its rules never run, so the crash surfacing is the proof that it was.
+    const result = classify(probe, stderr);
+    expect(result.status).toBe('rule-crash');
+    expect(result.crashingRules.map((rule) => rule.rule)).toContain('explodes-on-program');
+  });
+
+  it('lints several unusual extensions at once', async () => {
+    const { probe, stderr } = await probeFixturePlugin('exotic-several', 'crashing-plugin.mjs', 'fixture', {
+      cwd: EXOTIC,
+      files: ['widget.custom', 'layout.tmpl'],
+      parser: 'tagging-parser.mjs',
+      recordFiles: true,
+    });
+    const crash = classify(probe, stderr).crashingRules[0];
+    expect(crash?.file).toBe('widget.custom');
+    expect(crash?.fileCount).toBe(2);
   });
 
   it('classifies a plugin that throws at import time as load-fail', async () => {
