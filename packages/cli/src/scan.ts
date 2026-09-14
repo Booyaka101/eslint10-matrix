@@ -1,6 +1,7 @@
 import { dirname, resolve } from 'node:path';
 import { collectFiles } from './collect-files.js';
 import { displayPath } from './display-path.js';
+import { partitionHarness } from './harness.js';
 import { hasNodeModules, readLockfile, resolveInstalled, type InstalledPackage, type Lockfile } from './installed.js';
 import type { CrashingRule, Matrix, PluginRow, PluginRunResult } from './matrix.js';
 import { mapWithConcurrency, probe, pruneEnvs, rescuePass, type ProbeOptions, type ProbePlan } from './probe-run.js';
@@ -229,7 +230,7 @@ export async function scan(options: ScanOptions): Promise<ScanResult> {
     });
 
     options.onLog?.(`${name}@${installed.version}: measuring on eslint ${baseline} and ${target}`);
-    const onNine = await probe(planFor(baseline), probeOptions);
+    let onNine = await probe(planFor(baseline), probeOptions);
     let onTen = await probe(planFor(target), probeOptions);
     const localNotes: string[] = [];
 
@@ -238,6 +239,12 @@ export async function scan(options: ScanOptions): Promise<ScanResult> {
       onTen = confirmed.result;
       if (confirmed.note) localNotes.push(confirmed.note);
     }
+
+    // Before the rescue pass, so a plugin this environment measured wrong never
+    // reads as BLOCKED and never spends an install being rescued.
+    const partitioned = partitionHarness(onNine, onTen, { plugin: name, recordFiles: true });
+    onNine = partitioned.onNine!;
+    onTen = partitioned.onTen;
 
     const row: PluginRow = {
       name,

@@ -5,7 +5,25 @@ import { fileURLToPath } from 'node:url';
 
 export const DEFAULT_MATRIX_URL = 'https://booyaka101.github.io/eslint10-matrix/matrix.json';
 
-export type Status = 'clean' | 'rule-crash' | 'load-fail' | 'install-fail';
+export type Status = 'clean' | 'rule-crash' | 'load-fail' | 'install-fail' | 'harness-misconfig';
+
+/** Why a measurement says more about our environment than about the plugin. */
+export type HarnessCause = 'missing-peer' | 'parser-unavailable' | 'ast-shape' | 'corpus-unparsed';
+
+export interface HarnessFinding {
+  cause: HarnessCause;
+  /** The package, parser or directory the cause is about. Keeps a report line short. */
+  subject: string;
+  detail: string;
+  fix: string;
+}
+
+export interface HarnessRule extends CrashingRule, HarnessFinding {}
+
+/** Rules excluded from a verdict because the environment was wrong, not the plugin. */
+export interface HarnessReport {
+  rules: HarnessRule[];
+}
 
 export interface CrashingRule {
   rule: string;
@@ -28,6 +46,16 @@ export interface PluginRunResult {
   fixupFunction?: FixupFunction;
   /** Set when fixupConfigRules was used: the plugin config key it wrapped. */
   fixupConfigKey?: string;
+  /** The run supplied a `parser`, so a crash reading AST fields is on us. */
+  parserRequested?: boolean;
+  /** Whether that parser imported. Only meaningful alongside parserRequested. */
+  parserLoaded?: boolean;
+  /** Fatal messages carrying no rule id: files that did not parse at all. */
+  parseErrors?: number;
+  /** The denominator for `parseErrors`. Recorded only alongside it. */
+  lintedFiles?: number;
+  /** Present when `partitionHarness` moved rules off this result. */
+  harness?: HarnessReport;
 }
 
 export type FixupFunction = 'fixupPluginRules' | 'fixupConfigRules';

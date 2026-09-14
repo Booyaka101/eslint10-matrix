@@ -286,7 +286,7 @@ export async function probe(plan: ProbePlan, options: ProbeOptions = {}): Promis
         detail: `probe timed out after ${PROBE_TIMEOUT_MS / 1000}s`,
       };
     }
-    return classify(parsed, result.stderr);
+    return classify(parsed, result.stderr, plan.parserSpecifier != null);
   } catch (err) {
     return installFail(err instanceof Error ? err.message : String(err));
   } finally {

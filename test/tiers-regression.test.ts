@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
+import { partitionHarness } from '../packages/cli/src/harness.js';
 import type { Matrix } from '../packages/cli/src/matrix.js';
 import { buildReport, renderReport, verdictFor, type Entry } from '../packages/cli/src/report.js';
 
@@ -61,5 +62,42 @@ describe('tiers are unchanged by the shared-module extraction', () => {
     }).toEqual(before.buckets);
     expect(report.overrides).toEqual(before.overrides);
     expect(renderReport(report)).toBe(before.rendered);
+  });
+});
+
+/**
+ * 1.3.0 added a fifth status. Nothing on the board it shipped against was meant
+ * to move, so this replays the board 1.2.1 published and checks every row lands
+ * in the tier it landed in then. The fixture is a frozen copy rather than the
+ * live matrix.json: the nightly rewrites that file and pushes it to main, where
+ * a genuine upstream fix would turn this red for the wrong reason.
+ */
+describe('tiers are unchanged by harness attribution', () => {
+  it('gives every plugin on the 1.2.1 board the tier it had then', async () => {
+    const matrix = await readJson<Matrix>('matrix-1.2.1.json');
+    const before = await readJson<{ verdicts: { name: string; verdict: string; regressedRules: number }[] }>(
+      'tiers-1.2.1.json'
+    );
+
+    const now = matrix.plugins.map((row) => {
+      const { verdict, regressedRules } = verdictFor(row, matrix.eslintVersions);
+      return { name: row.name, verdict, regressedRules: regressedRules.length };
+    });
+
+    expect(now).toEqual(before.verdicts);
+    expect(now.some((row) => row.verdict === 'harness-misconfig')).toBe(false);
+  });
+
+  it('leaves every result on that board untouched when the runner re-partitions it', async () => {
+    const matrix = await readJson<Matrix>('matrix-1.2.1.json');
+    const { v9, v10 } = matrix.eslintVersions;
+    for (const row of matrix.plugins) {
+      const partitioned = partitionHarness(row.results[v9], row.results[v10]!, {
+        plugin: row.name,
+        recordFiles: false,
+      });
+      expect(partitioned.onNine).toBe(row.results[v9]);
+      expect(partitioned.onTen).toBe(row.results[v10]);
+    }
   });
 });

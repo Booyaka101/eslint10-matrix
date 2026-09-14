@@ -27,6 +27,7 @@ const STATUS_LABEL = {
   'rule-crash': 'rule crash',
   'load-fail': 'load fail',
   'install-fail': 'install fail',
+  'harness-misconfig': 'not measured',
 };
 
 function formatDownloads(n) {
@@ -42,29 +43,55 @@ const VERDICT_TEXT = {
   'partial-rescue': 'partial rescue',
   force: 'safe to force',
   clean: 'ready',
+  'harness-misconfig': 'not measured',
   untested: 'untested',
 };
+
+function cellDetail(result) {
+  if (result.status === 'rule-crash') return `${result.crashingRules.length}/${result.totalRules} rules`;
+  if (result.status === 'clean') return `${result.totalRules} rules ok`;
+  if (result.status === 'harness-misconfig') {
+    const excluded = result.harness?.rules.length ?? 0;
+    return `${excluded} ${excluded === 1 ? 'rule' : 'rules'}, broken environment`;
+  }
+  return esc((result.detail ?? '').slice(0, 90));
+}
 
 function cell(result) {
   if (!result) return '<td class="s"><span class="pill untested">untested</span></td>';
   const label = STATUS_LABEL[result.status] ?? result.status;
-  const detail =
-    result.status === 'rule-crash'
-      ? `${result.crashingRules.length}/${result.totalRules} rules`
-      : result.status === 'clean'
-        ? `${result.totalRules} rules ok`
-        : esc((result.detail ?? '').slice(0, 90));
+  const detail = cellDetail(result);
   return `<td class="s"><span class="pill ${esc(result.status)}">${esc(label)}</span><span class="sub">${esc(detail)}</span></td>`;
 }
 
-/** A row is expandable when it has crashing rules to list, a rescue to explain, or both. */
+/** A row is expandable when it has rules to list, a rescue to explain, or both. */
 function hasDetail(row, v10) {
-  return (row.results[v10]?.crashingRules.length ?? 0) > 0 || Boolean(row.rescue);
+  return (
+    (row.results[v10]?.crashingRules.length ?? 0) > 0 ||
+    (row.results[v10]?.harness?.rules.length ?? 0) > 0 ||
+    Boolean(row.rescue)
+  );
+}
+
+/** One line per distinct cause: four rules failing the same way are one repair. */
+function harnessDetail(row, v10) {
+  const rules = row.results[v10]?.harness?.rules ?? [];
+  const byCause = new Map(rules.map((rule) => [`${rule.cause}:${rule.subject}`, rule]));
+  return [...byCause.values()]
+    .map((finding) => {
+      const affected = rules.filter((r) => r.cause === finding.cause && r.subject === finding.subject);
+      return (
+        `<li class="harness"><code>${esc(finding.cause)}</code><span>${esc(finding.detail)}. ` +
+        `Excluded: ${esc(affected.map((r) => r.rule).join(', '))}. Fix: ${esc(finding.fix)}</span></li>`
+      );
+    })
+    .join('');
 }
 
 function crashDetail(row, v10) {
   if (!hasDetail(row, v10)) return '';
   const items =
+    harnessDetail(row, v10) +
     rescueDetail(row) +
     (row.results[v10]?.crashingRules ?? [])
       .map((r) => `<li><code>${esc(r.rule)}</code><span>${esc(r.message)}</span></li>`)
@@ -92,7 +119,7 @@ function rescueDetail(row) {
 
 function render(matrix) {
   const { v9, v10 } = matrix.eslintVersions;
-  const counts = { blocked: 0, rescuable: 0, 'partial-rescue': 0, force: 0, clean: 0, untested: 0 };
+  const counts = { blocked: 0, rescuable: 0, 'partial-rescue': 0, force: 0, clean: 0, 'harness-misconfig': 0, untested: 0 };
   for (const row of matrix.plugins) counts[verdictFor(row, matrix.eslintVersions).verdict] += 1;
 
   const rows = matrix.plugins
@@ -132,7 +159,7 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:
 .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
 .card b{display:block;font-size:26px;line-height:1.2}
 .card span{color:var(--muted);font-size:12.5px}
-.card.blocked b{color:var(--bad)}.card.rescue b{color:var(--accent)}.card.force b{color:var(--warn)}.card.clean b{color:var(--ok)}
+.card.blocked b{color:var(--bad)}.card.rescue b{color:var(--accent)}.card.force b{color:var(--warn)}.card.clean b{color:var(--ok)}.card.harness b{color:var(--muted)}
 .controls{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
 input[type=search]{background:var(--panel);border:1px solid var(--line);color:var(--fg);border-radius:8px;padding:8px 12px;min-width:230px;font-size:14px}
 input[type=search]:focus-visible,button:focus-visible,tr:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
@@ -149,9 +176,9 @@ tr.row:hover{background:#1c2230}
 .pill.clean{color:var(--ok);border-color:#23823a;background:#0f2a17}
 .pill.rule-crash{color:var(--bad);border-color:#8b2d28;background:#2b1210}
 .pill.load-fail,.pill.install-fail{color:var(--warn);border-color:#8a6415;background:#2a2009}
-.pill.untested{color:var(--muted);border-color:var(--line)}
+.pill.untested,.pill.harness-misconfig{color:var(--muted);border-color:var(--line)}
 .verdict{font-weight:600;font-size:13px}
-.verdict.blocked{color:var(--bad)}.verdict.rescuable,.verdict.partial-rescue{color:var(--accent)}.verdict.force{color:var(--warn)}.verdict.clean{color:var(--ok)}.verdict.untested{color:var(--muted)}
+.verdict.blocked{color:var(--bad)}.verdict.rescuable,.verdict.partial-rescue{color:var(--accent)}.verdict.force{color:var(--warn)}.verdict.clean{color:var(--ok)}.verdict.untested,.verdict.harness-misconfig{color:var(--muted)}
 .crashes{margin:0;padding:0 0 0 4px;list-style:none;display:grid;gap:6px}
 .crashes li{display:grid;grid-template-columns:230px 1fr;gap:12px;font-size:12.5px}
 .crashes code{color:var(--bad)}
@@ -159,6 +186,8 @@ tr.row:hover{background:#1c2230}
 .crashes li.rescue{padding-bottom:6px;border-bottom:1px solid var(--line);margin-bottom:2px}
 .crashes li.rescue code{color:var(--accent)}
 .crashes li.rescue span{color:var(--fg)}
+.crashes li.harness{padding-bottom:6px;border-bottom:1px solid var(--line);margin-bottom:2px}
+.crashes li.harness code{color:var(--muted)}
 .empty{padding:26px;text-align:center;color:var(--muted)}
 footer{color:var(--muted);font-size:13px;margin-top:34px}
 a{color:var(--accent)}
@@ -178,6 +207,7 @@ a{color:var(--accent)}
     <div class="card rescue"><b>${counts.rescuable + counts['partial-rescue']}</b><span>rescuable with @eslint/compat</span></div>
     <div class="card force"><b>${counts.force}</b><span>safe to force</span></div>
     <div class="card clean"><b>${counts.clean}</b><span>already declare ^10</span></div>
+    <div class="card harness"><b>${counts['harness-misconfig']}</b><span>not measured</span></div>
     <div class="card"><b>${matrix.plugins.length}</b><span>plugins executed</span></div>
   </div>
 
@@ -189,6 +219,7 @@ a{color:var(--accent)}
     <button data-filter="partial-rescue" aria-pressed="false">Partial rescue</button>
     <button data-filter="force" aria-pressed="false">Safe to force</button>
     <button data-filter="clean" aria-pressed="false">Ready</button>
+    <button data-filter="harness-misconfig" aria-pressed="false">Not measured</button>
   </div>
 
   <table>

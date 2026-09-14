@@ -1,6 +1,10 @@
 export type {
   CrashingRule,
   FixupFunction,
+  HarnessCause,
+  HarnessFinding,
+  HarnessReport,
+  HarnessRule,
   Matrix,
   PluginRow,
   PluginRunResult,

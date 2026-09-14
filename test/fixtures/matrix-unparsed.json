@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-09-14T01:50:46.607Z",
+  "eslintVersions": {
+    "v9": "9.39.5",
+    "v10": "10.10.0"
+  },
+  "plugins": [
+    {
+      "name": "eslint-plugin-svelte",
+      "version": "3.23.0",
+      "declaredPeerRange": "^8.57.1 || ^9.0.0 || ^10.0.0",
+      "weeklyDownloads": 1293709,
+      "results": {
+        "9.39.5": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 84,
+          "parserRequested": true,
+          "parserLoaded": true,
+          "parseErrors": 6,
+          "lintedFiles": 6
+        },
+        "10.10.0": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 84,
+          "parserRequested": true,
+          "parserLoaded": true,
+          "parseErrors": 6,
+          "lintedFiles": 6
+        }
+      }
+    }
+  ]
+}

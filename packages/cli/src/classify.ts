@@ -68,11 +68,32 @@ function truncate(text: string, max = 400): string {
 }
 
 /**
+ * What the probe observed about its own environment rather than about the
+ * plugin. The harness detectors need all three to tell "this plugin is broken"
+ * from "we measured it wrong", so none of them may be dropped here again.
+ * Absent fields stay absent: a `false` on every row of the board is noise.
+ */
+function probeFacts(probe: ProbeResult | null, parserRequested: boolean): Partial<PluginRunResult> {
+  // `parserLoaded` is left absent when the probe never reached its parser import,
+  // because a probe that died in an earlier phase has nothing to say about the
+  // parser and a `false` here would void the whole run on no evidence.
+  return {
+    ...(parserRequested ? { parserRequested: true } : {}),
+    ...(parserRequested && probe?.parserLoaded !== undefined ? { parserLoaded: probe.parserLoaded } : {}),
+    ...(probe?.parseErrors ? { parseErrors: probe.parseErrors, lintedFiles: probe.lintedFiles ?? 0 } : {}),
+  };
+}
+
+/**
  * Ordinary lint errors are the expected output of enabling every rule, so volume
  * of reports never affects the verdict. Only a failure to load the module and a
  * rule that throws or emits a fatal message count against a plugin.
  */
-export function classify(probe: ProbeResult | null, childStderr = ''): PluginRunResult {
+export function classify(probe: ProbeResult | null, childStderr = '', parserRequested = false): PluginRunResult {
+  return { ...classifyStatus(probe, childStderr), ...probeFacts(probe, parserRequested) };
+}
+
+function classifyStatus(probe: ProbeResult | null, childStderr: string): PluginRunResult {
   if (!probe) {
     const ruleId = ruleIdFromError(childStderr, childStderr);
     if (ruleId) {
