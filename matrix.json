@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-09-13T03:30:51.702Z",
+  "generatedAt": "2026-09-14T02:07:51.162Z",
   "eslintVersions": {
     "v9": "9.39.5",
     "v10": "10.10.0"
@@ -15,12 +15,16 @@
         "9.39.5": {
           "status": "clean",
           "crashingRules": [],
-          "totalRules": 126
+          "totalRules": 126,
+          "parserRequested": true,
+          "parserLoaded": true
         },
         "10.10.0": {
           "status": "clean",
           "crashingRules": [],
-          "totalRules": 126
+          "totalRules": 126,
+          "parserRequested": true,
+          "parserLoaded": true
         }
       }
     },
@@ -361,12 +365,16 @@
         "9.39.5": {
           "status": "clean",
           "crashingRules": [],
-          "totalRules": 16
+          "totalRules": 16,
+          "parserRequested": true,
+          "parserLoaded": true
         },
         "10.10.0": {
           "status": "clean",
           "crashingRules": [],
-          "totalRules": 16
+          "totalRules": 16,
+          "parserRequested": true,
+          "parserLoaded": true
         }
       }
     },
@@ -469,12 +477,20 @@
         "9.39.5": {
           "status": "clean",
           "crashingRules": [],
-          "totalRules": 253
+          "totalRules": 253,
+          "parserRequested": true,
+          "parserLoaded": true,
+          "parseErrors": 2,
+          "lintedFiles": 6
         },
         "10.10.0": {
           "status": "clean",
           "crashingRules": [],
-          "totalRules": 253
+          "totalRules": 253,
+          "parserRequested": true,
+          "parserLoaded": true,
+          "parseErrors": 2,
+          "lintedFiles": 6
         }
       }
     },
@@ -866,12 +882,16 @@
         "9.39.5": {
           "status": "clean",
           "crashingRules": [],
-          "totalRules": 51
+          "totalRules": 51,
+          "parserRequested": true,
+          "parserLoaded": true
         },
         "10.10.0": {
           "status": "clean",
           "crashingRules": [],
-          "totalRules": 51
+          "totalRules": 51,
+          "parserRequested": true,
+          "parserLoaded": true
         }
       }
     },
@@ -1010,12 +1030,16 @@
         "9.39.5": {
           "status": "clean",
           "crashingRules": [],
-          "totalRules": 82
+          "totalRules": 82,
+          "parserRequested": true,
+          "parserLoaded": true
         },
         "10.10.0": {
           "status": "clean",
           "crashingRules": [],
-          "totalRules": 82
+          "totalRules": 82,
+          "parserRequested": true,
+          "parserLoaded": true
         }
       }
     },
@@ -1124,12 +1148,20 @@
         "9.39.5": {
           "status": "clean",
           "crashingRules": [],
-          "totalRules": 84
+          "totalRules": 84,
+          "parserRequested": true,
+          "parserLoaded": true,
+          "parseErrors": 6,
+          "lintedFiles": 6
         },
         "10.10.0": {
           "status": "clean",
           "crashingRules": [],
-          "totalRules": 84
+          "totalRules": 84,
+          "parserRequested": true,
+          "parserLoaded": true,
+          "parseErrors": 6,
+          "lintedFiles": 6
         }
       }
     },
@@ -1290,13 +1322,16 @@
         "9.39.5": {
           "status": "clean",
           "crashingRules": [],
-          "totalRules": 1
+          "totalRules": 1,
+          "parserRequested": true,
+          "parserLoaded": true
         },
         "10.10.0": {
           "status": "load-fail",
           "crashingRules": [],
           "totalRules": 0,
-          "detail": "Class extends value undefined is not a constructor or null"
+          "detail": "Class extends value undefined is not a constructor or null",
+          "parserRequested": true
         }
       },
       "rescue": {
@@ -1363,7 +1398,7 @@
     },
     {
       "name": "@html-eslint/eslint-plugin",
-      "version": "0.65.0",
+      "version": "0.66.0",
       "declaredPeerRange": ">=8.0.0 || ^10.0.0-0",
       "weeklyDownloads": 251828,
       "results": {
