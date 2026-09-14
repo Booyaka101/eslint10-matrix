@@ -1,0 +1,282 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-09-14T02:31:55.016Z",
+  "eslintVersions": {
+    "v9": "9.39.5",
+    "v10": "10.10.0"
+  },
+  "plugins": [
+    {
+      "name": "@typescript-eslint/eslint-plugin",
+      "version": "8.70.0",
+      "declaredPeerRange": "^8.57.0 || ^9.0.0 || ^10.0.0",
+      "weeklyDownloads": 114433858,
+      "results": {
+        "9.39.5": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 126,
+          "parserRequested": true,
+          "parserLoaded": true
+        },
+        "10.10.0": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 126,
+          "parserRequested": true,
+          "parserLoaded": true
+        }
+      }
+    },
+    {
+      "name": "eslint-plugin-react",
+      "version": "7.37.5",
+      "declaredPeerRange": "^3 || ^4 || ^5 || ^6 || ^7 || ^8 || ^9.7",
+      "weeklyDownloads": 50254779,
+      "results": {
+        "9.39.5": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 101
+        },
+        "10.10.0": {
+          "status": "rule-crash",
+          "crashingRules": [
+            {
+              "rule": "boolean-prop-naming",
+              "message": "Error while loading rule 'react/boolean-prop-naming': contextOrFilename.getFilename is not a function"
+            },
+            {
+              "rule": "default-props-match-prop-types",
+              "message": "Error while loading rule 'react/default-props-match-prop-types': contextOrFilename.getFilename is not a function"
+            },
+            {
+              "rule": "destructuring-assignment",
+              "message": "Error while loading rule 'react/destructuring-assignment': contextOrFilename.getFilename is not a function"
+            },
+            {
+              "rule": "display-name",
+              "message": "Error while loading rule 'react/display-name': contextOrFilename.getFilename is not a function"
+            },
+            {
+              "rule": "forward-ref-uses-ref",
+              "message": "Error while loading rule 'react/forward-ref-uses-ref': context.getSourceCode is not a function"
+            },
+            {
+              "rule": "function-component-definition",
+              "message": "Error while loading rule 'react/function-component-definition': contextOrFilename.getFilename is not a function"
+            },
+            {
+              "rule": "hook-use-state",
+              "message": "Error while loading rule 'react/hook-use-state': contextOrFilename.getFilename is not a function"
+            },
+            {
+              "rule": "jsx-curly-spacing",
+              "message": "sourceCode.isSpaceBetweenTokens is not a function"
+            },
+            {
+              "rule": "jsx-equals-spacing",
+              "message": "sourceCode.isSpaceBetweenTokens is not a function"
+            },
+            {
+              "rule": "jsx-filename-extension",
+              "message": "Error while loading rule 'react/jsx-filename-extension': context.getFilename is not a function"
+            },
+            {
+              "rule": "jsx-no-constructed-context-values",
+              "message": "Error while loading rule 'react/jsx-no-constructed-context-values': contextOrFilename.getFilename is not a function"
+            },
+            {
+              "rule": "jsx-one-expression-per-line",
+              "message": "getSourceCode(...).isSpaceBetweenTokens is not a function"
+            },
+            {
+              "rule": "jsx-tag-spacing",
+              "message": "sourceCode.isSpaceBetweenTokens is not a function"
+            },
+            {
+              "rule": "no-arrow-function-lifecycle",
+              "message": "Error while loading rule 'react/no-arrow-function-lifecycle': contextOrFilename.getFilename is not a function"
+            },
+            {
+              "rule": "no-did-mount-set-state",
+              "message": "Error while loading rule 'react/no-did-mount-set-state': contextOrFilename.getFilename is not a function"
+            },
+            {
+              "rule": "no-did-update-set-state",
+              "message": "Error while loading rule 'react/no-did-update-set-state': contextOrFilename.getFilename is not a function"
+            },
+            {
+              "rule": "no-direct-mutation-state",
+              "message": "Error while loading rule 'react/no-direct-mutation-state': contextOrFilename.getFilename is not a function"
+            },
+            {
+              "rule": "no-multi-comp",
+              "message": "Error while loading rule 'react/no-multi-comp': contextOrFilename.getFilename is not a function"
+            },
+            {
+              "rule": "no-set-state",
+              "message": "Error while loading rule 'react/no-set-state': contextOrFilename.getFilename is not a function"
+            },
+            {
+              "rule": "no-string-refs",
+              "message": "Error while loading rule 'react/no-string-refs': contextOrFilename.getFilename is not a function"
+            },
+            {
+              "rule": "no-render-return-value",
+              "message": "Error while loading rule 'react/no-render-return-value': contextOrFilename.getFilename is not a function"
+            },
+            {
+              "rule": "no-this-in-sfc",
+              "message": "Error while loading rule 'react/no-this-in-sfc': contextOrFilename.getFilename is not a function"
+            },
+            {
+              "rule": "no-typos",
+              "message": "Error while loading rule 'react/no-typos': contextOrFilename.getFilename is not a function"
+            },
+            {
+              "rule": "no-unknown-property",
+              "message": "contextOrFilename.getFilename is not a function"
+            },
+            {
+              "rule": "no-unsafe",
+              "message": "Error while loading rule 'react/no-unsafe': contextOrFilename.getFilename is not a function"
+            },
+            {
+              "rule": "no-unstable-nested-components",
+              "message": "Error while loading rule 'react/no-unstable-nested-components': contextOrFilename.getFilename is not a function"
+            },
+            {
+              "rule": "no-unused-prop-types",
+              "message": "Error while loading rule 'react/no-unused-prop-types': contextOrFilename.getFilename is not a function"
+            },
+            {
+              "rule": "no-object-type-as-default-prop",
+              "message": "Error while loading rule 'react/no-object-type-as-default-prop': contextOrFilename.getFilename is not a function"
+            },
+            {
+              "rule": "no-will-update-set-state",
+              "message": "contextOrFilename.getFilename is not a function"
+            },
+            {
+              "rule": "prefer-exact-props",
+              "message": "Error while loading rule 'react/prefer-exact-props': contextOrFilename.getFilename is not a function"
+            },
+            {
+              "rule": "prefer-read-only-props",
+              "message": "Error while loading rule 'react/prefer-read-only-props': contextOrFilename.getFilename is not a function"
+            },
+            {
+              "rule": "prefer-stateless-function",
+              "message": "Error while loading rule 'react/prefer-stateless-function': contextOrFilename.getFilename is not a function"
+            },
+            {
+              "rule": "prop-types",
+              "message": "Error while loading rule 'react/prop-types': contextOrFilename.getFilename is not a function"
+            },
+            {
+              "rule": "require-default-props",
+              "message": "Error while loading rule 'react/require-default-props': contextOrFilename.getFilename is not a function"
+            },
+            {
+              "rule": "require-optimization",
+              "message": "Error while loading rule 'react/require-optimization': contextOrFilename.getFilename is not a function"
+            },
+            {
+              "rule": "require-render-return",
+              "message": "Error while loading rule 'react/require-render-return': contextOrFilename.getFilename is not a function"
+            },
+            {
+              "rule": "sort-comp",
+              "message": "Error while loading rule 'react/sort-comp': contextOrFilename.getFilename is not a function"
+            },
+            {
+              "rule": "static-property-placement",
+              "message": "Error while loading rule 'react/static-property-placement': contextOrFilename.getFilename is not a function"
+            }
+          ],
+          "totalRules": 101
+        }
+      },
+      "rescue": {
+        "eslintVersion": "10.10.0",
+        "compatVersion": "2.1.1",
+        "attempted": true,
+        "verdict": "rescuable",
+        "crashingRulesBefore": 38,
+        "fixupFunction": "fixupPluginRules",
+        "crashingRulesAfter": 0
+      }
+    },
+    {
+      "name": "eslint-plugin-jest",
+      "version": "29.16.6",
+      "declaredPeerRange": "^8.57.0 || ^9.0.0 || ^10.0.0",
+      "weeklyDownloads": 12463399,
+      "results": {
+        "9.39.5": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 71
+        },
+        "10.10.0": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 71
+        }
+      }
+    },
+    {
+      "name": "eslint-plugin-vue",
+      "version": "10.11.0",
+      "declaredPeerRange": "^8.57.0 || ^9.0.0 || ^10.0.0",
+      "weeklyDownloads": 5322623,
+      "results": {
+        "9.39.5": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 253,
+          "parserRequested": true,
+          "parserLoaded": true,
+          "parseErrors": 2,
+          "lintedFiles": 6
+        },
+        "10.10.0": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 253,
+          "parserRequested": true,
+          "parserLoaded": true,
+          "parseErrors": 2,
+          "lintedFiles": 6
+        }
+      }
+    },
+    {
+      "name": "eslint-plugin-svelte",
+      "version": "3.23.0",
+      "declaredPeerRange": "^8.57.1 || ^9.0.0 || ^10.0.0",
+      "weeklyDownloads": 1293709,
+      "results": {
+        "9.39.5": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 84,
+          "parserRequested": true,
+          "parserLoaded": true,
+          "parseErrors": 6,
+          "lintedFiles": 7
+        },
+        "10.10.0": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 84,
+          "parserRequested": true,
+          "parserLoaded": true,
+          "parseErrors": 6,
+          "lintedFiles": 7
+        }
+      }
+    }
+  ]
+}

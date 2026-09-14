@@ -39,7 +39,7 @@ function record(byCause, finding, label, version) {
  * tool's. A green row measured on no code at all is still not a measurement,
  * and telling us so is this guard's whole job.
  */
-function unparsed(version, result) {
+function unparsed(version, result, plugin) {
   const files = result?.lintedFiles ?? 0;
   const errors = result?.parseErrors ?? 0;
   if (files === 0 || errors < files) return null;
@@ -49,7 +49,9 @@ function unparsed(version, result) {
     detail:
       `none of the ${files} fixture ${files === 1 ? 'file' : 'files'} parsed on eslint ${version}, ` +
       `so this row reports "${result.status}" without the rules having seen any code`,
-    fix: 'give the corpus a file this plugin\'s parser can read, or drop the plugin from packages/runner/src/plugins.json',
+    fix:
+      `add a fixture this parser can read to packages/runner/fixtures and list its extension under ` +
+      `"corpusExtensions" for ${plugin} in packages/runner/src/plugins.json, or drop the plugin`,
   };
 }
 
@@ -59,7 +61,7 @@ function findings(row) {
     const rules = result?.harness?.rules ?? [];
     for (const rule of rules) record(byCause, rule, `${rule.rule} (${version})`, version);
     if (rules.some((rule) => rule.cause === 'corpus-unparsed')) continue;
-    const gap = unparsed(version, result);
+    const gap = unparsed(version, result, row.name);
     if (gap) record(byCause, gap, `every rule (${version})`, version);
   }
   return [...byCause.values()];

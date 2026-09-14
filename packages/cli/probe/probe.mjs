@@ -13,7 +13,7 @@
  * hang in a worker thread when it is somewhere else.
  */
 import { readFile, writeFile } from 'node:fs/promises';
-import { dirname, isAbsolute, join, resolve } from 'node:path';
+import { dirname, extname, isAbsolute, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -28,7 +28,7 @@ const OUTPUT = join(HERE, 'probe-result.json');
 const CONFIG_ERROR =
   /Configuration for rule|should NOT have|must NOT have|Value ".*" should be|Unexpected top-level property|Key "rules"|requires? type information|parserOptions\.project|EXPERIMENTAL_useProjectService/i;
 
-const TS_EXTENSIONS = ['.ts', '.tsx', '.mts', '.cts'];
+const JS_EXTENSIONS = ['.js', '.jsx', '.mjs', '.cjs'];
 
 /** Enough evidence to say how widely a rule breaks without linting every file against it. */
 const EVIDENCE_CAP = 25;
@@ -79,8 +79,21 @@ function collectRuleNames(plugin) {
   return [...new Set(usable)];
 }
 
-function isTsFile(file) {
-  return TS_EXTENSIONS.some((e) => file.endsWith(e));
+function isPlainJsFile(file) {
+  return JS_EXTENSIONS.some((e) => file.endsWith(e));
+}
+
+/**
+ * A config block matching exactly the extensions in front of us, rather than a
+ * fixed list, so a plugin that brings a fixture only its own parser can read
+ * gets a block that matches it. Single-extension braces are spelled out because
+ * minimatch reads `{ts}` with no comma as the literal characters.
+ */
+function globFor(files) {
+  const extensions = [...new Set(files.map((file) => extname(file).slice(1)).filter(Boolean))].sort();
+  if (extensions.length === 0) return '**/*';
+  if (extensions.length === 1) return `**/*.${extensions[0]}`;
+  return `**/*.{${extensions.join(',')}}`;
 }
 
 /**
@@ -248,9 +261,9 @@ async function main() {
     }
   }
 
-  // TypeScript sources are skipped rather than reported as parse noise when the
-  // target has no parser for them.
-  const usableFiles = parser ? files : files.filter((f) => !isTsFile(f));
+  // TypeScript sources, and any extension a plugin brought its own parser for,
+  // are skipped rather than reported as parse noise when no parser loaded.
+  const usableFiles = parser ? files : files.filter(isPlainJsFile);
 
   const rules = Object.fromEntries(ruleNames.map((id) => [`${namespace}/${id}`, 'error']));
   const languageOptions = {
@@ -259,7 +272,7 @@ async function main() {
     sourceType: 'module',
     parserOptions: { ecmaFeatures: { jsx: true } },
   };
-  const lintableGlob = parser ? '**/*.{js,jsx,mjs,cjs,ts,tsx,mts,cts}' : '**/*.{js,jsx,mjs,cjs}';
+  const lintableGlob = globFor(usableFiles);
 
   function buildConfig(pluginObject, activeRules) {
     const common = { plugins: { [namespace]: pluginObject }, ...(settings ? { settings } : {}) };
