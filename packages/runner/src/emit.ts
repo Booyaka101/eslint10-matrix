@@ -1,9 +1,10 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import { dirname } from 'node:path';
-import { SCHEMA_VERSION, type Matrix, type PluginRow } from './types.js';
+import { SCHEMA_VERSION, type Matrix, type PluginRow, type PluginRunResult } from './types.js';
 
-const STATUSES = new Set(['clean', 'rule-crash', 'load-fail', 'install-fail']);
+const STATUSES = new Set(['clean', 'rule-crash', 'load-fail', 'install-fail', 'harness-misconfig']);
 const RESCUE_VERDICTS = new Set(['rescuable', 'partial-rescue', 'blocked']);
+const HARNESS_CAUSES = new Set(['missing-peer', 'parser-unavailable', 'ast-shape', 'corpus-unparsed']);
 
 export function buildMatrix(
   eslintVersions: { v9: string; v10: string },
@@ -16,6 +17,23 @@ export function buildMatrix(
     eslintVersions,
     plugins: [...rows].sort((a, b) => b.weeklyDownloads - a.weeklyDownloads),
   };
+}
+
+function harnessProblems(at: string, result: PluginRunResult | undefined): string[] {
+  const problems: string[] = [];
+  if (result?.status === 'harness-misconfig' && (result.harness?.rules.length ?? 0) === 0) {
+    problems.push(`${at}.status is harness-misconfig with no harness.rules to explain it`);
+  }
+  if (result?.harness === undefined) return problems;
+  if (!Array.isArray(result.harness.rules)) return [`${at}.harness.rules must be an array`];
+  for (const [j, rule] of result.harness.rules.entries()) {
+    const hat = `${at}.harness.rules[${j}]`;
+    if (!HARNESS_CAUSES.has(rule?.cause)) problems.push(`${hat}.cause invalid: ${rule?.cause}`);
+    for (const field of ['rule', 'message', 'subject', 'detail', 'fix'] as const) {
+      if (typeof rule?.[field] !== 'string') problems.push(`${hat}.${field} must be a string`);
+    }
+  }
+  return problems;
 }
 
 /** Returns a list of human-readable problems; empty means the document is valid. */
@@ -64,6 +82,16 @@ export function validateMatrix(value: unknown): string[] {
         }
       }
       if (typeof result?.totalRules !== 'number') problems.push(`${rat}.totalRules must be a number`);
+      problems.push(...harnessProblems(rat, result));
+    }
+
+    // A harness misconfiguration is a fact about this environment, so it cannot
+    // hold on one major and not the other. partitionHarness only ever sets the
+    // status on both results at once; anything else means a hand-edited board.
+    const ten = m.eslintVersions && row.results[m.eslintVersions.v10];
+    const nine = m.eslintVersions && row.results[m.eslintVersions.v9];
+    if (ten?.status === 'harness-misconfig' && nine?.status !== 'harness-misconfig') {
+      problems.push(`${at} is harness-misconfig on eslint 10 but ${nine?.status ?? 'untested'} on eslint 9`);
     }
 
     if (row.rescue !== undefined) {

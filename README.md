@@ -205,6 +205,7 @@ The buckets are the whole point:
 - **PARTIAL-RESCUE**. The wrap fixes most crashing rules; the report names the ones you still have to disable.
 - **SAFE TO FORCE**. Declares an old range but runs clean with every rule enabled. The `overrides` block installs it against ESLint 10 anyway. `$eslint` resolves to whatever your root `eslint` dependency is, so you do not have to repeat the version.
 - **CLEAN**. Already declares `^10`. Nothing to do.
+- **HARNESS MISCONFIG**. Not a verdict about the plugin at all: the same rules failed the same way on ESLint 9 and 10, which means the environment they were measured in was wrong, not the plugin. The row names the cause and the fix, and is left out of the blocking count and the `--ci` exit code.
 
 ## Rescue verdicts, measured not assumed
 
@@ -309,7 +310,12 @@ Nightly, for each plugin and each of ESLint 9.39.5 and 10.10.0:
 2. `npm install --legacy-peer-deps` the plugin at `latest`, ESLint at the pinned version, and any real peer packages it needs (`typescript`, `vue-eslint-parser`, `react`). The `--legacy-peer-deps` is the experiment: the declared range is what we are testing, so we install past it deliberately.
 3. Import the plugin, collect every rule from `configs.all.rules` (or `Object.keys(plugin.rules)`), and enable all of them at `error`.
 4. Lint a checked-in corpus of ordinary React, hooks, CommonJS, ESM, JSX-a11y and TypeScript source.
-5. Classify: **clean**, **rule-crash**, **load-fail**, or **install-fail**.
+5. Classify: **clean**, **rule-crash**, **load-fail**, **install-fail**, or **harness-misconfig**.
+   The last one is not about the plugin. A rule that crashes identically on ESLint 9 and on 10
+   cannot be telling us anything about ESLint 10, so crashes that name a package we did not
+   install, a parser that did not load, or an AST field the parser never produced are moved out of
+   the crash list and recorded with the fix that repairs them. A crash that appears only on 10
+   stays a crash whatever its message looks like.
 6. For a plugin that regressed on 10, install `@eslint/compat@2.1.1` into a fresh isolated directory
    (its peer range covers 10, no extra forcing needed) and repeat the identical run with the plugin
    wrapped. Crashes at zero is RESCUABLE, fewer is PARTIAL-RESCUE with the residual rules stored, no
@@ -400,9 +406,21 @@ report prints in grey: files left unscanned, a version read from the lockfile ra
       "weeklyDownloads": 50254779,
       "results": {
         "10.10.0": {
-          "status": "rule-crash",              // clean | rule-crash | load-fail | install-fail
+          "status": "rule-crash",              // clean | rule-crash | load-fail | install-fail | harness-misconfig
           "crashingRules": [{ "rule": "display-name", "message": "..." }],
-          "totalRules": 101
+          "totalRules": 101,
+          "harness": {                         // only when the environment, not the plugin, broke a rule
+            "rules": [
+              {
+                "rule": "no-deprecated-functions",
+                "message": "Unable to detect Jest version...",
+                "cause": "missing-peer",       // or parser-unavailable | ast-shape | corpus-unparsed
+                "subject": "jest",
+                "detail": "...",
+                "fix": "add \"jest\" to extraDeps for eslint-plugin-jest in packages/runner/src/plugins.json"
+              }
+            ]
+          }
         }
       },
       "rescue": {                              // only on plugins that regressed on 10

@@ -1,10 +1,18 @@
 import { displayPath } from './display-path.js';
-import type { Matrix, PluginRow, PluginRunResult, RescueResult } from './matrix.js';
+import type { HarnessRule, Matrix, PluginRow, PluginRunResult, RescueResult } from './matrix.js';
 import { rowFor } from './matrix.js';
 import { satisfies } from './semver-lite.js';
 import { pluginNamespace, rescueSnippet } from './snippet.js';
 
-export type Bucket = 'blocked' | 'rescuable' | 'partial-rescue' | 'safe-to-force' | 'clean' | 'untested' | 'unknown';
+export type Bucket =
+  | 'blocked'
+  | 'rescuable'
+  | 'partial-rescue'
+  | 'safe-to-force'
+  | 'clean'
+  | 'harness-misconfig'
+  | 'untested'
+  | 'unknown';
 
 export interface Entry {
   name: string;
@@ -28,6 +36,7 @@ export interface Report {
   partialRescue: Entry[];
   safeToForce: Entry[];
   clean: Entry[];
+  harnessMisconfig: Entry[];
   untested: Entry[];
   unknown: Entry[];
   overrides: Record<string, { eslint: string }>;
@@ -64,6 +73,10 @@ function describeFailure(rules: string[], result: PluginRunResult, eslintV10: st
  */
 export function regressionOnTen(onNine: PluginRunResult | undefined, onTen: PluginRunResult): string[] | null {
   if (onTen.status === 'clean') return null;
+  // A row measured in a broken environment says nothing about ESLint 10, so it
+  // can never be a regression, never be BLOCKED, and never enter the rescue
+  // pass, which reaches this through rescueEligibility().
+  if (onTen.status === 'harness-misconfig') return null;
   if (!onNine || onNine.status === 'clean') {
     return onTen.status === 'rule-crash' ? onTen.crashingRules.map((r) => r.rule) : [];
   }
@@ -75,7 +88,7 @@ export function regressionOnTen(onNine: PluginRunResult | undefined, onTen: Plug
   return newlyBroken.length > 0 ? newlyBroken : null;
 }
 
-export type Verdict = 'blocked' | 'rescuable' | 'partial-rescue' | 'force' | 'clean' | 'untested';
+export type Verdict = 'blocked' | 'rescuable' | 'partial-rescue' | 'force' | 'clean' | 'harness-misconfig' | 'untested';
 
 /**
  * The single place a matrix row becomes a verdict. The CLI buckets by it and the
@@ -90,6 +103,7 @@ export function verdictFor(
 ): { verdict: Verdict; regressedRules: string[] } {
   const onTen = row.results[versions.v10];
   if (!onTen) return { verdict: 'untested', regressedRules: [] };
+  if (onTen.status === 'harness-misconfig') return { verdict: 'harness-misconfig', regressedRules: [] };
 
   const regressed = regressionOnTen(row.results[versions.v9], onTen);
   if (regressed !== null) {
@@ -125,6 +139,7 @@ export function buildReport(
     partialRescue: [],
     safeToForce: [],
     clean: [],
+    harnessMisconfig: [],
     untested: [],
     unknown: [],
     overrides: {},
@@ -169,6 +184,16 @@ export function buildReport(
 
     const base = { name, version: row.version, declaredPeerRange: row.declaredPeerRange };
     const { verdict, regressedRules } = verdictFor(row, matrix.eslintVersions);
+
+    if (verdict === 'harness-misconfig') {
+      report.harnessMisconfig.push({
+        ...base,
+        bucket: 'harness-misconfig',
+        result,
+        reason: harnessReason(result),
+      });
+      continue;
+    }
 
     if (verdict === 'blocked' || verdict === 'rescuable' || verdict === 'partial-rescue') {
       const entry: Entry = {
@@ -215,7 +240,30 @@ export function buildReport(
   report.partialRescue.sort(byName);
   report.safeToForce.sort(byName);
   report.clean.sort(byName);
+  report.harnessMisconfig.sort(byName);
   return report;
+}
+
+/** One entry per distinct cause, so four rules failing the same way read as one finding. */
+function harnessFindings(result: PluginRunResult | undefined): HarnessRule[] {
+  const rules = result?.harness?.rules ?? [];
+  return [...new Map(rules.map((rule) => [`${rule.cause}:${rule.subject}`, rule])).values()];
+}
+
+function harnessReason(result: PluginRunResult): string {
+  const count = result.harness?.rules.length ?? 0;
+  const causes = harnessFindings(result)
+    .map((finding) => `${finding.cause} (${finding.subject})`)
+    .join(', ');
+  return `${count} ${count === 1 ? 'rule was' : 'rules were'} measured in a broken environment: ${causes}`;
+}
+
+/** The dim note under a row that kept some real crashes and lost some of ours. */
+function harnessExclusionNote(entry: Entry): string | null {
+  const count = entry.result?.harness?.rules.length ?? 0;
+  if (count === 0) return null;
+  const causes = harnessFindings(entry.result).map((f) => `${f.cause}: ${f.subject}`).join(', ');
+  return `${count} ${count === 1 ? 'rule' : 'rules'} excluded as harness misconfiguration (${causes})`;
 }
 
 /** Keeps a long crash message from running a terminal line past readability. */
@@ -295,6 +343,7 @@ export function renderReport(report: Report, options: { color?: boolean } = {}):
     report.partialRescue.length +
     report.safeToForce.length +
     report.clean.length +
+    report.harnessMisconfig.length +
     report.untested.length;
   const out: string[] = [];
   const plural = total === 1 ? 'plugin' : 'plugins';
@@ -315,7 +364,7 @@ export function renderReport(report: Report, options: { color?: boolean } = {}):
     const width = Math.max(...report.blocked.map((e) => label(e).length));
     for (const entry of report.blocked) {
       out.push(`  ${pad(label(entry), width + 2)}${entry.reason}`);
-      for (const line of [crashEvidence(entry), blockedRescueNote(entry.rescue)]) {
+      for (const line of [crashEvidence(entry), blockedRescueNote(entry.rescue), harnessExclusionNote(entry)]) {
         if (line) out.push(dim(`  ${' '.repeat(width + 2)}${line}`));
       }
     }
@@ -330,8 +379,9 @@ export function renderReport(report: Report, options: { color?: boolean } = {}):
     for (const entry of entries) {
       out.push('');
       out.push(`  ${label(entry)}  ${rescueLine(entry, report.eslintVersions.v10)}`);
-      const evidence = crashEvidence(entry);
-      if (evidence) out.push(dim(`    ${evidence}`));
+      for (const line of [crashEvidence(entry), harnessExclusionNote(entry)]) {
+        if (line) out.push(dim(`    ${line}`));
+      }
       out.push('');
       out.push(
         entry
@@ -376,6 +426,24 @@ export function renderReport(report: Report, options: { color?: boolean } = {}):
   if (report.untested.length > 0) {
     out.push(bold(`UNTESTED (${report.untested.length})`));
     for (const entry of report.untested) out.push(`  ${entry.name}  ${dim(entry.reason)}`);
+    out.push('');
+  }
+
+  if (report.harnessMisconfig.length > 0) {
+    out.push(
+      dim(bold(`HARNESS MISCONFIG (${report.harnessMisconfig.length})`)) +
+        dim('  measured with a broken environment, not a plugin failure')
+    );
+    const width = Math.max(...report.harnessMisconfig.map((e) => label(e).length));
+    for (const entry of report.harnessMisconfig) {
+      out.push(dim(`  ${pad(label(entry), width + 2)}${entry.reason}`));
+      const indent = ' '.repeat(width + 2);
+      for (const finding of harnessFindings(entry.result)) {
+        out.push(dim(`  ${indent}${finding.detail}`));
+        out.push(dim(`  ${indent}fix: ${finding.fix}`));
+      }
+      out.push(dim(`  ${indent}${ISSUE_URL}?title=${encodeURIComponent(`${entry.name}: measured with a broken harness`)}`));
+    }
     out.push('');
   }
 

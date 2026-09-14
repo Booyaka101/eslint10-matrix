@@ -1,20 +1,61 @@
 # Changelog
 
-## Unreleased
+## 1.3.0 - 2026-09-14
 
-- Two board rows were measuring the environment rather than ESLint 10. Both reported the same
-  failure on ESLint 9 and ESLint 10, which is the tell.
-  - Each plugin's parser now parses every file, not only the TypeScript ones.
-    `@typescript-eslint/eslint-plugin` was being run under espree on the `.js`, `.jsx`, `.mjs` and
-    `.cjs` fixtures, and four of its rules read fields espree never produces, so they threw
-    `Cannot read properties of undefined (reading 'length')` on both majors. It is clean on both
-    now. `scan` picks up the same change, and resolves `@typescript-eslint/parser` whenever the
-    repo has it installed rather than only when the repo contains `.ts` files.
-    ([#10](https://github.com/Booyaka101/eslint10-matrix/issues/10))
-  - `eslint-plugin-jest` is measured with `jest` installed, the way a repo that lints jest tests
-    has it. `no-deprecated-functions` reads a version out of the jest package and threw
-    `Unable to detect Jest version` without it, again on both majors. Clean on both now.
-    ([#11](https://github.com/Booyaka101/eslint10-matrix/issues/11))
+Two rows reached the published board saying a plugin was broken when what was broken was the
+environment we measured it in. Both reported the same failure on ESLint 9 and on ESLint 10, which
+is the tell: a run that fails identically on both majors cannot be telling you anything about
+ESLint 10. 1.3.0 fixes those two rows and then teaches the tool to recognise the shape, so the
+next one is reported as our problem instead of being published as a plugin failure.
+
+- **New `harness-misconfig` status and HARNESS MISCONFIG bucket.** Crashes that name a package we
+  did not install, a parser that did not load, an AST field the parser never produced, or a corpus
+  that did not parse are moved off the crash list into a `harness` object on the result, each with
+  a cause, the package or parser it is about, and the edit that fixes it. When neither major has a
+  crash left that belongs to the plugin, the row's status becomes `harness-misconfig` and its
+  verdict reads "not measured": it is counted in the plugin total, and deliberately not in the
+  blocking total or the `--ci` exit code, because we have not measured the plugin. A row that keeps
+  a real crash stays a `rule-crash` and prints one dim line naming what was excluded.
+- **The gate.** Apart from a parser that did not load, which is environment-wide by construction, a
+  rule is only attributed to the harness when *both* majors crash it for the *same* cause. A crash
+  that appears only on ESLint 10 is an ESLint 10 finding whatever its message looks like.
+  `eslint-plugin-react`'s `contextOrFilename.getFilename is not a function` matches the AST-shape
+  pattern exactly and stays RESCUABLE with its 38 rules, because ESLint 9 runs it fine.
+- A method missing on `context` or `sourceCode` is never called a harness problem. Those are the
+  APIs ESLint 9 and 10 deleted, which is the plugin's problem and the one the rescue pass exists to
+  fix. `eslint-plugin-node` fails that way on both majors, so only this keeps its 20 crashing rules
+  and its RESCUABLE verdict intact.
+- `scripts/check-harness.mjs` prints every row carrying harness data with its suggested fix and
+  exits 1, and runs as a new `harness-guard` job in the nightly. The board stops being able to
+  publish a broken measurement quietly.
+- The static site gains a "not measured" pill, verdict, summary card and filter, and each such row
+  expands to the excluded rules and the fix.
+- Replaying the board 1.2.1 published through the new code moves no row into the new bucket and
+  changes no plugin's tier. The only rows it moves are the two below, on the board published
+  before they were fixed.
+
+Fixed in the environment itself, so the board no longer carries either row:
+
+- Each plugin's parser now parses every file, not only the TypeScript ones.
+  `@typescript-eslint/eslint-plugin` was being run under espree on the `.js`, `.jsx`, `.mjs` and
+  `.cjs` fixtures, and four of its rules read fields espree never produces, so they threw
+  `Cannot read properties of undefined (reading 'length')` on both majors. It is clean on both
+  now. `scan` picks up the same change, and resolves `@typescript-eslint/parser` whenever the
+  repo has it installed rather than only when the repo contains `.ts` files.
+  ([#10](https://github.com/Booyaka101/eslint10-matrix/issues/10))
+- `eslint-plugin-jest` is measured with `jest` installed, the way a repo that lints jest tests
+  has it. `no-deprecated-functions` reads a version out of the jest package and threw
+  `Unable to detect Jest version` without it, again on both majors. Clean on both now.
+  ([#11](https://github.com/Booyaka101/eslint10-matrix/issues/11))
+
+`schemaVersion` stays 1 and a board written by 1.3.0 stays readable by 1.2.1 and earlier: the
+`harness` object is an extra field they ignore, and the new status does not fail their shape check.
+Checked against the published 1.2.1, a `harness-misconfig` row reads as CLEAN when the plugin
+declares `^10` and as SAFE TO FORCE when it does not, and does not count towards `--ci`. So an old
+CLI calls such a row ready rather than broken, which is the optimistic answer, not the alarming
+one, and matches 1.3.0 on the part that matters: it never blocks an upgrade on a measurement we do
+not stand behind. Upgrade to see the cause and the fix. In practice a published board should never
+carry one, which is what the new `harness-guard` nightly job is for.
 
 ## 1.2.1 - 2026-09-10
 

@@ -6,6 +6,7 @@ import { corpusFiles, CORPUS_DIR } from './corpus.js';
 import { buildMatrix, writeMatrix } from './emit.js';
 import { eslintDistTags, packageFacts } from './registry.js';
 import { pluginNamespace } from '../../cli/dist/snippet.js';
+import { partitionHarness } from '../../cli/dist/harness.js';
 import { mapWithConcurrency, probe, rescuePass, type ProbePlan } from '../../cli/dist/probe-run.js';
 import type { PluginRow, PluginRunResult, PluginSpec } from './types.js';
 
@@ -112,6 +113,14 @@ async function main(): Promise<void> {
     for (const version of [eslintVersions.v9, eslintVersions.v10]) {
       results[version] = await probePair(spec, version, opts.keepTemp);
     }
+    // Before the rescue pass, so a row that only ever measured our own broken
+    // environment cannot be BLOCKED and cannot spend an install being rescued.
+    const partitioned = partitionHarness(results[eslintVersions.v9], results[eslintVersions.v10]!, {
+      plugin: spec.name,
+      recordFiles: false,
+    });
+    results[eslintVersions.v9] = partitioned.onNine!;
+    results[eslintVersions.v10] = partitioned.onTen;
     const rescue = await rescuePass(results, eslintVersions, () => corpusPlan(spec, eslintVersions.v10), {
       keepTemp: opts.keepTemp,
     });

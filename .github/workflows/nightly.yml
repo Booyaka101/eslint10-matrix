@@ -91,12 +91,40 @@ jobs:
             git push
           fi
 
+      - name: Keep the merged board for the harness guard
+        uses: actions/upload-artifact@v7
+        with:
+          name: matrix
+          path: matrix.json
+          retention-days: 7
+
       - uses: actions/configure-pages@v6
       - uses: actions/upload-pages-artifact@v5
         with:
           path: site/dist
           # site/build.mjs writes .nojekyll, and v4 stopped packing dotfiles.
           include-hidden-files: true
+
+  # Reads the artifact rather than the commit: merge pushes to main, and a guard
+  # that checked out main would race that push.
+  harness-guard:
+    name: harness guard
+    needs: merge
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: matrix
+
+      - name: Fail if any row was measured with a broken environment
+        run: node scripts/check-harness.mjs matrix.json
 
   deploy:
     name: deploy pages

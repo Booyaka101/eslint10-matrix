@@ -1,0 +1,275 @@
+{
+  "capturedFrom": "matrix.json at 2992fee, the board published by 1.2.1",
+  "verdicts": [
+    {
+      "name": "@typescript-eslint/eslint-plugin",
+      "verdict": "clean",
+      "regressedRules": 0
+    },
+    {
+      "name": "eslint-plugin-react-hooks",
+      "verdict": "clean",
+      "regressedRules": 0
+    },
+    {
+      "name": "eslint-plugin-react",
+      "verdict": "rescuable",
+      "regressedRules": 38
+    },
+    {
+      "name": "eslint-plugin-import",
+      "verdict": "rescuable",
+      "regressedRules": 3
+    },
+    {
+      "name": "eslint-plugin-jsx-a11y",
+      "verdict": "force",
+      "regressedRules": 0
+    },
+    {
+      "name": "eslint-plugin-prettier",
+      "verdict": "clean",
+      "regressedRules": 0
+    },
+    {
+      "name": "eslint-plugin-react-refresh",
+      "verdict": "clean",
+      "regressedRules": 0
+    },
+    {
+      "name": "@next/eslint-plugin-next",
+      "verdict": "force",
+      "regressedRules": 0
+    },
+    {
+      "name": "eslint-plugin-jest",
+      "verdict": "clean",
+      "regressedRules": 0
+    },
+    {
+      "name": "eslint-plugin-storybook",
+      "verdict": "clean",
+      "regressedRules": 0
+    },
+    {
+      "name": "eslint-plugin-testing-library",
+      "verdict": "clean",
+      "regressedRules": 0
+    },
+    {
+      "name": "eslint-plugin-n",
+      "verdict": "clean",
+      "regressedRules": 0
+    },
+    {
+      "name": "eslint-plugin-unicorn",
+      "verdict": "clean",
+      "regressedRules": 0
+    },
+    {
+      "name": "eslint-plugin-es-x",
+      "verdict": "clean",
+      "regressedRules": 0
+    },
+    {
+      "name": "eslint-plugin-promise",
+      "verdict": "clean",
+      "regressedRules": 0
+    },
+    {
+      "name": "eslint-plugin-vue",
+      "verdict": "clean",
+      "regressedRules": 0
+    },
+    {
+      "name": "@stylistic/eslint-plugin",
+      "verdict": "clean",
+      "regressedRules": 0
+    },
+    {
+      "name": "eslint-plugin-jsdoc",
+      "verdict": "clean",
+      "regressedRules": 0
+    },
+    {
+      "name": "eslint-plugin-import-x",
+      "verdict": "clean",
+      "regressedRules": 0
+    },
+    {
+      "name": "eslint-plugin-simple-import-sort",
+      "verdict": "clean",
+      "regressedRules": 0
+    },
+    {
+      "name": "eslint-plugin-playwright",
+      "verdict": "clean",
+      "regressedRules": 0
+    },
+    {
+      "name": "eslint-plugin-security",
+      "verdict": "force",
+      "regressedRules": 0
+    },
+    {
+      "name": "eslint-plugin-sonarjs",
+      "verdict": "clean",
+      "regressedRules": 0
+    },
+    {
+      "name": "eslint-plugin-cypress",
+      "verdict": "clean",
+      "regressedRules": 0
+    },
+    {
+      "name": "@vitest/eslint-plugin",
+      "verdict": "clean",
+      "regressedRules": 0
+    },
+    {
+      "name": "eslint-plugin-node",
+      "verdict": "rescuable",
+      "regressedRules": 8
+    },
+    {
+      "name": "eslint-plugin-eslint-comments",
+      "verdict": "rescuable",
+      "regressedRules": 8
+    },
+    {
+      "name": "@angular-eslint/eslint-plugin",
+      "verdict": "clean",
+      "regressedRules": 0
+    },
+    {
+      "name": "@tanstack/eslint-plugin-query",
+      "verdict": "clean",
+      "regressedRules": 0
+    },
+    {
+      "name": "eslint-plugin-perfectionist",
+      "verdict": "clean",
+      "regressedRules": 0
+    },
+    {
+      "name": "eslint-plugin-turbo",
+      "verdict": "clean",
+      "regressedRules": 0
+    },
+    {
+      "name": "eslint-plugin-no-only-tests",
+      "verdict": "force",
+      "regressedRules": 0
+    },
+    {
+      "name": "@eslint-community/eslint-plugin-eslint-comments",
+      "verdict": "clean",
+      "regressedRules": 0
+    },
+    {
+      "name": "eslint-plugin-regexp",
+      "verdict": "clean",
+      "regressedRules": 0
+    },
+    {
+      "name": "eslint-plugin-jest-dom",
+      "verdict": "clean",
+      "regressedRules": 0
+    },
+    {
+      "name": "@eslint-react/eslint-plugin",
+      "verdict": "clean",
+      "regressedRules": 0
+    },
+    {
+      "name": "eslint-plugin-mocha",
+      "verdict": "clean",
+      "regressedRules": 0
+    },
+    {
+      "name": "eslint-plugin-tailwindcss",
+      "verdict": "clean",
+      "regressedRules": 0
+    },
+    {
+      "name": "eslint-plugin-boundaries",
+      "verdict": "clean",
+      "regressedRules": 0
+    },
+    {
+      "name": "eslint-plugin-svelte",
+      "verdict": "clean",
+      "regressedRules": 0
+    },
+    {
+      "name": "eslint-plugin-react-compiler",
+      "verdict": "clean",
+      "regressedRules": 0
+    },
+    {
+      "name": "eslint-plugin-jsonc",
+      "verdict": "clean",
+      "regressedRules": 0
+    },
+    {
+      "name": "eslint-plugin-compat",
+      "verdict": "clean",
+      "regressedRules": 0
+    },
+    {
+      "name": "eslint-plugin-i18next",
+      "verdict": "force",
+      "regressedRules": 0
+    },
+    {
+      "name": "eslint-plugin-yml",
+      "verdict": "clean",
+      "regressedRules": 0
+    },
+    {
+      "name": "eslint-plugin-lodash",
+      "verdict": "rescuable",
+      "regressedRules": 1
+    },
+    {
+      "name": "eslint-plugin-vitest",
+      "verdict": "blocked",
+      "regressedRules": 0
+    },
+    {
+      "name": "eslint-plugin-deprecation",
+      "verdict": "blocked",
+      "regressedRules": 0
+    },
+    {
+      "name": "eslint-plugin-markdown",
+      "verdict": "clean",
+      "regressedRules": 0
+    },
+    {
+      "name": "eslint-plugin-toml",
+      "verdict": "clean",
+      "regressedRules": 0
+    },
+    {
+      "name": "eslint-plugin-eslint-plugin",
+      "verdict": "clean",
+      "regressedRules": 0
+    },
+    {
+      "name": "@html-eslint/eslint-plugin",
+      "verdict": "clean",
+      "regressedRules": 0
+    },
+    {
+      "name": "eslint-plugin-depend",
+      "verdict": "clean",
+      "regressedRules": 0
+    },
+    {
+      "name": "@ternaus/eslint-plugin-react",
+      "verdict": "clean",
+      "regressedRules": 0
+    }
+  ]
+}
