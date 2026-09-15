@@ -52,7 +52,18 @@ jobs:
             echo "::error::$TAG does not match packages/cli/package.json ($manifest)"
             exit 1
           fi
-          echo "publishing eslint10-matrix@$manifest from $TAG"
+          # Re-dispatching a tag that already shipped is an operator slip, not a
+          # broken build, so it skips the publish instead of going red. The read
+          # is only trustworthy going in: npm 404s a version for some minutes
+          # AFTER it lands, so a dispatch on the heels of a publish still falls
+          # through to `npm publish` and fails there the way it always has.
+          if npm view "eslint10-matrix@$manifest" version >/dev/null 2>&1; then
+            echo "ALREADY_PUBLISHED=1" >> "$GITHUB_ENV"
+            echo "eslint10-matrix@$manifest is already on the registry, nothing published." >> "$GITHUB_STEP_SUMMARY"
+            echo "eslint10-matrix@$manifest is already on the registry; will verify the tree and stop."
+          else
+            echo "publishing eslint10-matrix@$manifest from $TAG"
+          fi
 
       - run: npm ci
       - run: npm run build
@@ -60,10 +71,12 @@ jobs:
       - run: npm test
 
       - name: Publish to npm
+        if: env.ALREADY_PUBLISHED != '1'
         working-directory: packages/cli
         run: npm publish
 
       - name: What to check
+        if: env.ALREADY_PUBLISHED != '1'
         run: |
           echo "The proof of success is the '+ eslint10-matrix@<version>' line above plus the"
           echo "Sigstore entry, not a registry lookup: npm processes publishes asynchronously"
