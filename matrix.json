@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-09-14T03:34:14.854Z",
+  "generatedAt": "2026-09-15T03:31:54.929Z",
   "eslintVersions": {
     "v9": "9.39.5",
     "v10": "10.10.0"
@@ -304,7 +304,7 @@
     },
     {
       "name": "eslint-plugin-react-refresh",
-      "version": "0.5.6",
+      "version": "0.5.7",
       "declaredPeerRange": "^9 || ^10",
       "weeklyDownloads": 35346714,
       "results": {
@@ -514,7 +514,7 @@
     },
     {
       "name": "eslint-plugin-jsdoc",
-      "version": "64.3.10",
+      "version": "64.4.0",
       "declaredPeerRange": "^7.0.0 || ^8.0.0 || ^9.0.0 || ^10.0.0",
       "weeklyDownloads": 5288500,
       "results": {
@@ -568,19 +568,19 @@
     },
     {
       "name": "eslint-plugin-playwright",
-      "version": "2.11.0",
+      "version": "2.12.0",
       "declaredPeerRange": ">=8.40.0",
       "weeklyDownloads": 4152358,
       "results": {
         "9.39.5": {
           "status": "clean",
           "crashingRules": [],
-          "totalRules": 59
+          "totalRules": 67
         },
         "10.10.0": {
           "status": "clean",
           "crashingRules": [],
-          "totalRules": 59
+          "totalRules": 67
         }
       }
     },
@@ -933,7 +933,7 @@
     },
     {
       "name": "eslint-plugin-turbo",
-      "version": "2.10.12",
+      "version": "2.10.13",
       "declaredPeerRange": ">6.6.0",
       "weeklyDownloads": 2206157,
       "results": {
@@ -1023,7 +1023,7 @@
     },
     {
       "name": "@eslint-react/eslint-plugin",
-      "version": "5.19.0",
+      "version": "5.19.1",
       "declaredPeerRange": "*",
       "weeklyDownloads": 1502554,
       "results": {
