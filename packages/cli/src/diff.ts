@@ -1,5 +1,7 @@
 import { palette } from './colour.js';
-import type { Matrix, PluginRow, PluginRunResult, RescueVerdict, Status } from './matrix.js';
+import type { Matrix, MeasuredEnv, PluginRow, PluginRunResult, RescueVerdict, Status } from './matrix.js';
+import { describeDelta, versionDeltas, type VersionDelta } from './version-delta.js';
+import { wrapList } from './wrap.js';
 
 /**
  * Why two boards disagree, most specific first. `unknown-env` is not a weaker
@@ -16,11 +18,7 @@ export interface StatusChange {
   after: Status | 'untested';
 }
 
-export interface EnvChange {
-  package: string;
-  before: string | null;
-  after: string | null;
-}
+export type EnvChange = VersionDelta;
 
 export interface DiffEntry {
   name: string;
@@ -123,22 +121,23 @@ function majorsInvolved(change: Pick<DiffEntry, 'statuses' | 'rescue'>, boards: 
   return involved.size > 0 ? MAJORS.filter((major) => involved.has(major)) : [...MAJORS];
 }
 
+/**
+ * The runtime sits in with the dependencies because it drifts the same way and
+ * explains the same thing: the nightly floats node 22 and takes whichever npm
+ * ships with it, so either can move under a spec that did not.
+ */
+function withRuntime(env: MeasuredEnv): Record<string, string | null> {
+  return { ...env.deps, node: env.node, npm: env.npm };
+}
+
 function envDiff(before: PluginRow, after: PluginRow, boards: Boards, majors: readonly Major[]): EnvChange[] {
   const found = new Map<string, EnvChange>();
   for (const major of majors) {
     const was = before.results[boards.before.eslintVersions[major]]?.measuredWith;
     const now = after.results[boards.after.eslintVersions[major]]?.measuredWith;
     if (!was || !now) continue;
-    const deps = [...new Set([...Object.keys(was.deps), ...Object.keys(now.deps)])].map(
-      (name) => [name, was.deps[name] ?? null, now.deps[name] ?? null] as const
-    );
-    // The runtime is diffed beside the dependencies because it drifts the same way
-    // and explains the same thing. The nightly floats node 22 and takes whichever
-    // npm ships with it, so either can move under a spec that did not.
-    const pairs = [['node', was.node, now.node] as const, ['npm', was.npm, now.npm] as const, ...deps];
-    for (const [name, from, to] of pairs) {
-      if (from === to) continue;
-      found.set(`${name}|${from}|${to}`, { package: name, before: from, after: to });
+    for (const delta of versionDeltas(withRuntime(was), withRuntime(now))) {
+      found.set(`${delta.package}|${delta.before}|${delta.after}`, delta);
     }
   }
   return [...found.values()].sort((a, b) => a.package.localeCompare(b.package));
@@ -164,7 +163,7 @@ function environmentUnrecorded(
 }
 
 function describeEnv(changes: EnvChange[]): string {
-  return changes.map((c) => `${c.package} ${c.before ?? '(missing)'} -> ${c.after ?? '(missing)'}`).join(', ');
+  return changes.map(describeDelta).join(', ');
 }
 
 function attribute(
@@ -309,19 +308,10 @@ const CAUSE_WIDTH = 100;
  */
 function causeLines(cause: DiffCause, detail: string): string[] {
   const head = `  ${cause}: `;
+  // The other two causes are sentences, and re-flowing English at a comma reads
+  // worse than one long line.
   if (cause !== 'eslint' && cause !== 'env') return [head + detail];
-  const lines: string[] = [];
-  let current = '';
-  for (const part of detail.split(', ')) {
-    const next = current === '' ? head + part : `${current}, ${part}`;
-    // The comma it grows if anything follows it counts against the budget too.
-    if (current !== '' && next.length + 1 > CAUSE_WIDTH) {
-      lines.push(`${current},`);
-      current = ' '.repeat(head.length) + part;
-    } else current = next;
-  }
-  lines.push(current);
-  return lines;
+  return wrapList(head, detail.split(', '), CAUSE_WIDTH);
 }
 
 export function renderDiff(result: DiffResult, options: { color?: boolean } = {}): string {

@@ -226,6 +226,29 @@ would not fit beside its indent, which a scoped parser and two long plugin names
 `--json` carries the whole object. A verdict without this is a claim you cannot go back and check,
 which is what `diff` and the nightly drift guard are built on.
 
+### When the board's versions are not yours
+
+A verdict is only as good as what it was measured against, so `check` says when the two disagree:
+
+```
+CLEAN (1)  already declares ^10
+  eslint-plugin-vue@10.5.0
+
+MEASURED DIFFERENTLY (1)  the board reached these verdicts with versions this repo does not have
+  eslint-plugin-vue  vue-eslint-parser 10.3.0, here 9.1.0
+```
+
+The board says eslint-plugin-vue is clean on ESLint 10. It got there with vue-eslint-parser 10.3.0,
+and this repo is on 9.1.0, so that clean result is about a setup this repo does not have. It is a
+note and not a verdict: the section never moves a row between buckets and never changes the `--ci`
+exit code, because the board cannot know whether the older parser is a problem for you.
+
+Only packages both sides have are compared, so a peer the probe installed and you do not use stays
+out of the way. ESLint itself is left out too, since a repo running `check` is on 9 by definition.
+Versions are read from `node_modules` first and the lockfile second, the same way `scan` reads them,
+and `--json` carries the full list under `measuredDrift`. Boards published before 1.4.0 recorded no
+environment, so nothing appears against them.
+
 ## Rescue verdicts, measured not assumed
 
 ESLint 9 reached end of life on 2026-08-06, so waiting on 9 is no longer a plan. For plugins that
@@ -442,7 +465,7 @@ Each entry may carry `settings`, `parser` and `extraDeps`, the same configuratio
 npm ci
 npm run build                                    # both packages
 npm run lint                                     # this repo lints itself, on ESLint 10
-npm test                                         # 237 tests, vitest (build first: the end-to-end tests drive the built CLI)
+npm test                                         # 254 tests, vitest (build first: the end-to-end tests drive the built CLI)
 node packages/runner/dist/run.js --only eslint-plugin-react   # one plugin
 node packages/runner/dist/run.js                 # full pass, ~4 minutes at concurrency 6
 node site/build.mjs --in matrix.json --out site/dist

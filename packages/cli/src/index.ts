@@ -4,7 +4,8 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { diffBlocks, diffMatrices, renderDiff } from './diff.js';
 import { displayPath } from './display-path.js';
-import { DEFAULT_MATRIX_URL, loadMatrix, MatrixError, type Matrix } from './matrix.js';
+import { measuredDrift } from './env-drift.js';
+import { DEFAULT_MATRIX_URL, loadMatrix, MatrixError, rowFor, type Matrix } from './matrix.js';
 import { buildReport, renderReport, type Report } from './report.js';
 import { ConfigError, resolveConfig } from './resolve-config.js';
 import { scan, ScanError } from './scan.js';
@@ -198,6 +199,7 @@ function jsonReport(report: Report, source: string, stale?: string): string {
       untested: report.untested,
       unknown: report.unknown,
       overrides: report.overrides,
+      ...(report.measuredDrift ? { measuredDrift: report.measuredDrift } : {}),
       notes: report.notes,
     },
     null,
@@ -295,7 +297,15 @@ async function commandCheck(opts: Options): Promise<number> {
   }
 
   const load = await loadMatrix({ url: opts.matrix, noCache: opts.noCache, timeoutMs: opts.timeoutMs });
-  const report = buildReport(load.matrix, { plugins, unknown, projectDir, configPath });
+  // The ESLint 10 run is the one the report is about, so it is the environment
+  // worth comparing. Rows the board never measured contribute nothing and cost
+  // no filesystem reads.
+  const v10 = load.matrix.eslintVersions.v10;
+  const drift = await measuredDrift(
+    plugins.map((name) => ({ name, measuredWith: rowFor(load.matrix, name)?.results[v10]?.measuredWith })),
+    projectDir
+  );
+  const report = buildReport(load.matrix, { plugins, unknown, projectDir, configPath, measuredDrift: drift });
 
   if (opts.json) {
     console.log(jsonReport(report, load.source, load.staleReason));

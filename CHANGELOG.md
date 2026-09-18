@@ -62,6 +62,15 @@ live now.
   twice in an ordinary terminal and was the one line in the report nothing clipped. The site shows
   the full list per major inside the expanded row, because the two majors install separately and the
   versions around the plugin can differ between them.
+- **`check` says when the board's versions are not yours.** A MEASURED DIFFERENTLY section names
+  every plugin whose ESLint 10 verdict was reached against a package version this repo does not
+  have, with both numbers: `vue-eslint-parser 10.3.0, here 9.1.0`. Until the board recorded what it
+  installed there was no way to say this at all, and it is the thing the recording is for. A repo
+  on an older parser was being told a plugin is clean on the strength of a run it is not
+  reproducing. Only packages both sides have are compared, ESLint itself is excluded because a repo
+  running `check` is on 9 by definition, and versions are read from `node_modules` first and the
+  lockfile second, the same as `scan`. It never moves a row between buckets and never changes the
+  `--ci` exit code: the board knows the versions disagree, not that the disagreement matters.
 - `examples/react-app` pins `typescript` again. Its lockfile had drifted to TypeScript 7, which
   `@typescript-eslint/parser@8` refuses to load, so the example the README walks you through
   reported HARNESS MISCONFIG instead of the rescue story it is there to show. The measured line is

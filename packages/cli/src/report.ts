@@ -1,9 +1,11 @@
 import { palette } from './colour.js';
 import { displayPath } from './display-path.js';
+import type { MeasuredDrift } from './env-drift.js';
 import type { HarnessRule, Matrix, MeasuredEnv, PluginRow, PluginRunResult, RescueResult } from './matrix.js';
 import { rowFor } from './matrix.js';
 import { satisfies } from './semver-lite.js';
 import { pluginNamespace, rescueSnippet } from './snippet.js';
+import { wrapList } from './wrap.js';
 
 export type Bucket =
   | 'blocked'
@@ -43,6 +45,8 @@ export interface Report {
   overrides: Record<string, { eslint: string }>;
   /** Set by `scan`: what was executed here instead of read from the board. */
   measured?: Measured;
+  /** Rows whose verdict was measured against versions this repo does not have. */
+  measuredDrift?: MeasuredDrift[];
   /** Anything the reader needs to know about how the answer was reached. */
   notes: string[];
 }
@@ -126,6 +130,7 @@ export function buildReport(
     projectDir: string;
     configPath: string;
     measured?: Measured;
+    measuredDrift?: MeasuredDrift[];
     notes?: string[];
   }
 ): Report {
@@ -145,6 +150,7 @@ export function buildReport(
     unknown: [],
     overrides: {},
     ...(input.measured ? { measured: input.measured } : {}),
+    ...(input.measuredDrift?.length ? { measuredDrift: input.measuredDrift } : {}),
     notes: input.notes ?? [],
   };
 
@@ -482,6 +488,20 @@ export function renderReport(report: Report, options: { color?: boolean } = {}):
   if (report.unknown.length > 0) {
     out.push(bold(`UNKNOWN (${report.unknown.length})`));
     for (const entry of report.unknown) out.push(`  ${entry.name}  ${dim(entry.reason)}`);
+    out.push('');
+  }
+
+  if (report.measuredDrift?.length) {
+    out.push(
+      yellow(bold(`MEASURED DIFFERENTLY (${report.measuredDrift.length})`)) +
+        '  the board reached these verdicts with versions this repo does not have'
+    );
+    const width = Math.max(...report.measuredDrift.map((d) => d.plugin.length));
+    for (const drift of report.measuredDrift) {
+      const head = `  ${pad(drift.plugin, width + 2)}`;
+      const items = drift.deltas.map((d) => `${d.package} ${d.before}, here ${d.after}`);
+      for (const line of wrapList(head, items, 118)) out.push(dim(line));
+    }
     out.push('');
   }
 
