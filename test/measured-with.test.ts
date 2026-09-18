@@ -1,23 +1,10 @@
-import { mkdir, mkdtemp, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { envKey, envsDir, measureEnvironment, probe, specName } from '../packages/cli/src/probe-run.js';
 import type { Matrix, MeasuredEnv } from '../packages/cli/src/matrix.js';
 import { buildReport, describeMeasuredEnv, renderReport } from '../packages/cli/src/report.js';
-
-async function tempDir(prefix = 'e10m-measured-'): Promise<string> {
-  return mkdtemp(join(tmpdir(), prefix));
-}
-
-/** A node_modules the way npm leaves one, with a manifest per installed package. */
-async function fakeInstall(dir: string, packages: Record<string, string>): Promise<void> {
-  for (const [name, version] of Object.entries(packages)) {
-    const pkgDir = join(dir, 'node_modules', ...name.split('/'));
-    await mkdir(pkgDir, { recursive: true });
-    await writeFile(join(pkgDir, 'package.json'), JSON.stringify({ name, version }));
-  }
-}
+import { fakeInstall, tempDir } from './fake-repo.js';
 
 describe('specName', () => {
   it('takes the range off a plain name', () => {

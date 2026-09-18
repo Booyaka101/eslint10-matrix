@@ -71,6 +71,25 @@ live now.
   running `check` is on 9 by definition, and versions are read from `node_modules` first and the
   lockfile second, the same as `scan`. It never moves a row between buckets and never changes the
   `--ci` exit code: the board knows the versions disagree, not that the disagreement matters.
+- **`scan --against [board]`.** After the report, `scan` says where this repo and a board disagree
+  and why, in the words `diff` already uses: the board is the before, this repo is the after. Both
+  sides are matrices carrying what they were measured in, so the attribution comes free and nobody
+  has to run two commands and compare by eye. Only rows the board also measures are compared, since
+  a plugin it has never heard of would otherwise read as `added to the board`, and a board with none
+  of them in common says so rather than printing an empty diff, which reads as agreement.
+- **`diff --only <a,b>`.** Narrows a comparison to the plugins you named, out of the changes and out
+  of the counts both, so `--ci` judges exactly what was printed. A repo watching its own five
+  plugins should not be failed by a sixth it does not use moving overnight. The header counts the
+  rows compared rather than the rows each board holds, so a narrowed run does not report 49 plugins
+  going missing.
+- The MEASURED DIFFERENTLY section ends by naming the command that can settle it. It can say the
+  versions disagree and not whether the disagreement matters, and `scan` is the one that runs the
+  plugins against what you actually have.
+- `check` falls back to the ESLint 9 run's environment when the ESLint 10 one recorded none. A row
+  whose ESLint 10 install failed wrote nothing, and the ESLint 9 run of the same row was installed
+  the same night out of the same registry, so it answers the question instead of leaving the row
+  silent.
+- The screenshot scripts report a bad flag or a missing file as one line instead of a stack.
 - `examples/react-app` pins `typescript` again. Its lockfile had drifted to TypeScript 7, which
   `@typescript-eslint/parser@8` refuses to load, so the example the README walks you through
   reported HARNESS MISCONFIG instead of the rescue story it is there to show. The measured line is

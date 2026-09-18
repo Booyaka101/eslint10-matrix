@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { mkdtemp, mkdir, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import {
   hasNodeModules,
@@ -11,13 +10,10 @@ import {
   stripBom,
 } from '../packages/cli/src/installed.js';
 import { REPO_ROOT } from './probe-sandbox.js';
+import { tempDir } from './fake-repo.js';
 
 const SCAN_REPO = join(REPO_ROOT, 'test', 'fixtures', 'scan-repo');
 const PLUGIN = 'eslint-plugin-fixture-lazy-import';
-
-async function tempDir(): Promise<string> {
-  return mkdtemp(join(tmpdir(), 'e10m-test-'));
-}
 
 describe('resolving what a repo actually has installed', () => {
   it('reads the installed version rather than the range or the lockfile', async () => {

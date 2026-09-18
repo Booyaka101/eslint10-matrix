@@ -48,6 +48,7 @@ export interface BoardSummary {
   source: string;
   generatedAt: string;
   eslintVersions: { v9: string; v10: string };
+  /** How many rows of this board the comparison covered. */
   plugins: number;
 }
 
@@ -68,12 +69,12 @@ interface Rows {
   after: PluginRow;
 }
 
-function summarise(matrix: Matrix, source: string): BoardSummary {
+function summarise(matrix: Matrix, source: string, compared: number): BoardSummary {
   return {
     source,
     generatedAt: matrix.generatedAt,
     eslintVersions: matrix.eslintVersions,
-    plugins: matrix.plugins.length,
+    plugins: compared,
   };
 }
 
@@ -201,13 +202,41 @@ function attribute(
   return { cause: 'unexplained', causeDetail: 'no recorded version changed' };
 }
 
+export interface DiffOptions {
+  /**
+   * Rows to compare, by name. Everything else is left out of the changes and out
+   * of the counts, so `--ci` judges exactly what was printed. A name on neither
+   * board is not an error: it is a row that has not changed by any measure.
+   */
+  only?: readonly string[];
+}
+
+/**
+ * The rows two matrices can be compared on. Used where one side is a repo rather
+ * than a board: the board measures 54 plugins and a repo uses five, so without
+ * this every plugin the repo does not use reads as `removed from the board`,
+ * which is a sentence about the board that is not true.
+ */
+export function sharedRows(board: Matrix, local: Matrix): string[] {
+  const measured = new Set(board.plugins.map((row) => row.name));
+  return local.plugins.map((row) => row.name).filter((name) => measured.has(name));
+}
+
+function rowsByName(matrix: Matrix, only?: readonly string[]): Map<string, PluginRow> {
+  const wanted = only ? new Set(only) : null;
+  return new Map(
+    matrix.plugins.filter((row) => !wanted || wanted.has(row.name)).map((row) => [row.name, row])
+  );
+}
+
 export function diffMatrices(
   before: { matrix: Matrix; source: string },
-  after: { matrix: Matrix; source: string }
+  after: { matrix: Matrix; source: string },
+  options: DiffOptions = {}
 ): DiffResult {
   const boards = { before: before.matrix, after: after.matrix };
-  const beforeRows = new Map(before.matrix.plugins.map((row) => [row.name, row]));
-  const afterRows = new Map(after.matrix.plugins.map((row) => [row.name, row]));
+  const beforeRows = rowsByName(before.matrix, options.only);
+  const afterRows = rowsByName(after.matrix, options.only);
   const changes: DiffEntry[] = [];
 
   for (const [name, afterRow] of afterRows) {
@@ -244,8 +273,10 @@ export function diffMatrices(
 
   changes.sort((a, b) => a.name.localeCompare(b.name));
   return {
-    before: summarise(before.matrix, before.source),
-    after: summarise(after.matrix, after.source),
+    // The count is what was compared, not what each board holds. Narrowed to five
+    // rows, a header reading `54 -> 5 plugins` says 49 rows went missing.
+    before: summarise(before.matrix, before.source, beforeRows.size),
+    after: summarise(after.matrix, after.source, afterRows.size),
     changes,
     counts: count(changes),
   };
@@ -314,7 +345,17 @@ function causeLines(cause: DiffCause, detail: string): string[] {
   return wrapList(head, detail.split(', '), CAUSE_WIDTH);
 }
 
-export function renderDiff(result: DiffResult, options: { color?: boolean } = {}): string {
+export interface RenderOptions {
+  color?: boolean;
+  /**
+   * What to say when nothing moved. `scan` compares a board against this repo
+   * rather than two boards against each other, and there "no row changed" is a
+   * sentence about a history that does not exist.
+   */
+  unchanged?: string;
+}
+
+export function renderDiff(result: DiffResult, options: RenderOptions = {}): string {
   const { dim, bold, red, green } = palette(options.color ?? false);
 
   const out: string[] = [''];
@@ -328,7 +369,7 @@ export function renderDiff(result: DiffResult, options: { color?: boolean } = {}
   out.push('');
 
   if (result.changes.length === 0) {
-    out.push(green('No row changed status or rescue verdict.'));
+    out.push(green(options.unchanged ?? 'No row changed status or rescue verdict.'));
     out.push('');
     return out.join('\n');
   }

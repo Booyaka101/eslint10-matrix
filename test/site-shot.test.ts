@@ -56,3 +56,42 @@ describe('site-shot when Chrome does not come up', () => {
     expect(out).toContain('usage: site-shot.mjs');
   });
 });
+
+/**
+ * These are run by hand when a screenshot goes stale, and the two things that
+ * actually go wrong are a mistyped flag and a path that is not there. A stack
+ * buries both.
+ */
+describe('what the screenshot scripts say when they cannot run', () => {
+  it('names the flag it did not recognise', async () => {
+    const { code, out } = await runScript('terminal-shot.mjs', ['--nope', 'x']);
+    expect(code).toBe(1);
+    expect(out).toContain('terminal-shot: unknown argument --nope');
+    expect(out).toContain('usage: terminal-shot.mjs');
+    expect(out).not.toContain('    at ');
+  });
+
+  /**
+   * The read is a top level await, which rejects as an uncaught exception rather
+   * than an unhandled rejection. One handler has to cover both.
+   */
+  it('names a missing input file rather than printing a stack', async () => {
+    const { code, out } = await runScript('terminal-shot.mjs', [
+      '--in',
+      join(tmpdir(), 'e10m-no-such-capture.ansi'),
+      '--out',
+      join(tmpdir(), 'e10m-never-written.png'),
+    ]);
+    expect(code).toBe(1);
+    expect(out).toContain('terminal-shot: ');
+    expect(out).toContain('no such file or directory');
+    expect(out).not.toContain('    at ');
+  });
+
+  it('does the same for site-shot', async () => {
+    const { code, out } = await runScript('site-shot.mjs', ['--clip']);
+    expect(code).toBe(1);
+    expect(out).toContain('site-shot: --clip needs a value');
+    expect(out).not.toContain('    at ');
+  });
+});

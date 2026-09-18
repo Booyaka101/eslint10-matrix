@@ -25,3 +25,17 @@ export function parseFlags(argv, spec, usage, seed = {}) {
 function name(flag) {
   return flag.replace(/^--/, '');
 }
+
+/**
+ * Report a hand-run script's failures as one line rather than a stack. The two
+ * things that actually go wrong are a mistyped flag and a missing file, and a
+ * stack buries both. A top-level await that rejects arrives here rather than as
+ * an unhandled rejection, so one handler covers the whole script without
+ * wrapping it in a main().
+ */
+export function reportFailures(script) {
+  process.on('uncaughtException', (err) => {
+    console.error(`${script}: ${err.message}`);
+    process.exit(1);
+  });
+}

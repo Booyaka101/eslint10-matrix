@@ -30,7 +30,9 @@ function summarise(entries: Entry[]): { name: string; bucket: string; reason: st
  * and into the CLI. Nothing about the tiers was meant to change, so this replays
  * the 1.1.0 matrix through the current code and compares against output captured
  * before the move. Both fixtures are frozen: refreshing the published board must
- * not touch them.
+ * not touch them. The rendered capture was retaken once, in 1.4.0, when the notes
+ * started counting the indent they print under; the two lines that moved are the
+ * two that ran past 120 columns, and no verdict, bucket or override changed.
  */
 describe('tiers are unchanged by the shared-module extraction', () => {
   it('reproduces the captured verdicts, buckets, overrides and rendered report', async () => {

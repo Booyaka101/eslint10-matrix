@@ -60,7 +60,7 @@ executed here against your installed versions on 7 files, baseline eslint 9.39.5
 
 BLOCKED (1)
   eslint-plugin-vitest@0.5.4  fails to load on 10.10.0
-                              @eslint/compat did not help: still fails to load with @eslint/compat installed: Class extends v…
+                              @eslint/compat did not help: still fails to load with @eslint/compat installed: Class ext…
                               measured with eslint 10.10.0, +4 more, node 22.18.0, npm 10.9.3
 
 RESCUABLE (2)  crashes as published, verified clean when wrapped with @eslint/compat
@@ -81,7 +81,7 @@ RESCUABLE (2)  crashes as published, verified clean when wrapped with @eslint/co
     ];
 
   eslint-plugin-react@7.37.5  6 rules crash on 10.10.0, all recover wrapped in fixupPluginRules()
-    react/forward-ref-uses-ref crashed on eslint.config.js: Error while loading rule 'react/forward-ref-uses… (6 more files)
+    react/forward-ref-uses-ref crashed on eslint.config.js: Error while loading rule 'react/forward-ref-… (6 more files)
     measured with eslint 10.10.0, @typescript-eslint/parser 8.67.0, +2 more, node 22.18.0, npm 10.9.3
 
     import { fixupPluginRules } from '@eslint/compat';
@@ -131,6 +131,33 @@ versions your lockfile pins, so the numbers are about your repo and nothing else
 cached under `~/.cache/eslint10-matrix/envs` and pruned after 14 days, so the second run is much
 faster than the first.
 
+### Where your answer and the board's differ
+
+`scan --against` prints the report, then says where this repo and a board disagree, in the same
+words `diff` uses:
+
+```
+$ eslint10-matrix scan . --against board.json
+
+board.json -> this repo
+generated 2026-09-15T03:31:54.929Z -> 2026-09-18T06:22:24.900Z, 5 -> 5 plugins
+
+eslint-plugin-promise  rule-crash -> clean on 10.10.0
+  plugin: eslint-plugin-promise 7.4.0 -> 7.3.0
+
+1 row changed, 0 added, 0 removed. 1 attributed, 0 with no recorded environment.
+```
+
+The board is the before and this repo is the after, so a cause line reads as what is different here:
+that board measured eslint-plugin-promise at 7.4.0 and this app is on 7.3.0. Pass the flag bare to
+compare against the published board, or name one to compare against that. Only
+plugins the board also measures are compared: a plugin it has never heard of is on the report above
+with its own verdict, and calling it `added to the board` would be a sentence about the board that
+is not true. If the board measures none of them, the command says so rather than printing an empty
+diff, which would read as agreement. The board is fetched fresh and never read from or written to
+the cache, the same as `diff`, and the report is printed before the fetch, so a board that cannot be
+reached costs you the comparison and not the scan you waited for.
+
 What it refuses to do:
 
 - **No `node_modules`**: it stops with exit 2 and tells you to install. It will never quietly fall back to whatever npm publishes as latest, because that is the question `check` answers.
@@ -150,7 +177,7 @@ matrix generated 2026-09-15T03:31:54.929Z
 
 BLOCKED (1)
   eslint-plugin-vitest@0.5.4  fails to load on 10.10.0
-                              @eslint/compat did not help: still fails to load with @eslint/compat installed: Class extends v…
+                              @eslint/compat did not help: still fails to load with @eslint/compat installed: Class ext…
 
 RESCUABLE (2)  crashes as published, verified clean when wrapped with @eslint/compat
   npm install --save-dev @eslint/compat, then in eslint.config.js:
@@ -236,6 +263,7 @@ CLEAN (1)  already declares ^10
 
 MEASURED DIFFERENTLY (1)  the board reached these verdicts with versions this repo does not have
   eslint-plugin-vue  vue-eslint-parser 10.3.0, here 9.1.0
+  eslint10-matrix scan measures these against the versions you have
 ```
 
 The board says eslint-plugin-vue is clean on ESLint 10. It got there with vue-eslint-parser 10.3.0,
@@ -247,7 +275,9 @@ Only packages both sides have are compared, so a peer the probe installed and yo
 out of the way. ESLint itself is left out too, since a repo running `check` is on 9 by definition.
 Versions are read from `node_modules` first and the lockfile second, the same way `scan` reads them,
 and `--json` carries the full list under `measuredDrift`. Boards published before 1.4.0 recorded no
-environment, so nothing appears against them.
+environment, so nothing appears against them. The section can say the versions disagree and not
+whether the disagreement matters, so it ends by naming the command that can: `scan` runs the same
+plugins against what you actually have installed.
 
 ## Rescue verdicts, measured not assumed
 
@@ -328,6 +358,11 @@ The nightly commits `matrix.json` every day, so a week of boards is already in t
 there is nothing to keep or fetch. The path after the colon is relative to the repository root
 unless you start it with `./`. A path that really exists on disk is read as a file, colon or not.
 
+`--only eslint-plugin-vue,eslint-plugin-jest` narrows the comparison to the plugins you named.
+Everything else stays out of the changes and out of the counts, so `--ci` judges exactly what was
+printed: a repo watching its own five plugins is not failed by a sixth it does not use moving
+overnight. A name neither board has is a row that has not changed by any measure, not an error.
+
 The cause is the first of these that applies, most specific first:
 
 | cause | means |
@@ -383,6 +418,8 @@ eslint10-matrix diff [a] <b>     what changed between two boards, and why. Each 
 | `--no-cache` | `check`, `scan` | never read or write `~/.cache/eslint10-matrix`. `diff` never touches the cache at all: it compares the two boards you named, so a board it cannot fetch is an error rather than a silent fall back to the last one `check` saw. |
 | `--no-color` | all | disable ANSI colour |
 | `--plugins <a,b>` | `check`, `scan` | skip config resolution and use these package names. The way past a config this tool cannot read, at the cost of the config's `ignores` and `settings`. |
+| `--only <a,b>` | `diff` | compare only these plugins. The counts and `--ci` then cover exactly what was printed. |
+| `--against [board]` | `scan` | after the report, say where this repo disagrees with a board and why. No board named means the published one. |
 | `--matrix <src>` | `check` | read a board from a local path, a different URL, or a git revision such as `HEAD~7:matrix.json` |
 | `--timeout <ms>` | `check`, `diff` | network timeout for fetching a board (default 15000) |
 | `--eslint <version>` | `scan` | the ESLint 10 release to measure against (default 10.10.0) |
@@ -465,7 +502,7 @@ Each entry may carry `settings`, `parser` and `extraDeps`, the same configuratio
 npm ci
 npm run build                                    # both packages
 npm run lint                                     # this repo lints itself, on ESLint 10
-npm test                                         # 254 tests, vitest (build first: the end-to-end tests drive the built CLI)
+npm test                                         # 271 tests, vitest (build first: the end-to-end tests drive the built CLI)
 node packages/runner/dist/run.js --only eslint-plugin-react   # one plugin
 node packages/runner/dist/run.js                 # full pass, ~4 minutes at concurrency 6
 node site/build.mjs --in matrix.json --out site/dist

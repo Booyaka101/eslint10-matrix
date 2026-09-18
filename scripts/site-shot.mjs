@@ -14,7 +14,7 @@ import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { parseFlags } from './args.mjs';
+import { parseFlags, reportFailures } from './args.mjs';
 import { chromePath } from './chrome.mjs';
 
 const VIEWPORT = { width: 1280, height: 2400 };
@@ -128,6 +128,8 @@ async function evaluate(cdp, expression) {
   if (exceptionDetails) throw new Error(exceptionDetails.exception?.description ?? 'page threw');
   return result.value;
 }
+
+reportFailures('site-shot');
 
 const opts = parseArgs(process.argv.slice(2));
 const url = pathToFileURL(resolve(opts.in)).href;

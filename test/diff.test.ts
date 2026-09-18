@@ -2,7 +2,7 @@ import { mkdir, mkdtemp, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
-import { diffBlocks, diffMatrices, renderDiff, type DiffResult } from '../packages/cli/src/diff.js';
+import { diffBlocks, diffMatrices, renderDiff, sharedRows, type DiffResult } from '../packages/cli/src/diff.js';
 import { main, parseArgs } from '../packages/cli/src/index.js';
 import { cacheDir, cachePath, DEFAULT_MATRIX_URL, type Matrix, type MeasuredEnv, type PluginRunResult, type Status } from '../packages/cli/src/matrix.js';
 
@@ -325,6 +325,102 @@ describe('the cause line under a changed row', () => {
   });
 });
 
+/**
+ * A repo runs five plugins and the board measures fifty-four, so a comparison
+ * that is not narrowed says `removed from the board` about every plugin the repo
+ * does not happen to use.
+ */
+describe('comparing only some rows', () => {
+  const two = (tenA: PluginRunResult, tenB: PluginRunResult): Matrix =>
+    board([
+      { name: 'eslint-plugin-vue', ten: tenA },
+      { name: 'eslint-plugin-promise', ten: tenB },
+    ]);
+
+  it('leaves unnamed rows out of the changes and out of the counts', () => {
+    const before = two(result('clean'), result('clean'));
+    const after = two(result('rule-crash'), result('rule-crash'));
+
+    const all = diff(before, after);
+    expect(all.counts.changed).toBe(2);
+
+    const narrowed = diffMatrices(
+      { matrix: before, source: 'before.json' },
+      { matrix: after, source: 'after.json' },
+      { only: ['eslint-plugin-vue'] }
+    );
+    expect(narrowed.counts.changed).toBe(1);
+    expect(narrowed.changes.map((change) => change.name)).toEqual(['eslint-plugin-vue']);
+  });
+
+  /** Narrowing to a row neither board has is a comparison of nothing, not an error. */
+  it('takes a name neither board has', () => {
+    const narrowed = diffMatrices(
+      { matrix: board([{ name: 'eslint-plugin-vue' }]), source: 'before.json' },
+      { matrix: board([{ name: 'eslint-plugin-vue' }]), source: 'after.json' },
+      { only: ['eslint-plugin-nothing'] }
+    );
+    expect(narrowed.changes).toEqual([]);
+    expect(narrowed.counts).toMatchObject({ changed: 0, added: 0, removed: 0 });
+  });
+
+  /** `54 -> 5 plugins` over a narrowed comparison reads as 49 rows going missing. */
+  it('counts what was compared, not what each board holds', () => {
+    const published = board([
+      { name: 'eslint-plugin-vue' },
+      { name: 'eslint-plugin-promise' },
+      { name: 'eslint-plugin-jest' },
+    ]);
+    const local = board([{ name: 'eslint-plugin-vue' }]);
+    const narrowed = diffMatrices(
+      { matrix: published, source: 'board' },
+      { matrix: local, source: 'this repo' },
+      { only: sharedRows(published, local) }
+    );
+    expect(narrowed.before.plugins).toBe(1);
+    expect(narrowed.after.plugins).toBe(1);
+  });
+
+  it('does not read a row present on one side only as added or removed', () => {
+    const narrowed = diffMatrices(
+      { matrix: board([{ name: 'eslint-plugin-vue' }]), source: 'before.json' },
+      { matrix: two(result('clean'), result('clean')), source: 'after.json' },
+      { only: ['eslint-plugin-vue'] }
+    );
+    expect(narrowed.counts.added).toBe(0);
+  });
+});
+
+describe('sharedRows', () => {
+  it('is the rows the board also measures, in the local order', () => {
+    const published = board([{ name: 'eslint-plugin-vue' }, { name: 'eslint-plugin-promise' }]);
+    const local = board([{ name: 'eslint-plugin-promise' }, { name: 'eslint-plugin-private' }]);
+    expect(sharedRows(published, local)).toEqual(['eslint-plugin-promise']);
+  });
+
+  it('is empty when the two have nothing in common', () => {
+    expect(sharedRows(board([{ name: 'eslint-plugin-vue' }]), board([{ name: 'eslint-plugin-mine' }]))).toEqual([]);
+  });
+});
+
+/**
+ * `scan --against` compares a board with this repo, where "no row changed" is a
+ * sentence about a history that does not exist.
+ */
+describe('what renderDiff says when nothing moved', () => {
+  const same = (): DiffResult => diff(board([{ name: 'eslint-plugin-vue' }]), board([{ name: 'eslint-plugin-vue' }]));
+
+  it('talks about rows changing by default', () => {
+    expect(renderDiff(same(), { color: false })).toContain('No row changed status or rescue verdict.');
+  });
+
+  it('lets the caller put it another way', () => {
+    const text = renderDiff(same(), { color: false, unchanged: 'This repo and the board agree.' });
+    expect(text).toContain('This repo and the board agree.');
+    expect(text).not.toContain('No row changed');
+  });
+});
+
 describe('the diff command', () => {
   async function boardFile(matrix: Matrix): Promise<string> {
     const dir = await mkdtemp(join(tmpdir(), 'e10m-diff-'));
@@ -410,6 +506,41 @@ describe('the diff command', () => {
   it('compares a single board against the published one', () => {
     expect(parseArgs(['diff', 'matrix.json']).boards).toEqual([DEFAULT_MATRIX_URL, 'matrix.json']);
     expect(parseArgs(['diff', 'a.json', 'b.json']).boards).toEqual(['a.json', 'b.json']);
+  });
+
+  /**
+   * The point of narrowing in CI: a repo watching its own five plugins should not
+   * be failed by a sixth it does not use moving on the board overnight.
+   */
+  it('judges under --ci exactly what --only printed', async () => {
+    const parser = env({ eslint: V10, 'vue-eslint-parser': '10.2.0' });
+    const promise = { name: 'eslint-plugin-promise', ten: result('clean') };
+    const before = board([{ ten: result('clean', parser) }, promise]);
+    const after = board([{ ten: result('rule-crash', parser) }, promise]);
+
+    const everything = await runDiff(before, after, ['--ci']);
+    expect(everything.code).toBe(1);
+
+    const narrowed = await runDiff(before, after, ['--ci', '--only', 'eslint-plugin-promise']);
+    expect(narrowed.code).toBe(0);
+    expect(narrowed.out).not.toContain('eslint-plugin-vue');
+    expect(narrowed.out).toContain('No row changed status or rescue verdict.');
+  });
+
+  it('takes --only as a comma separated list or repeated', () => {
+    expect(parseArgs(['diff', 'a.json', 'b.json', '--only', 'a,b']).only).toEqual(['a', 'b']);
+    expect(parseArgs(['diff', 'a.json', 'b.json', '--only', 'a', '--only', 'b']).only).toEqual(['a', 'b']);
+    expect(parseArgs(['diff', 'a.json', 'b.json', '--only', ' a , b ']).only).toEqual(['a', 'b']);
+    expect(parseArgs(['diff', 'a.json', 'b.json']).only).toEqual([]);
+  });
+
+  it('reads --against with no board as the published one', () => {
+    expect(parseArgs(['scan', '.', '--against']).against).toBe(DEFAULT_MATRIX_URL);
+    expect(parseArgs(['scan', '.', '--against', 'matrix.json']).against).toBe('matrix.json');
+    // A following flag is the next flag, not this one's argument.
+    expect(parseArgs(['scan', '.', '--against', '--json']).against).toBe(DEFAULT_MATRIX_URL);
+    expect(parseArgs(['scan', '.', '--against', '--json']).json).toBe(true);
+    expect(parseArgs(['scan', '.']).against).toBeUndefined();
   });
 
   it('exits 2 with a usage error when given no board at all', async () => {

@@ -1,19 +1,15 @@
-import { mkdir, mkdtemp, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { measuredDrift } from '../packages/cli/src/env-drift.js';
 import type { Matrix, MeasuredEnv } from '../packages/cli/src/matrix.js';
 import { buildReport, renderReport } from '../packages/cli/src/report.js';
+import { fakeInstall, tempDir } from './fake-repo.js';
 import { ROOT, runNode } from './run-script.js';
 
 async function repo(installed: Record<string, string>, files: Record<string, string> = {}): Promise<string> {
-  const dir = await mkdtemp(join(tmpdir(), 'e10m-drift-'));
-  for (const [name, version] of Object.entries(installed)) {
-    const pkgDir = join(dir, 'node_modules', ...name.split('/'));
-    await mkdir(pkgDir, { recursive: true });
-    await writeFile(join(pkgDir, 'package.json'), JSON.stringify({ name, version }));
-  }
+  const dir = await tempDir('e10m-drift-');
+  await fakeInstall(dir, installed);
   for (const [name, text] of Object.entries(files)) await writeFile(join(dir, name), text);
   return dir;
 }
@@ -119,6 +115,17 @@ describe('the MEASURED DIFFERENTLY section', () => {
     expect(text).toContain('vue-eslint-parser 10.3.0, here 9.1.0');
   });
 
+  /**
+   * The section can say the versions disagree, not whether the disagreement
+   * matters. The command that can is the one that runs the plugins here.
+   */
+  it('points at the command that can settle it', () => {
+    const text = reportWith([
+      { plugin: 'eslint-plugin-vue', deltas: [{ package: 'vue-eslint-parser', before: '10.3.0', after: '9.1.0' }] },
+    ]);
+    expect(text).toContain('eslint10-matrix scan measures these against the versions you have');
+  });
+
   it('is absent when nothing drifted', () => {
     expect(reportWith([])).not.toContain('MEASURED DIFFERENTLY');
   });
@@ -136,7 +143,7 @@ describe('the MEASURED DIFFERENTLY section', () => {
       .split('\n')
       .filter((line) => line.includes('here '));
     expect(lines.length).toBeGreaterThan(1);
-    for (const line of lines) expect(line.length).toBeLessThanOrEqual(118);
+    for (const line of lines) expect(line.length).toBeLessThanOrEqual(120);
     for (const delta of deltas) expect(lines.join('\n')).toContain(`${delta.package} ${delta.before}, here ${delta.after}`);
   });
 });
@@ -146,7 +153,10 @@ describe('the MEASURED DIFFERENTLY section', () => {
  * is clean on ESLint 10 on the strength of a parser it is not running.
  */
 describe('check, end to end', () => {
-  it('tells a repo when its own versions are not the ones the verdict came from', async () => {
+  const CLI = join(ROOT, 'packages', 'cli', 'dist', 'index.js');
+
+  /** A repo on vue-eslint-parser 9.1.0, and a board that measured vue on 10.3.0. */
+  async function driftRepo(measuredOn: '9.39.5' | '10.10.0'): Promise<{ dir: string; matrixPath: string }> {
     const dir = await repo({ 'eslint-plugin-vue': '10.5.0', 'vue-eslint-parser': '9.1.0' });
     await writeFile(
       join(dir, 'package.json'),
@@ -170,15 +180,18 @@ describe('check, end to end', () => {
     await writeFile(join(dir, 'node_modules', 'eslint-plugin-vue', 'index.js'), 'export default { rules: {} };\n');
 
     const board: Matrix = structuredClone(CLEAN_BOARD);
-    board.plugins[0]!.results['10.10.0']!.measuredWith = env({
+    board.plugins[0]!.results[measuredOn]!.measuredWith = env({
       eslint: '10.10.0',
       'vue-eslint-parser': '10.3.0',
     });
     const matrixPath = join(dir, 'matrix.json');
     await writeFile(matrixPath, JSON.stringify(board));
+    return { dir, matrixPath };
+  }
 
-    const cli = join(ROOT, 'packages', 'cli', 'dist', 'index.js');
-    const human = await runNode(cli, ['check', dir, '--matrix', matrixPath, '--no-cache', '--no-color']);
+  it('tells a repo when its own versions are not the ones the verdict came from', async () => {
+    const { dir, matrixPath } = await driftRepo('10.10.0');
+    const human = await runNode(CLI, ['check', dir, '--matrix', matrixPath, '--no-cache', '--no-color']);
     expect(human.code).toBe(0);
     expect(human.out).toContain('MEASURED DIFFERENTLY (1)');
     expect(human.out).toContain('vue-eslint-parser 10.3.0, here 9.1.0');
@@ -187,11 +200,11 @@ describe('check, end to end', () => {
 
     // A note, not a verdict: the board knows the versions disagree, not that the
     // disagreement matters, so it must not fail anybody's build.
-    const ci = await runNode(cli, ['check', dir, '--matrix', matrixPath, '--no-cache', '--ci', '--no-color']);
+    const ci = await runNode(CLI, ['check', dir, '--matrix', matrixPath, '--no-cache', '--ci', '--no-color']);
     expect(ci.code).toBe(0);
     expect(ci.out).toContain('MEASURED DIFFERENTLY (1)');
 
-    const json = await runNode(cli, ['check', dir, '--matrix', matrixPath, '--no-cache', '--json']);
+    const json = await runNode(CLI, ['check', dir, '--matrix', matrixPath, '--no-cache', '--json']);
     const parsed = JSON.parse(json.out) as { measuredDrift?: Array<{ plugin: string }> };
     expect(parsed.measuredDrift).toEqual([
       {
@@ -199,5 +212,17 @@ describe('check, end to end', () => {
         deltas: [{ package: 'vue-eslint-parser', before: '10.3.0', after: '9.1.0' }],
       },
     ]);
+  });
+
+  /**
+   * A row whose ESLint 10 install failed recorded nothing, and the ESLint 9 run of
+   * the same row was installed the same night out of the same registry. Falling
+   * back to it answers the question rather than leaving the row silent.
+   */
+  it('falls back to the ESLint 9 run when the ESLint 10 one recorded nothing', async () => {
+    const { dir, matrixPath } = await driftRepo('9.39.5');
+    const { code, out } = await runNode(CLI, ['check', dir, '--matrix', matrixPath, '--no-cache', '--no-color']);
+    expect(code).toBe(0);
+    expect(out).toContain('vue-eslint-parser 10.3.0, here 9.1.0');
   });
 });

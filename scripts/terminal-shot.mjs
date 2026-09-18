@@ -3,9 +3,13 @@
  * Renders captured terminal output to a PNG for the README, so the screenshots
  * can be regenerated from a real run instead of being redrawn by hand.
  *
- *   node packages/cli/dist/index.js scan examples/react-app --color > out.ansi
+ *   (cd examples/react-app && node ../../packages/cli/dist/index.js scan . --color) > out.ansi
  *   node scripts/terminal-shot.mjs --in out.ansi --out docs/scan-terminal.png \
  *     --prompt "npx eslint10-matrix scan" --title examples/react-app --lines 23
+ *
+ * The capture runs from inside the example and scans `.`, which is what the
+ * committed PNG was made from. Scanning `examples/react-app` from the repo root
+ * prints a different path and the shot stops matching.
  *
  * Needs Chrome; pass --chrome if it is not in one of the usual install paths.
  */
@@ -14,7 +18,7 @@ import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { parseFlags } from './args.mjs';
+import { parseFlags, reportFailures } from './args.mjs';
 import { chromePath } from './chrome.mjs';
 
 const FONT_SIZE = 13;
@@ -95,6 +99,8 @@ function page(body, title, width) {
 </div>
 `;
 }
+
+reportFailures('terminal-shot');
 
 const opts = parseArgs(process.argv.slice(2));
 const raw = await readFile(resolve(opts.in), 'utf8');

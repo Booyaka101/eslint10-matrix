@@ -273,16 +273,24 @@ function harnessExclusionNote(entry: Entry): string | null {
   return `${count} ${count === 1 ? 'rule' : 'rules'} excluded as harness misconfiguration (${causes})`;
 }
 
+/** The column every note in the report is clipped or wrapped to fit inside. */
+const WIDTH = 120;
+
 /** Keeps a long crash message from running a terminal line past readability. */
-function clip(text: string, max = 96): string {
+function clip(text: string, max: number): string {
   return text.length > max ? `${text.slice(0, max - 1)}…` : text;
+}
+
+/** What is left for a note printed under `indent` spaces. Never less than legible. */
+function budget(indent: number, used = 0): number {
+  return Math.max(40, WIDTH - indent - used);
 }
 
 /**
  * The file citation `scan` adds: the corpus board has no file to name, so this
  * is empty for a report built from the published matrix.
  */
-function crashEvidence(entry: Entry): string | null {
+function crashEvidence(entry: Entry, indent: number): string | null {
   const crash = entry.result?.crashingRules.find((r) => r.file);
   if (!crash?.file) return null;
   const others = (crash.fileCount ?? 1) - 1;
@@ -291,7 +299,7 @@ function crashEvidence(entry: Entry): string | null {
   // The message is what gets clipped, never the file count: how much of the repo
   // a rule breaks is the part a reader cannot reconstruct from anywhere else.
   const head = `${pluginNamespace(entry.name)}/${crash.rule} crashed on ${crash.file}: `;
-  return `${head}${clip(crash.message, Math.max(40, 120 - head.length - more.length))}${more}`;
+  return `${head}${clip(crash.message, budget(indent, head.length + more.length))}${more}`;
 }
 
 /**
@@ -320,19 +328,21 @@ export function describeMeasuredEnv(env: MeasuredEnv, max = Number.POSITIVE_INFI
 function measuredNote(entry: Entry, indent: number): string | null {
   const env = entry.result?.measuredWith;
   if (!env) return null;
-  const budget = Math.max(40, 120 - indent);
+  const room = budget(indent);
   for (let shown = 6; shown > 1; shown -= 1) {
     const line = describeMeasuredEnv(env, shown);
-    if (line.length <= budget) return line;
+    if (line.length <= room) return line;
   }
   return describeMeasuredEnv(env, 1);
 }
 
 /** The one-line "why this is still blocked" note under a BLOCKED plugin. */
-function blockedRescueNote(rescue: RescueResult | undefined): string | null {
+function blockedRescueNote(rescue: RescueResult | undefined, indent: number): string | null {
   if (!rescue) return null;
-  if (!rescue.attempted) return clip(`@eslint/compat not attempted: ${rescue.skipReason ?? 'no reason recorded'}`);
-  return clip(`@eslint/compat did not help: ${rescue.detail ?? 'the wrap changed nothing'}`);
+  const room = budget(indent);
+  if (!rescue.attempted)
+    return clip(`@eslint/compat not attempted: ${rescue.skipReason ?? 'no reason recorded'}`, room);
+  return clip(`@eslint/compat did not help: ${rescue.detail ?? 'the wrap changed nothing'}`, room);
 }
 
 /**
@@ -400,7 +410,13 @@ export function renderReport(report: Report, options: { color?: boolean } = {}):
     const width = Math.max(...report.blocked.map((e) => label(e).length));
     for (const entry of report.blocked) {
       out.push(`  ${pad(label(entry), width + 2)}${entry.reason}`);
-      for (const line of [crashEvidence(entry), blockedRescueNote(entry.rescue), harnessExclusionNote(entry), measuredNote(entry, width + 4)]) {
+      const indent = width + 4;
+      for (const line of [
+        crashEvidence(entry, indent),
+        blockedRescueNote(entry.rescue, indent),
+        harnessExclusionNote(entry),
+        measuredNote(entry, indent),
+      ]) {
         if (line) out.push(dim(`  ${' '.repeat(width + 2)}${line}`));
       }
     }
@@ -415,7 +431,7 @@ export function renderReport(report: Report, options: { color?: boolean } = {}):
     for (const entry of entries) {
       out.push('');
       out.push(`  ${label(entry)}  ${rescueLine(entry, report.eslintVersions.v10)}`);
-      for (const line of [crashEvidence(entry), harnessExclusionNote(entry), measuredNote(entry, 4)]) {
+      for (const line of [crashEvidence(entry, 4), harnessExclusionNote(entry), measuredNote(entry, 4)]) {
         if (line) out.push(dim(`    ${line}`));
       }
       out.push('');
@@ -500,8 +516,12 @@ export function renderReport(report: Report, options: { color?: boolean } = {}):
     for (const drift of report.measuredDrift) {
       const head = `  ${pad(drift.plugin, width + 2)}`;
       const items = drift.deltas.map((d) => `${d.package} ${d.before}, here ${d.after}`);
-      for (const line of wrapList(head, items, 118)) out.push(dim(line));
+      for (const line of wrapList(head, items, WIDTH)) out.push(dim(line));
     }
+    // The section states a disagreement and cannot say whether it matters. The
+    // command that can is the one that runs the plugins here, so say so rather
+    // than leaving the reader with a fact and no move.
+    out.push(dim('  eslint10-matrix scan measures these against the versions you have'));
     out.push('');
   }
 
