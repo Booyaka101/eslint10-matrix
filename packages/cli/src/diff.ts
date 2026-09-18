@@ -139,18 +139,23 @@ function envDiff(before: PluginRow, after: PluginRow, boards: Boards, majors: re
   return [...found.values()].sort((a, b) => a.package.localeCompare(b.package));
 }
 
-/** True when either board measured this row without recording its environment. */
+/**
+ * True when either board reached this row without leaving an environment behind.
+ * A result that is absent counts: `untested -> clean` has nothing recorded on the
+ * before side, so nothing can be ruled out there either, and calling that
+ * `unexplained` would fail the nightly for a row nobody had measured yet.
+ */
 function environmentUnrecorded(
   before: PluginRow,
   after: PluginRow,
   boards: Boards,
   majors: readonly Major[]
 ): boolean {
-  return majors.some((major) => {
-    const was = before.results[boards.before.eslintVersions[major]];
-    const now = after.results[boards.after.eslintVersions[major]];
-    return (was !== undefined && !was.measuredWith) || (now !== undefined && !now.measuredWith);
-  });
+  return majors.some(
+    (major) =>
+      !before.results[boards.before.eslintVersions[major]]?.measuredWith ||
+      !after.results[boards.after.eslintVersions[major]]?.measuredWith
+  );
 }
 
 function describeEnv(changes: EnvChange[]): string {

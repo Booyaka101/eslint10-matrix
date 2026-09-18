@@ -312,9 +312,12 @@ Attribution is scoped to the ESLint major the row actually moved on. A row that 
 explained by something that happened around 9, and an install that failed before it wrote a
 `node_modules` on one major does not cost the other major its answer.
 
-`scripts/check-drift.mjs` is this wired up as the nightly's `drift-guard` job: it fetches the
-published board, diffs the freshly built one against it, prints every change with its cause and
-fails the run if any of them is unexplained.
+`scripts/check-drift.mjs` is this wired up as the nightly's `drift-guard` job: it diffs the freshly
+built board against the published one, prints every change with its cause and fails the run if any
+of them is unexplained. The baseline comes from `scripts/fetch-published.mjs`, which saves the
+published board during the merge, before the deploy overwrites it. The guard does not gate the
+deploy. It reports, the same way the harness guard does, so a red night does not leave main ahead
+of what is published and every night after it re-failing against the same stale board.
 
 ![The rescuable tier on the live matrix](docs/rescuable-tier.png)
 

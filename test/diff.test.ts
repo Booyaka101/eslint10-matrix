@@ -2,7 +2,7 @@ import { mkdir, mkdtemp, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
-import { diffMatrices, renderDiff, type DiffResult } from '../packages/cli/src/diff.js';
+import { diffBlocks, diffMatrices, renderDiff, type DiffResult } from '../packages/cli/src/diff.js';
 import { main } from '../packages/cli/src/index.js';
 import { cacheDir, cachePath, type Matrix, type MeasuredEnv, type PluginRunResult, type Status } from '../packages/cli/src/matrix.js';
 
@@ -208,6 +208,22 @@ describe('attributing a changed row', () => {
       },
     ]);
     expect(diff(before, after).changes[0]?.cause).toBe('unexplained');
+  });
+
+  /**
+   * A row the before board never measured on this major has no environment to
+   * have changed, which is the same position as a pre-1.4.0 board. Calling it
+   * unexplained would fail the nightly the first time a plugin joins the board.
+   */
+  it('calls a major the before board never measured unknown-env, not unexplained', () => {
+    const before = board([{ ten: result('clean', env({ eslint: V10 })) }]);
+    delete before.plugins[0].results[V10];
+    const after = board([{ ten: result('rule-crash', env({ eslint: V10 })) }]);
+
+    const [change] = diff(before, after).changes;
+    expect(change.statuses).toEqual([{ eslintVersion: V10, before: 'untested', after: 'rule-crash' }]);
+    expect(change.cause).toBe('unknown-env');
+    expect(diffBlocks(diff(before, after))).toBe(false);
   });
 
   it('names a dependency that stopped installing', () => {

@@ -33,9 +33,15 @@ live now.
   ESLint 10 answer its cause. `--ci` exits 1 on `unexplained` and on a row that left the board, and
   0 on everything else, because plugins changing is the board working. Either argument can be a
   path or an `https://` URL.
-- **A `drift-guard` job in the nightly.** `scripts/check-drift.mjs` fetches the published board,
-  diffs the freshly built one against it, prints every change with its cause and fails when one has
-  none. It also says out loud when rows left the board, which is what a shard that died looks like.
+- **A `drift-guard` job in the nightly.** `scripts/check-drift.mjs` diffs the freshly built board
+  against the published one, prints every change with its cause and fails when one has none. It
+  also says out loud when rows left the board, which is what a shard that died looks like. The
+  baseline is captured by `scripts/fetch-published.mjs` while the merge job runs, before the deploy
+  replaces it, because a guard that fetched it afterwards would be comparing the build with itself.
+  The guard is advisory and does not gate the deploy: blocking publishing would leave main ahead of
+  Pages, and the next night would re-diff against the same stale board and fail again. An
+  unreachable baseline is not drift either, it is the absence of one, so the guard says so and
+  passes.
 - The report prints one dim line per row naming the environment behind the verdict, ESLint first
   then alphabetical, capped at six packages with a `+N more`. The site shows the full list per
   major inside the expanded row, because the two majors install separately and the versions around

@@ -79,6 +79,18 @@ jobs:
           npm run build --workspace packages/cli
           node site/build.mjs --in matrix.json --out site/dist
 
+      # Before the deploy below replaces it. Afterwards the drift guard would be
+      # diffing this build against itself and never see a thing.
+      - name: Keep the board this run replaces, for the drift guard
+        run: node scripts/fetch-published.mjs published-matrix.json
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: published-matrix
+          path: published-matrix.json
+          retention-days: 7
+          if-no-files-found: ignore
+
       - name: Commit matrix.json
         run: |
           git config user.name  "github-actions[bot]"
@@ -91,7 +103,7 @@ jobs:
             git push
           fi
 
-      - name: Keep the merged board for the harness guard
+      - name: Keep the merged board for the guards
         uses: actions/upload-artifact@v7
         with:
           name: matrix
@@ -126,8 +138,10 @@ jobs:
       - name: Fail if any row was measured with a broken environment
         run: node scripts/check-harness.mjs matrix.json
 
-  # Same artifact, same reason: the published board is the one the fresh build is
-  # diffed against, so this runs after merge has uploaded it.
+  # Advisory, like the harness guard. It turns the run red and says why, but it does
+  # not gate the deploy: a guard that blocked publishing would leave main ahead of
+  # Pages, and every following night would re-diff the fresh board against the same
+  # stale one and fail again until somebody intervened.
   drift-guard:
     name: drift guard
     needs: merge
@@ -149,14 +163,19 @@ jobs:
         with:
           name: matrix
 
-      - name: Fail if a verdict moved with nothing recorded to explain it
-        run: node scripts/check-drift.mjs matrix.json
+      # Absent when Pages had nothing to serve, or was unreachable at capture time.
+      # check-drift.mjs reads that as no baseline and skips.
+      - uses: actions/download-artifact@v8
+        continue-on-error: true
+        with:
+          name: published-matrix
 
-  # Waits on the drift guard, not just the merge: the guard diffs against the board
-  # on Pages, so deploying first would leave it comparing this build with itself.
+      - name: Fail if a verdict moved with nothing recorded to explain it
+        run: node scripts/check-drift.mjs matrix.json published-matrix.json
+
   deploy:
     name: deploy pages
-    needs: [merge, drift-guard]
+    needs: merge
     runs-on: ubuntu-latest
     environment:
       name: github-pages

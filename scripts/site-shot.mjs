@@ -54,14 +54,26 @@ async function debuggerUrl(port, deadline = Date.now() + 15_000) {
   }
 }
 
-function connect(url) {
+function connect(url, timeoutMs = 20_000) {
   const socket = new WebSocket(url);
   const pending = new Map();
   let nextId = 0;
+
+  // Chrome dying mid-capture settles nothing on its own, so without these the
+  // await would hang forever and the browser this script spawned would leak.
+  const failAll = (reason) => {
+    for (const waiting of [...pending.values()]) waiting.fail(new Error(reason));
+    pending.clear();
+  };
+
   const open = new Promise((done, fail) => {
     socket.addEventListener('open', () => done());
     socket.addEventListener('error', () => fail(new Error('devtools socket failed')));
+    socket.addEventListener('close', () => fail(new Error('devtools socket closed')));
   });
+  socket.addEventListener('error', () => failAll('devtools socket failed'));
+  socket.addEventListener('close', () => failAll('devtools socket closed'));
+
   socket.addEventListener('message', (event) => {
     const message = JSON.parse(event.data);
     const waiting = pending.get(message.id);
@@ -75,7 +87,15 @@ function connect(url) {
       await open;
       const id = (nextId += 1);
       return new Promise((done, fail) => {
-        pending.set(id, { done, fail });
+        const timer = setTimeout(() => {
+          pending.delete(id);
+          fail(new Error(`${method} did not answer within ${timeoutMs / 1000}s`));
+        }, timeoutMs);
+        const settle = (fn) => (value) => {
+          clearTimeout(timer);
+          fn(value);
+        };
+        pending.set(id, { done: settle(done), fail: settle(fail) });
         socket.send(JSON.stringify({ id, method, params }));
       });
     },
@@ -119,7 +139,16 @@ try {
   await cdp.send('Runtime.enable');
 
   for (const selector of opts.click) {
-    const clicked = await evaluate(cdp, `!!document.querySelector(${JSON.stringify(selector)})?.click()  || true`);
+    // click() returns undefined, so the hit has to be reported separately or a
+    // renamed selector silently writes an unfiltered screenshot over the old one.
+    const clicked = await evaluate(
+      cdp,
+      `(() => {
+         const el = document.querySelector(${JSON.stringify(selector)});
+         el?.click();
+         return Boolean(el);
+       })()`
+    );
     if (!clicked) throw new Error(`nothing matched ${selector}`);
   }
 
