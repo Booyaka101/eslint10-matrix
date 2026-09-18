@@ -10,19 +10,12 @@
  * Needs Chrome; pass --chrome if it is not in one of the usual install paths.
  */
 import { spawn } from 'node:child_process';
-import { existsSync } from 'node:fs';
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
-
-const CHROME_CANDIDATES = [
-  'C:/Program Files/Google/Chrome/Application/chrome.exe',
-  'C:/Program Files (x86)/Google/Chrome/Application/chrome.exe',
-  '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
-  '/usr/bin/google-chrome',
-  '/usr/bin/chromium',
-];
+import { parseFlags } from './args.mjs';
+import { chromePath } from './chrome.mjs';
 
 const FONT_SIZE = 13;
 const LINE_HEIGHT = 20.15;
@@ -35,21 +28,21 @@ const SGR_CLASS = { 1: 'b', 2: 'd', 31: 'r', 32: 'g', 33: 'y' };
 // eslint-disable-next-line no-control-regex
 const SGR = /\u001B\[(\d+)m/g;
 
+const USAGE =
+  'usage: terminal-shot.mjs --in <file.ansi> --out <file.png> [--prompt <text>] [--title <text>] [--lines n]';
+
+const FLAGS = {
+  '--in': 'string',
+  '--out': 'string',
+  '--prompt': 'string',
+  '--title': 'string',
+  '--lines': 'number',
+  '--chrome': 'string',
+};
+
 function parseArgs(argv) {
-  const opts = { lines: 0, prompt: '', chrome: '', title: 'Terminal' };
-  for (let i = 0; i < argv.length; i += 1) {
-    const next = () => argv[++i];
-    switch (argv[i]) {
-      case '--in': opts.in = next(); break;
-      case '--out': opts.out = next(); break;
-      case '--prompt': opts.prompt = next(); break;
-      case '--title': opts.title = next(); break;
-      case '--lines': opts.lines = Number(next()); break;
-      case '--chrome': opts.chrome = next(); break;
-      default: throw new Error(`unknown argument ${argv[i]}`);
-    }
-  }
-  if (!opts.in || !opts.out) throw new Error('usage: terminal-shot.mjs --in <file.ansi> --out <file.png>');
+  const opts = parseFlags(argv, FLAGS, USAGE, { title: 'Terminal' });
+  if (!opts.in || !opts.out) throw new Error(USAGE);
   return opts;
 }
 
@@ -101,12 +94,6 @@ function page(body, title, width) {
   <pre>${body}</pre>
 </div>
 `;
-}
-
-function chromePath(preferred) {
-  const found = [preferred, ...CHROME_CANDIDATES].find((p) => p && existsSync(p));
-  if (!found) throw new Error('no Chrome found: pass --chrome <path>');
-  return found;
 }
 
 const opts = parseArgs(process.argv.slice(2));

@@ -1,6 +1,6 @@
 {
   "name": "eslint10-matrix-workspace",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "private": true,
   "type": "module",
   "description": "Nightly-executed ESLint 10 compatibility matrix for popular ESLint plugins",
@@ -16,6 +16,7 @@
     "build": "npm run build --workspace packages/cli && npm run build --workspace packages/runner",
     "run:matrix": "npm run build && node packages/runner/dist/run.js",
     "site": "node site/build.mjs",
+    "sync:readme": "node scripts/sync-readme.mjs",
     "lint": "eslint .",
     "test": "npm run build && vitest run",
     "test:watch": "vitest"

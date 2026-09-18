@@ -5,7 +5,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 // Shared with the CLI so a row cannot be "blocked" in one and "ready" in the other.
 // Requires `npm run build --workspace packages/cli` first; both workflows do that.
-import { verdictFor } from '../packages/cli/dist/report.js';
+import { describeMeasuredEnv, verdictFor } from '../packages/cli/dist/report.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(HERE, '..');
@@ -64,13 +64,29 @@ function cell(result) {
   return `<td class="s"><span class="pill ${esc(result.status)}">${esc(label)}</span><span class="sub">${esc(detail)}</span></td>`;
 }
 
-/** A row is expandable when it has rules to list, a rescue to explain, or both. */
+/** A row is expandable when it has rules to list, a rescue to explain, or an environment to show. */
 function hasDetail(row, v10) {
   return (
     (row.results[v10]?.crashingRules.length ?? 0) > 0 ||
     (row.results[v10]?.harness?.rules.length ?? 0) > 0 ||
-    Boolean(row.rescue)
+    Boolean(row.rescue) ||
+    Object.values(row.results).some((result) => result?.measuredWith)
   );
+}
+
+/**
+ * One line per ESLint major: each installs separately, so the versions around
+ * the plugin can differ between them and the reader should see which is which.
+ */
+function measuredDetail(row) {
+  return Object.entries(row.results)
+    .filter(([, result]) => result?.measuredWith)
+    .map(
+      ([version, result]) =>
+        `<li class="measured"><code>eslint ${esc(version)}</code>` +
+        `<span>${esc(describeMeasuredEnv(result.measuredWith))}</span></li>`
+    )
+    .join('');
 }
 
 /** One line per distinct cause: four rules failing the same way are one repair. */
@@ -93,6 +109,7 @@ function crashDetail(row, v10) {
   const items =
     harnessDetail(row, v10) +
     rescueDetail(row) +
+    measuredDetail(row) +
     (row.results[v10]?.crashingRules ?? [])
       .map((r) => `<li><code>${esc(r.rule)}</code><span>${esc(r.message)}</span></li>`)
       .join('');
@@ -188,6 +205,8 @@ tr.row:hover{background:#1c2230}
 .crashes li.rescue span{color:var(--fg)}
 .crashes li.harness{padding-bottom:6px;border-bottom:1px solid var(--line);margin-bottom:2px}
 .crashes li.harness code{color:var(--muted)}
+.crashes li.measured{padding-bottom:6px;border-bottom:1px solid var(--line);margin-bottom:2px}
+.crashes li.measured code,.crashes li.measured span{color:var(--muted)}
 .empty{padding:26px;text-align:center;color:var(--muted)}
 footer{color:var(--muted);font-size:13px;margin-top:34px}
 a{color:var(--accent)}

@@ -1,5 +1,57 @@
 # Changelog
 
+## 1.4.0 - 2026-09-18
+
+The board has always been able to say a plugin broke and never able to say what it was measured
+against. Issue #11 asked for the fix the obvious way round: pin `settings.jest.version` in
+`plugins.json` so the run stops depending on whichever jest npm resolves that night. That was
+rejected, and rightly. A pin is a declaration, and the board's entire claim is that its verdicts
+come from execution rather than from declarations. Pinning would also have frozen the measurement
+at whatever was true the day somebody typed the number, which is the opposite of what a nightly is
+for. The real defect was never what we install. It is that we never wrote down what we got.
+
+So 1.4.0 records instead of declaring. Nothing about what gets installed changed, and
+`plugins.json` gained no version pins, only a sentence in its comment saying where the versions
+live now.
+
+- **Every result carries `measuredWith`.** After the install, the probe reads the version out of
+  each dependency's own `package.json` in the environment it is about to run in, and stores those
+  alongside the Node and npm that did the work. A dependency we asked for and did not get is
+  recorded as `null` rather than dropped, because "it was not there" is the interesting case. This
+  happens on a cache hit too: an environment reused from `~/.cache/eslint10-matrix/envs` can be
+  thirteen days old, so its specs are not evidence of anything. Resolving the spec against the
+  registry instead would have been wrong in a way that is easy to miss. npm 10 backtracks a
+  `latest` direct dependency to satisfy a transitive peer, so the version a spec installs is a
+  property of the installer and the day, not of the spec.
+- **`eslint10-matrix diff <before> <after>`.** Pairs two boards by plugin name and prints every row
+  whose status on either ESLint major, or whose rescue verdict, moved, with the first cause that
+  applies beside it: `eslint` if the boards were built against different releases, `plugin` if the
+  plugin shipped, `env` if something installed around it moved (named, with both versions),
+  `unknown-env` if one of the boards predates this release and recorded nothing, `unexplained` if
+  every version both boards recorded is identical. Attribution is scoped to the major the row
+  actually moved on, so an install that never wrote a `node_modules` on ESLint 9 cannot cost the
+  ESLint 10 answer its cause. `--ci` exits 1 on `unexplained` and on a row that left the board, and
+  0 on everything else, because plugins changing is the board working. Either argument can be a
+  path or an `https://` URL.
+- **A `drift-guard` job in the nightly.** `scripts/check-drift.mjs` fetches the published board,
+  diffs the freshly built one against it, prints every change with its cause and fails when one has
+  none. It also says out loud when rows left the board, which is what a shard that died looks like.
+- The report prints one dim line per row naming the environment behind the verdict, ESLint first
+  then alphabetical, capped at six packages with a `+N more`. The site shows the full list per
+  major inside the expanded row, because the two majors install separately and the versions around
+  the plugin can differ between them.
+- `examples/react-app` pins `typescript` again. Its lockfile had drifted to TypeScript 7, which
+  `@typescript-eslint/parser@8` refuses to load, so the example the README walks you through
+  reported HARNESS MISCONFIG instead of the rescue story it is there to show. The measured line is
+  what made that visible in one read.
+- `packages/cli/README.md` is now generated from the repo README by `npm run sync:readme`, and a
+  test fails when it is stale. The hand-kept copy had missed the entire 1.3.0 release.
+
+`schemaVersion` is still 1. `measuredWith` is additive exactly as `harness` was in 1.3.0, so a
+1.3.0 CLI reads a 1.4.0 board and prints the same verdicts it always did. That was checked by
+running `npx eslint10-matrix@1.3.0 check` against a board built by this release: identical output,
+minus the lines 1.3.0 has no field for.
+
 ## 1.3.0 - 2026-09-14
 
 Two rows reached the published board saying a plugin was broken when what was broken was the

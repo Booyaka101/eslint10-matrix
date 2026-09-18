@@ -36,6 +36,19 @@ export interface CrashingRule {
   fileCountCapped?: boolean;
 }
 
+/**
+ * What was actually on disk when the run happened, read back out of the probe's
+ * own node_modules. A spec is a wish and a range resolves differently on
+ * different days, so a verdict that does not carry this cannot say which
+ * environment produced it. `null` means we asked npm for the package and it was
+ * not there afterwards, which is the interesting case.
+ */
+export interface MeasuredEnv {
+  node: string;
+  npm: string | null;
+  deps: Record<string, string | null>;
+}
+
 export interface PluginRunResult {
   status: Status;
   crashingRules: CrashingRule[];
@@ -56,6 +69,8 @@ export interface PluginRunResult {
   lintedFiles?: number;
   /** Present when `partitionHarness` moved rules off this result. */
   harness?: HarnessReport;
+  /** The resolved environment this run happened in. Absent when nothing installed. */
+  measuredWith?: MeasuredEnv;
 }
 
 export type FixupFunction = 'fixupPluginRules' | 'fixupConfigRules';
@@ -168,7 +183,7 @@ async function loadFromFile(path: string): Promise<MatrixLoad> {
     const code = (err as NodeJS.ErrnoException).code;
     throw new MatrixError(
       code === 'ENOENT' ? `matrix file not found: ${resolve(path)}` : `could not read ${resolve(path)}: ${String(err)}`,
-      'Pass --matrix with a path to a matrix.json, or omit it to fetch the published one.'
+      'Give a matrix.json path or an http(s) URL. check reads the published board when you give it neither.'
     );
   }
   let parsed: unknown;
@@ -209,7 +224,7 @@ export async function loadMatrix(options: {
         const retryAfter = res.headers.get('retry-after');
         throw new Error(`rate limited (HTTP 429)${retryAfter ? `, retry after ${retryAfter}s` : ''}`);
       }
-      if (res.status === 404) throw new Error(`HTTP 404 - no matrix published at ${url}`);
+      if (res.status === 404) throw new Error('HTTP 404 - nothing published there');
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const parsed = (await res.json()) as unknown;
       assertMatrixShape(parsed);
@@ -231,9 +246,11 @@ export async function loadMatrix(options: {
     }
   }
 
+  // "no cached copy" would be a lie when --no-cache told us not to look for one.
+  const cacheNote = options.noCache ? '' : ' and no cached copy is available';
   throw new MatrixError(
-    `could not fetch the matrix from ${url} (${networkError}) and no cached copy is available`,
-    'Check your network, or pass --matrix <path-to-matrix.json> to use a local copy.'
+    `could not fetch the matrix from ${url}: ${networkError}${cacheNote}`,
+    'Check your network, or point the command at a local matrix.json instead.'
   );
 }
 

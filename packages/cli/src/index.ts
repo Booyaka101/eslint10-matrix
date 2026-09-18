@@ -2,6 +2,7 @@
 import { readFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { diffBlocks, diffMatrices, renderDiff } from './diff.js';
 import { displayPath } from './display-path.js';
 import { loadMatrix, MatrixError, type Matrix } from './matrix.js';
 import { buildReport, renderReport, type Report } from './report.js';
@@ -16,6 +17,7 @@ USAGE
   eslint10-matrix scan [dir]       execute your installed plugin versions against
                                    ESLint 10 on your own source files
   eslint10-matrix plugins          list every plugin in the published matrix
+  eslint10-matrix diff <a> <b>     what changed between two boards, and why
   eslint10-matrix --help
   eslint10-matrix --version
 
@@ -33,6 +35,14 @@ OPTIONS
   --matrix <src>      use a matrix.json path or URL instead of the published one
   --timeout <ms>      network timeout for fetching the matrix (default 15000)
 
+  diff only
+  Both arguments are a matrix.json path or an http(s) URL. Every changed row is
+  attributed to the eslint version, the plugin version, an installed dependency,
+  or nothing.
+  --ci                exit 1 when a change has no recorded cause, or a row was
+                      removed from the board
+  --timeout <ms>      network timeout when a board is a URL (default 15000)
+
   scan only
   --eslint <version>  the ESLint 10 release to measure against (default ${TESTED_ESLINT.v10})
   --max-files <n>     how many of the repo's files to lint (default 200)
@@ -41,12 +51,13 @@ OPTIONS
 
 EXIT CODES
   0  report printed
-  1  --ci and at least one plugin blocks the upgrade
+  1  --ci and at least one plugin blocks the upgrade, or a diff change
+     has no recorded cause
   2  the command could not run (no flat config, no node_modules, bad arguments)
 `;
 
 interface Options {
-  command: 'check' | 'scan' | 'plugins' | 'help' | 'version';
+  command: 'check' | 'scan' | 'plugins' | 'diff' | 'help' | 'version';
   dir: string;
   ci: boolean;
   json: boolean;
@@ -59,6 +70,8 @@ interface Options {
   maxFiles: number;
   concurrency: number;
   quiet: boolean;
+  /** `diff` only: the two boards to compare, in that order. */
+  boards: [string, string];
 }
 
 class UsageError extends Error {}
@@ -83,6 +96,7 @@ export function parseArgs(argv: string[]): Options {
     maxFiles: 200,
     concurrency: 3,
     quiet: false,
+    boards: ['', ''],
   };
 
   const positional: string[] = [];
@@ -127,6 +141,12 @@ export function parseArgs(argv: string[]): Options {
     if (target) opts.dir = resolve(target);
   } else if (command === 'plugins') {
     opts.command = 'plugins';
+  } else if (command === 'diff') {
+    opts.command = 'diff';
+    const [, before, after] = positional;
+    if (!before || !after) throw new UsageError('diff needs two boards: eslint10-matrix diff <before> <after>');
+    if (positional.length > 3) throw new UsageError(`diff takes two boards, got ${positional.length - 1}`);
+    opts.boards = [before, after];
   } else if (command === 'help') {
     opts.command = 'help';
   } else {
@@ -230,6 +250,27 @@ async function commandScan(opts: Options): Promise<number> {
   return opts.ci && blocking > 0 ? 1 : 0;
 }
 
+async function commandDiff(opts: Options): Promise<number> {
+  const [beforeSource, afterSource] = opts.boards;
+  // Never the cache, either way round. The cached board is whatever `check` last
+  // fetched, so falling back to it would diff a board nobody asked for under the
+  // URL they typed, and caching a board given to `diff` would poison `check`.
+  const load = (source: string) => loadMatrix({ url: source, noCache: true, timeoutMs: opts.timeoutMs });
+  // Sequential so a bad first argument reports itself rather than racing the second.
+  const before = await load(beforeSource);
+  const after = await load(afterSource);
+
+  const result = diffMatrices(
+    { matrix: before.matrix, source: beforeSource },
+    { matrix: after.matrix, source: afterSource }
+  );
+
+  if (opts.json) console.log(JSON.stringify(result, null, 2));
+  else process.stdout.write(renderDiff(result, { color: opts.color }));
+
+  return opts.ci && diffBlocks(result) ? 1 : 0;
+}
+
 async function commandCheck(opts: Options): Promise<number> {
   let plugins: string[];
   let unknown: string[];
@@ -292,7 +333,7 @@ export async function main(argv: string[]): Promise<number> {
     return 0;
   }
 
-  const commands = { plugins: commandPlugins, scan: commandScan, check: commandCheck };
+  const commands = { plugins: commandPlugins, scan: commandScan, check: commandCheck, diff: commandDiff };
   try {
     return await commands[opts.command](opts);
   } catch (err) {

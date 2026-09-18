@@ -24,7 +24,7 @@ export default [
     languageOptions: {
       ecmaVersion: 2023,
       sourceType: 'module',
-      globals: { console: 'readonly', process: 'readonly', fetch: 'readonly', AbortController: 'readonly', setTimeout: 'readonly', clearTimeout: 'readonly', Buffer: 'readonly', URL: 'readonly' },
+      globals: { console: 'readonly', process: 'readonly', fetch: 'readonly', AbortController: 'readonly', setTimeout: 'readonly', clearTimeout: 'readonly', Buffer: 'readonly', URL: 'readonly', WebSocket: 'readonly' },
     },
     rules: {
       'no-console': 'off',

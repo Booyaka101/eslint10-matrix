@@ -126,9 +126,37 @@ jobs:
       - name: Fail if any row was measured with a broken environment
         run: node scripts/check-harness.mjs matrix.json
 
+  # Same artifact, same reason: the published board is the one the fresh build is
+  # diffed against, so this runs after merge has uploaded it.
+  drift-guard:
+    name: drift guard
+    needs: merge
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+      # The guard reads the CLI's diff, so the CLI has to be compiled first.
+      - run: npm run build --workspace packages/cli
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: matrix
+
+      - name: Fail if a verdict moved with nothing recorded to explain it
+        run: node scripts/check-drift.mjs matrix.json
+
+  # Waits on the drift guard, not just the merge: the guard diffs against the board
+  # on Pages, so deploying first would leave it comparing this build with itself.
   deploy:
     name: deploy pages
-    needs: merge
+    needs: [merge, drift-guard]
     runs-on: ubuntu-latest
     environment:
       name: github-pages

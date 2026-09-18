@@ -1,29 +1,11 @@
-import { execFile } from 'node:child_process';
 import { mkdtemp, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { promisify } from 'node:util';
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { FIXTURES, runScript } from './run-script.js';
 
-const run = promisify(execFile);
-const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const GUARD = join(ROOT, 'scripts', 'check-harness.mjs');
-const FIXTURES = join(ROOT, 'test', 'fixtures');
-
-/**
- * The guard is a CI job, so it is tested the way CI runs it: as a process, on
- * its exit code and its real output. Every board here is a captured one.
- */
-async function guard(board: string): Promise<{ code: number; out: string }> {
-  try {
-    const { stdout, stderr } = await run(process.execPath, [GUARD, board]);
-    return { code: 0, out: stdout + stderr };
-  } catch (err) {
-    const e = err as { code?: number; stdout?: string; stderr?: string };
-    return { code: e.code ?? -1, out: (e.stdout ?? '') + (e.stderr ?? '') };
-  }
-}
+/** Every board here is a captured one. */
+const guard = (board: string) => runScript('check-harness.mjs', [board]);
 
 describe('the nightly harness guard', () => {
   /**

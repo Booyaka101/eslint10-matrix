@@ -1,5 +1,6 @@
+import { palette } from './colour.js';
 import { displayPath } from './display-path.js';
-import type { HarnessRule, Matrix, PluginRow, PluginRunResult, RescueResult } from './matrix.js';
+import type { HarnessRule, Matrix, MeasuredEnv, PluginRow, PluginRunResult, RescueResult } from './matrix.js';
 import { rowFor } from './matrix.js';
 import { satisfies } from './semver-lite.js';
 import { pluginNamespace, rescueSnippet } from './snippet.js';
@@ -287,6 +288,30 @@ function crashEvidence(entry: Entry): string | null {
   return `${head}${clip(crash.message, Math.max(40, 120 - head.length - more.length))}${more}`;
 }
 
+/**
+ * eslint leads because it is the axis the board is about; the rest are
+ * alphabetical so two runs of the same row print in the same order. The site
+ * calls this with no cap, having room for the whole list.
+ */
+export function describeMeasuredEnv(env: MeasuredEnv, max = Number.POSITIVE_INFINITY): string {
+  const names = Object.keys(env.deps).sort((a, b) => {
+    if (a === 'eslint' || b === 'eslint') return a === 'eslint' ? -1 : 1;
+    return a.localeCompare(b);
+  });
+  const shown = names.slice(0, max).map((name) => `${name} ${env.deps[name] ?? '(missing)'}`);
+  const rest = names.length - shown.length;
+  if (rest > 0) shown.push(`+${rest} more`);
+  shown.push(`node ${env.node}`);
+  if (env.npm) shown.push(`npm ${env.npm}`);
+  return `measured with ${shown.join(', ')}`;
+}
+
+/** The dim line naming the environment the row's ESLint 10 run happened in. */
+function measuredNote(entry: Entry): string | null {
+  const env = entry.result?.measuredWith;
+  return env ? describeMeasuredEnv(env, 6) : null;
+}
+
 /** The one-line "why this is still blocked" note under a BLOCKED plugin. */
 function blockedRescueNote(rescue: RescueResult | undefined): string | null {
   if (!rescue) return null;
@@ -330,12 +355,7 @@ export function renderOverrides(overrides: Record<string, { eslint: string }>): 
 }
 
 export function renderReport(report: Report, options: { color?: boolean } = {}): string {
-  const c = options.color ?? false;
-  const dim = (s: string) => (c ? `\u001B[2m${s}\u001B[0m` : s);
-  const bold = (s: string) => (c ? `\u001B[1m${s}\u001B[0m` : s);
-  const red = (s: string) => (c ? `\u001B[31m${s}\u001B[0m` : s);
-  const yellow = (s: string) => (c ? `\u001B[33m${s}\u001B[0m` : s);
-  const green = (s: string) => (c ? `\u001B[32m${s}\u001B[0m` : s);
+  const { dim, bold, red, yellow, green } = palette(options.color ?? false);
 
   const total =
     report.blocked.length +
@@ -364,7 +384,7 @@ export function renderReport(report: Report, options: { color?: boolean } = {}):
     const width = Math.max(...report.blocked.map((e) => label(e).length));
     for (const entry of report.blocked) {
       out.push(`  ${pad(label(entry), width + 2)}${entry.reason}`);
-      for (const line of [crashEvidence(entry), blockedRescueNote(entry.rescue), harnessExclusionNote(entry)]) {
+      for (const line of [crashEvidence(entry), blockedRescueNote(entry.rescue), harnessExclusionNote(entry), measuredNote(entry)]) {
         if (line) out.push(dim(`  ${' '.repeat(width + 2)}${line}`));
       }
     }
@@ -379,7 +399,7 @@ export function renderReport(report: Report, options: { color?: boolean } = {}):
     for (const entry of entries) {
       out.push('');
       out.push(`  ${label(entry)}  ${rescueLine(entry, report.eslintVersions.v10)}`);
-      for (const line of [crashEvidence(entry), harnessExclusionNote(entry)]) {
+      for (const line of [crashEvidence(entry), harnessExclusionNote(entry), measuredNote(entry)]) {
         if (line) out.push(dim(`    ${line}`));
       }
       out.push('');
@@ -442,6 +462,8 @@ export function renderReport(report: Report, options: { color?: boolean } = {}):
         out.push(dim(`  ${indent}${finding.detail}`));
         out.push(dim(`  ${indent}fix: ${finding.fix}`));
       }
+      const measured = measuredNote(entry);
+      if (measured) out.push(dim(`  ${indent}${measured}`));
       out.push(dim(`  ${indent}${ISSUE_URL}?title=${encodeURIComponent(`${entry.name}: measured with a broken harness`)}`));
     }
     out.push('');

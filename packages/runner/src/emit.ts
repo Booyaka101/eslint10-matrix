@@ -42,6 +42,26 @@ function harnessProblems(at: string, result: PluginRunResult | undefined): strin
   return problems;
 }
 
+/**
+ * An absent `measuredWith` is fine: nothing installed, so there is nothing to
+ * record. An empty one is not, because it claims a measurement it does not have.
+ */
+function measuredProblems(at: string, result: PluginRunResult | undefined): string[] {
+  const env = result?.measuredWith;
+  if (env === undefined) return [];
+  const mat = `${at}.measuredWith`;
+  if (!env || typeof env !== 'object') return [`${mat} must be an object when present`];
+  const problems: string[] = [];
+  if (typeof env.node !== 'string') problems.push(`${mat}.node must be a string`);
+  if (env.npm !== null && typeof env.npm !== 'string') problems.push(`${mat}.npm must be string|null`);
+  if (!env.deps || typeof env.deps !== 'object') return [...problems, `${mat}.deps must be an object`];
+  if (Object.keys(env.deps).length === 0) problems.push(`${mat}.deps is empty; omit measuredWith instead`);
+  for (const [name, version] of Object.entries(env.deps)) {
+    if (version !== null && typeof version !== 'string') problems.push(`${mat}.deps['${name}'] must be string|null`);
+  }
+  return problems;
+}
+
 /** Returns a list of human-readable problems; empty means the document is valid. */
 export function validateMatrix(value: unknown): string[] {
   const problems: string[] = [];
@@ -89,6 +109,7 @@ export function validateMatrix(value: unknown): string[] {
       }
       if (typeof result?.totalRules !== 'number') problems.push(`${rat}.totalRules must be a number`);
       problems.push(...harnessProblems(rat, result));
+      problems.push(...measuredProblems(rat, result));
     }
 
     // Rule-level attribution needs both majors to agree, so a row attributed that
