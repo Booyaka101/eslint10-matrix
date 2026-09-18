@@ -3,6 +3,8 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { envKey, envsDir, measureEnvironment, probe, specName } from '../packages/cli/src/probe-run.js';
+import type { Matrix, MeasuredEnv } from '../packages/cli/src/matrix.js';
+import { buildReport, describeMeasuredEnv, renderReport } from '../packages/cli/src/report.js';
 
 async function tempDir(prefix = 'e10m-measured-'): Promise<string> {
   return mkdtemp(join(tmpdir(), prefix));
@@ -139,5 +141,101 @@ describe('probe attaches the environment it measured in', () => {
     expect(result.status).toBe('install-fail');
     expect(result.measuredWith).toBeUndefined();
     expect('measuredWith' in result).toBe(false);
+  });
+});
+
+/** The long real case: a scoped parser plus plugins whose names run to 30 characters. */
+const CROWDED: MeasuredEnv = {
+  node: '22.18.0',
+  npm: '10.9.3',
+  deps: {
+    eslint: '10.10.0',
+    '@typescript-eslint/parser': '8.67.0',
+    'eslint-plugin-testing-library': '7.13.1',
+    'eslint-plugin-vitest': '0.5.4',
+    typescript: '5.9.3',
+    vitest: '2.1.9',
+  },
+};
+
+function blockedBoard(measuredWith: MeasuredEnv): Matrix {
+  return {
+    schemaVersion: 1,
+    generatedAt: '2026-09-18T00:00:00.000Z',
+    eslintVersions: { v9: '9.39.5', v10: '10.10.0' },
+    plugins: [
+      {
+        name: 'eslint-plugin-testing-library',
+        version: '7.13.1',
+        declaredPeerRange: '^9.0.0',
+        weeklyDownloads: 1,
+        results: {
+          '9.39.5': { status: 'clean', crashingRules: [], totalRules: 4 },
+          '10.10.0': { status: 'load-fail', crashingRules: [], totalRules: 0, error: 'Class extends value undefined', measuredWith },
+        },
+      },
+    ],
+  };
+}
+
+const reportFor = (env: MeasuredEnv): string =>
+  renderReport(buildReport(blockedBoard(env), {
+    plugins: ['eslint-plugin-testing-library'],
+    unknown: [],
+    projectDir: './',
+    configPath: './eslint.config.js',
+  }), {
+    color: false,
+  });
+
+describe('the environment line in the human report', () => {
+  it('names eslint first, then the rest alphabetically, with the runtime last', () => {
+    expect(describeMeasuredEnv(CROWDED)).toBe(
+      'measured with eslint 10.10.0, @typescript-eslint/parser 8.67.0, eslint-plugin-testing-library 7.13.1, ' +
+        'eslint-plugin-vitest 0.5.4, typescript 5.9.3, vitest 2.1.9, node 22.18.0, npm 10.9.3'
+    );
+  });
+
+  /**
+   * It is a dim note under an already indented row, and it was the only line in
+   * the report nothing clipped. Six real dependencies took it to 178 columns,
+   * wide enough to wrap twice in a normal terminal and to widen the README's
+   * screenshot by a third.
+   */
+  it('drops names until the line fits beside its indent', () => {
+    const line = reportFor(CROWDED)
+      .split('\n')
+      .find((l) => l.includes('measured with'));
+    expect(line).toBeDefined();
+    expect(line!.length).toBeLessThanOrEqual(120);
+    expect(line).toContain('measured with eslint 10.10.0');
+    expect(line).toContain('more');
+  });
+
+  /** Dropping a name must never drop the count, or the line quietly lies. */
+  it('still accounts for every dependency it did not name', () => {
+    const line = reportFor(CROWDED)
+      .split('\n')
+      .find((l) => l.includes('measured with'))!;
+    const named = line.slice(line.indexOf('measured with')).split(', ').filter((part) => !part.startsWith('+'));
+    const unnamed = Number(/\+(\d+) more/.exec(line)?.[1] ?? 0);
+    // node and npm are always there and are not dependencies.
+    expect(named.length - 2 + unnamed).toBe(Object.keys(CROWDED.deps).length);
+    expect(unnamed).toBeGreaterThan(0);
+  });
+
+  /** A short environment loses nothing: the cap is a width, not a policy. */
+  it('names every dependency when they all fit', () => {
+    const small: MeasuredEnv = { node: '22.18.0', npm: '10.9.3', deps: { eslint: '10.10.0', typescript: '5.9.3' } };
+    const text = reportFor(small);
+    expect(text).toContain('measured with eslint 10.10.0, typescript 5.9.3, node 22.18.0, npm 10.9.3');
+    expect(text).not.toContain('more,');
+  });
+
+  /** npm can fail to answer, and "npm null" under a plugin name is worse than silence. */
+  it('leaves npm out when it was not recorded', () => {
+    const text = reportFor({ node: '22.18.0', npm: null, deps: { eslint: '10.10.0' } });
+    expect(text).toContain('measured with eslint 10.10.0, node 22.18.0');
+    expect(text).not.toContain('npm');
   });
 });

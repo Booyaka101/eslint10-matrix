@@ -67,7 +67,9 @@ describe('the nightly drift guard', () => {
     const shorter = await boardFile((matrix) => {
       matrix.plugins = matrix.plugins.filter((row) => row.name === 'eslint-plugin-jest');
     });
-    expect((await guard(shorter)).out).toContain('on the published board and not in this one');
+    const { out } = await guard(shorter);
+    expect(out).toContain('1 row left the board');
+    expect(out).toContain('check no shard failed');
   });
 
   it('exits 2 on a board it cannot read', async () => {

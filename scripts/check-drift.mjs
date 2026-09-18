@@ -49,15 +49,8 @@ process.stdout.write(renderDiff(result));
 const { changed, added, removed, unexplained } = result.counts;
 const moved = changed + added + removed;
 
-// A dropped row is not drift we can attribute, and a shard that died looks exactly
-// like one. Worth saying out loud, but not worth failing a run the brief scopes to
-// unexplained verdict changes.
-if (removed > 0) {
-  console.error(
-    `drift: ${removed} ${removed === 1 ? 'row is' : 'rows are'} on the published board and not in this one. ` +
-      'Check no shard failed before this board replaces it.'
-  );
-}
+// renderDiff already names the dropped rows. This is the part only CI can say.
+if (removed > 0) console.error('drift: check no shard failed before this board replaces the published one.');
 
 if (unexplained === 0) {
   console.log(

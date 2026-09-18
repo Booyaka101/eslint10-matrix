@@ -128,6 +128,9 @@ try {
         '--headless=new',
         '--disable-gpu',
         '--hide-scrollbars',
+        // Its own profile, in the directory already being cleaned up below, so this
+        // never touches a Chrome the user has open.
+        `--user-data-dir=${join(stage, 'profile')}`,
         '--force-device-scale-factor=2',
         `--window-size=${width + 48},${height}`,
         `--screenshot=${out}`,

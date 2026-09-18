@@ -126,12 +126,17 @@ function majorsInvolved(change: Pick<DiffEntry, 'statuses' | 'rescue'>, boards: 
 function envDiff(before: PluginRow, after: PluginRow, boards: Boards, majors: readonly Major[]): EnvChange[] {
   const found = new Map<string, EnvChange>();
   for (const major of majors) {
-    const was = before.results[boards.before.eslintVersions[major]]?.measuredWith?.deps;
-    const now = after.results[boards.after.eslintVersions[major]]?.measuredWith?.deps;
+    const was = before.results[boards.before.eslintVersions[major]]?.measuredWith;
+    const now = after.results[boards.after.eslintVersions[major]]?.measuredWith;
     if (!was || !now) continue;
-    for (const name of new Set([...Object.keys(was), ...Object.keys(now)])) {
-      const from = was[name] ?? null;
-      const to = now[name] ?? null;
+    const deps = [...new Set([...Object.keys(was.deps), ...Object.keys(now.deps)])].map(
+      (name) => [name, was.deps[name] ?? null, now.deps[name] ?? null] as const
+    );
+    // The runtime is diffed beside the dependencies because it drifts the same way
+    // and explains the same thing. The nightly floats node 22 and takes whichever
+    // npm ships with it, so either can move under a spec that did not.
+    const pairs = [['node', was.node, now.node] as const, ['npm', was.npm, now.npm] as const, ...deps];
+    for (const [name, from, to] of pairs) {
       if (from === to) continue;
       found.set(`${name}|${from}|${to}`, { package: name, before: from, after: to });
     }
@@ -332,7 +337,17 @@ export function renderDiff(result: DiffResult, options: { color?: boolean } = {}
     out.push(
       red(
         `${counts.unexplained} ${counts.unexplained === 1 ? 'change has' : 'changes have'} no recorded cause: ` +
-          'the boards agree on eslint, plugin and dependency versions.'
+          'every version both boards recorded is identical.'
+      )
+    );
+  }
+  // The other half of what --ci exits 1 on. Without this the summary reads clean
+  // while the command fails, and the reader has to count the rows to find out why.
+  if (counts.removed > 0) {
+    out.push(
+      red(
+        `${counts.removed} ${counts.removed === 1 ? 'row' : 'rows'} left the board: ` +
+          'a dropped row has no cause to attribute, and a shard that died looks exactly like one.'
       )
     );
   }

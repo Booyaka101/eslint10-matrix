@@ -10,8 +10,9 @@
  * Needs Chrome; pass --chrome if it is not in one of the usual install paths.
  */
 import { spawn } from 'node:child_process';
-import { writeFile } from 'node:fs/promises';
-import { resolve } from 'node:path';
+import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { parseFlags } from './args.mjs';
 import { chromePath } from './chrome.mjs';
@@ -33,23 +34,30 @@ const FLAGS = {
 };
 
 function parseArgs(argv) {
-  // Ports are per-process so two shots can render at once without colliding.
-  const opts = parseFlags(argv, FLAGS, USAGE, { port: 9222 + (process.pid % 900) });
+  // Per-process so two shots can render at once, and never 9222: that is where a
+  // developer's own Chrome listens, and this script clicks inside what it finds.
+  const opts = parseFlags(argv, FLAGS, USAGE, { port: 9300 + (process.pid % 600) });
   if (!opts.in || !opts.out || opts.clip.length === 0) throw new Error(USAGE);
   return opts;
 }
 
-/** Chrome needs a moment to open its debugging port, and says so when it has. */
-async function debuggerUrl(port, deadline = Date.now() + 15_000) {
+/**
+ * Chrome needs a moment to open its debugging port, and says so when it has. The
+ * target has to be the page we asked for: anything else on this port is somebody
+ * else's browser, and this script is about to click inside whatever it gets.
+ */
+async function debuggerUrl(port, wanted, deadline = Date.now() + 15_000) {
   for (;;) {
     try {
       const response = await fetch(`http://127.0.0.1:${port}/json/list`);
-      const target = (await response.json()).find((t) => t.type === 'page' && t.webSocketDebuggerUrl);
+      const target = (await response.json()).find(
+        (t) => t.type === 'page' && t.url === wanted && t.webSocketDebuggerUrl
+      );
       if (target) return target.webSocketDebuggerUrl;
     } catch {
       // Not listening yet.
     }
-    if (Date.now() > deadline) throw new Error(`chrome never opened a debugging port on ${port}`);
+    if (Date.now() > deadline) throw new Error(`chrome never opened ${wanted} on port ${port}`);
     await new Promise((done) => setTimeout(done, 100));
   }
 }
@@ -116,6 +124,9 @@ async function evaluate(cdp, expression) {
 
 const opts = parseArgs(process.argv.slice(2));
 const url = pathToFileURL(resolve(opts.in)).href;
+// Its own profile, so it can never attach to a Chrome already running on this box
+// and so nothing it does lands in the user's real one.
+const profile = await mkdtemp(join(tmpdir(), 'e10m-shot-'));
 
 const chrome = spawn(
   chromePath(opts.chrome),
@@ -125,6 +136,7 @@ const chrome = spawn(
     '--hide-scrollbars',
     '--no-first-run',
     '--no-default-browser-check',
+    `--user-data-dir=${profile}`,
     `--remote-debugging-port=${opts.port}`,
     `--window-size=${VIEWPORT.width},${VIEWPORT.height}`,
     url,
@@ -134,7 +146,7 @@ const chrome = spawn(
 
 let cdp;
 try {
-  cdp = connect(await debuggerUrl(opts.port));
+  cdp = connect(await debuggerUrl(opts.port, url));
   await cdp.send('Page.enable');
   await cdp.send('Runtime.enable');
 
@@ -190,6 +202,11 @@ try {
   console.log(`wrote ${out} (${Math.round((box.width + PAD * 2) * SCALE)}x${Math.round((box.height + PAD) * SCALE)})`);
 } finally {
   cdp?.close();
-  // Only the Chrome this script started, by pid.
+  // Only the Chrome this script started, by pid. Windows keeps the profile's
+  // lockfile open until it has actually gone, so the wait is not politeness.
+  const gone = new Promise((done) => chrome.once('exit', done));
   chrome.kill();
+  await gone;
+  // A temp directory left behind is not worth failing a screenshot that worked.
+  await rm(profile, { recursive: true, force: true }).catch(() => {});
 }

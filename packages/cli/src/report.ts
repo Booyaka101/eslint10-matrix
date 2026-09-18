@@ -306,10 +306,20 @@ export function describeMeasuredEnv(env: MeasuredEnv, max = Number.POSITIVE_INFI
   return `measured with ${shown.join(', ')}`;
 }
 
-/** The dim line naming the environment the row's ESLint 10 run happened in. */
-function measuredNote(entry: Entry): string | null {
+/**
+ * The dim line naming the environment the row's ESLint 10 run happened in.
+ * Names drop out until it fits: a scoped parser and two long plugin names run
+ * this past 170 columns, and it was the one note in the report nothing clipped.
+ */
+function measuredNote(entry: Entry, indent: number): string | null {
   const env = entry.result?.measuredWith;
-  return env ? describeMeasuredEnv(env, 6) : null;
+  if (!env) return null;
+  const budget = Math.max(40, 120 - indent);
+  for (let shown = 6; shown > 1; shown -= 1) {
+    const line = describeMeasuredEnv(env, shown);
+    if (line.length <= budget) return line;
+  }
+  return describeMeasuredEnv(env, 1);
 }
 
 /** The one-line "why this is still blocked" note under a BLOCKED plugin. */
@@ -384,7 +394,7 @@ export function renderReport(report: Report, options: { color?: boolean } = {}):
     const width = Math.max(...report.blocked.map((e) => label(e).length));
     for (const entry of report.blocked) {
       out.push(`  ${pad(label(entry), width + 2)}${entry.reason}`);
-      for (const line of [crashEvidence(entry), blockedRescueNote(entry.rescue), harnessExclusionNote(entry), measuredNote(entry)]) {
+      for (const line of [crashEvidence(entry), blockedRescueNote(entry.rescue), harnessExclusionNote(entry), measuredNote(entry, width + 4)]) {
         if (line) out.push(dim(`  ${' '.repeat(width + 2)}${line}`));
       }
     }
@@ -399,7 +409,7 @@ export function renderReport(report: Report, options: { color?: boolean } = {}):
     for (const entry of entries) {
       out.push('');
       out.push(`  ${label(entry)}  ${rescueLine(entry, report.eslintVersions.v10)}`);
-      for (const line of [crashEvidence(entry), harnessExclusionNote(entry), measuredNote(entry)]) {
+      for (const line of [crashEvidence(entry), harnessExclusionNote(entry), measuredNote(entry, 4)]) {
         if (line) out.push(dim(`    ${line}`));
       }
       out.push('');
@@ -462,7 +472,7 @@ export function renderReport(report: Report, options: { color?: boolean } = {}):
         out.push(dim(`  ${indent}${finding.detail}`));
         out.push(dim(`  ${indent}fix: ${finding.fix}`));
       }
-      const measured = measuredNote(entry);
+      const measured = measuredNote(entry, width + 4);
       if (measured) out.push(dim(`  ${indent}${measured}`));
       out.push(dim(`  ${indent}${ISSUE_URL}?title=${encodeURIComponent(`${entry.name}: measured with a broken harness`)}`));
     }

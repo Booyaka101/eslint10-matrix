@@ -9,8 +9,8 @@ import { cacheDir, cachePath, DEFAULT_MATRIX_URL, type Matrix, type MeasuredEnv,
 const V9 = '9.39.5';
 const V10 = '10.10.0';
 
-function env(deps: Record<string, string | null>): MeasuredEnv {
-  return { node: '22.18.0', npm: '11.6.2', deps };
+function env(deps: Record<string, string | null>, runtime: Partial<MeasuredEnv> = {}): MeasuredEnv {
+  return { node: '22.18.0', npm: '11.6.2', ...runtime, deps };
 }
 
 function result(status: Status, measuredWith?: MeasuredEnv): PluginRunResult {
@@ -231,6 +231,38 @@ describe('attributing a changed row', () => {
     const after = board([{ ten: result('load-fail', env({ eslint: V10, jest: null })) }]);
     expect(diff(before, after).changes[0]?.causeDetail).toBe('jest 30.5.1 -> (missing)');
   });
+
+  /**
+   * The nightly floats `node-version: 22`, so the runtime moves under the board on
+   * its own schedule and nothing in `deps` records it. Reading only `deps` made the
+   * commonest real drift come out unexplained, which fails the nightly for a cause
+   * that is sitting right there in `measuredWith`.
+   */
+  it('names the node that moved when no dependency did', () => {
+    const before = board([{ ten: result('clean', env({ eslint: V10 }, { node: '22.18.0' })) }]);
+    const after = board([{ ten: result('rule-crash', env({ eslint: V10 }, { node: '22.21.1' })) }]);
+
+    const [change] = diff(before, after).changes;
+    expect(change.cause).toBe('env');
+    expect(change.causeDetail).toBe('node 22.18.0 -> 22.21.1');
+    expect(change.envChanges).toEqual([{ package: 'node', before: '22.18.0', after: '22.21.1' }]);
+  });
+
+  it('names npm too, which is what decides what a spec installs', () => {
+    const before = board([{ ten: result('clean', env({ eslint: V10 }, { npm: '10.9.3' })) }]);
+    const after = board([{ ten: result('rule-crash', env({ eslint: V10 }, { npm: '11.6.2' })) }]);
+
+    const [change] = diff(before, after).changes;
+    expect(change.cause).toBe('env');
+    expect(change.causeDetail).toBe('npm 10.9.3 -> 11.6.2');
+  });
+
+  it('sorts the runtime in with the dependencies rather than ahead of them', () => {
+    const before = board([{ ten: result('clean', env({ eslint: V10, jest: '30.5.1' }, { node: '22.18.0' })) }]);
+    const after = board([{ ten: result('rule-crash', env({ eslint: V10, jest: '31.0.0' }, { node: '22.21.1' })) }]);
+
+    expect(diff(before, after).changes[0]?.causeDetail).toBe('jest 30.5.1 -> 31.0.0, node 22.18.0 -> 22.21.1');
+  });
 });
 
 describe('the diff command', () => {
@@ -283,9 +315,16 @@ describe('the diff command', () => {
     expect((await runDiff(before, after, ['--ci'])).code).toBe(0);
   });
 
-  it('exits 1 under --ci on a removed row', async () => {
-    const { code } = await runDiff(board([{ name: 'eslint-plugin-gone' }]), board([]), ['--ci']);
+  /**
+   * The summary has to say why, not only the exit code. A run that fails under a
+   * tail reading "1 row changed, 0 added, 1 removed. 0 attributed" leaves the reader
+   * counting rows to work out which half of --ci fired.
+   */
+  it('exits 1 under --ci on a removed row, and says so in the summary', async () => {
+    const { code, out } = await runDiff(board([{ name: 'eslint-plugin-gone' }]), board([]), ['--ci']);
     expect(code).toBe(1);
+    expect(out).toContain('1 row left the board');
+    expect(out).toContain('a shard that died looks exactly like one');
   });
 
   it('exits 0 under --ci on an added row', async () => {
