@@ -8,16 +8,26 @@ const exec = promisify(execFile);
 export const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 export const FIXTURES = join(ROOT, 'test', 'fixtures');
 
+export interface Run {
+  code: number;
+  out: string;
+}
+
 /**
- * The guards are CI jobs, so they are tested the way CI runs them: as a real
- * process, on the exit code and the output a maintainer would read.
+ * Runs a node script the way CI runs it: as a real process, reported on the
+ * exit code and the output a maintainer would read. stdout and stderr are one
+ * string because the reader sees one terminal.
  */
-export async function runScript(script: string, args: readonly string[]): Promise<{ code: number; out: string }> {
+export async function runNode(script: string, args: readonly string[]): Promise<Run> {
   try {
-    const { stdout, stderr } = await exec(process.execPath, [join(ROOT, 'scripts', script), ...args]);
+    const { stdout, stderr } = await exec(process.execPath, [script, ...args]);
     return { code: 0, out: stdout + stderr };
   } catch (err) {
     const e = err as { code?: number; stdout?: string; stderr?: string };
     return { code: e.code ?? -1, out: (e.stdout ?? '') + (e.stderr ?? '') };
   }
 }
+
+/** The CI guards, which all live in scripts/. */
+export const runScript = (script: string, args: readonly string[]): Promise<Run> =>
+  runNode(join(ROOT, 'scripts', script), args);

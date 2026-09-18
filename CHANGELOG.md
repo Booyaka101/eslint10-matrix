@@ -50,10 +50,18 @@ live now.
   The path after the colon is repository-root relative, the way `git show` takes it, and a path
   that really exists on disk is still read as a file, so a Windows drive letter is never mistaken
   for a revision.
+- **The site opens with what moved.** `site/build.mjs --since <board>` renders a panel above the
+  table naming every row that changed since that board, where it moved to and why, in the same
+  words `diff` uses. The nightly hands it the board it is about to replace, which is the one a
+  reader last saw. Every row on the board carries a verdict and no history at all, so somebody who
+  checked last week had no way to tell which verdicts were new. `--since` takes a file, a URL or a
+  git revision, and a baseline it cannot read costs the panel and nothing else.
 - The report prints one dim line per row naming the environment behind the verdict, ESLint first
-  then alphabetical, capped at six packages with a `+N more`. The site shows the full list per
-  major inside the expanded row, because the two majors install separately and the versions around
-  the plugin can differ between them.
+  then alphabetical. Names drop off the end with a `+N more` once the line would not fit beside its
+  indent: six real dependencies with a scoped parser among them ran it to 178 columns, which wrapped
+  twice in an ordinary terminal and was the one line in the report nothing clipped. The site shows
+  the full list per major inside the expanded row, because the two majors install separately and the
+  versions around the plugin can differ between them.
 - `examples/react-app` pins `typescript` again. Its lockfile had drifted to TypeScript 7, which
   `@typescript-eslint/parser@8` refuses to load, so the example the README walks you through
   reported HARNESS MISCONFIG instead of the rescue story it is there to show. The measured line is

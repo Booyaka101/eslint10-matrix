@@ -74,15 +74,16 @@ jobs:
       - name: Merge shards into matrix.json
         run: node scripts/merge-shards.mjs shards matrix.json
 
-      - name: Build the static site
+      # Before the deploy below replaces it. Afterwards the drift guard would be
+      # diffing this build against itself and never see a thing, and the site
+      # would have nothing to say about what moved.
+      - name: Keep the board this run replaces
         run: |
           npm run build --workspace packages/cli
-          node site/build.mjs --in matrix.json --out site/dist
+          node scripts/fetch-published.mjs published-matrix.json
 
-      # Before the deploy below replaces it. Afterwards the drift guard would be
-      # diffing this build against itself and never see a thing.
-      - name: Keep the board this run replaces, for the drift guard
-        run: node scripts/fetch-published.mjs published-matrix.json
+      - name: Build the static site
+        run: node site/build.mjs --in matrix.json --out site/dist --since published-matrix.json
 
       - uses: actions/upload-artifact@v7
         with:

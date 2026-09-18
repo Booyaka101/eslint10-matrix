@@ -61,14 +61,14 @@ executed here against your installed versions on 7 files, baseline eslint 9.39.5
 BLOCKED (1)
   eslint-plugin-vitest@0.5.4  fails to load on 10.10.0
                               @eslint/compat did not help: still fails to load with @eslint/compat installed: Class extends v…
-                              measured with eslint 10.10.0, @typescript-eslint/parser 8.67.0, eslint-plugin-vitest 0.5.4, typescript 5.9.3, vitest 2.1.9, node 22.18.0, npm 10.9.3
+                              measured with eslint 10.10.0, +4 more, node 22.18.0, npm 10.9.3
 
 RESCUABLE (2)  crashes as published, verified clean when wrapped with @eslint/compat
   npm install --save-dev @eslint/compat, then in eslint.config.js:
 
   eslint-plugin-import@2.32.0  4 rules crash on 10.10.0, all recover wrapped in fixupPluginRules()
     import/order crashed on src\components\Catalogue.jsx: sourceCode.getTokenOrCommentBefore is not a function
-    measured with eslint 10.10.0, @typescript-eslint/parser 8.67.0, eslint-plugin-import 2.32.0, typescript 5.9.3, node 22.18.0, npm 10.9.3
+    measured with eslint 10.10.0, @typescript-eslint/parser 8.67.0, +2 more, node 22.18.0, npm 10.9.3
 
     import { fixupPluginRules } from '@eslint/compat';
     import pluginImport from 'eslint-plugin-import';
@@ -82,7 +82,7 @@ RESCUABLE (2)  crashes as published, verified clean when wrapped with @eslint/co
 
   eslint-plugin-react@7.37.5  6 rules crash on 10.10.0, all recover wrapped in fixupPluginRules()
     react/forward-ref-uses-ref crashed on eslint.config.js: Error while loading rule 'react/forward-ref-uses… (6 more files)
-    measured with eslint 10.10.0, @typescript-eslint/parser 8.67.0, eslint-plugin-react 7.37.5, typescript 5.9.3, node 22.18.0, npm 10.9.3
+    measured with eslint 10.10.0, @typescript-eslint/parser 8.67.0, +2 more, node 22.18.0, npm 10.9.3
 
     import { fixupPluginRules } from '@eslint/compat';
     import react from 'eslint-plugin-react';
@@ -146,7 +146,7 @@ What it refuses to do:
 $ cd examples/react-app && npx eslint10-matrix check --matrix ../../matrix.json
 
 ESLint 10.10.0 readiness for react-app (5 plugins)
-matrix generated 2026-09-10T01:34:04.617Z
+matrix generated 2026-09-15T03:31:54.929Z
 
 BLOCKED (1)
   eslint-plugin-vitest@0.5.4  fails to load on 10.10.0
@@ -221,7 +221,8 @@ are summarised as a single list, so there is no row to hang it on; `--json` has 
     measured with eslint 10.10.0, eslint-plugin-react 7.37.5, react 19.3.0, node 22.18.0, npm 10.9.3
 ```
 
-ESLint leads, the rest are alphabetical, and long lists stop at six packages with a `+N more`.
+ESLint leads, the rest are alphabetical, and names drop off the end with a `+N more` once the line
+would not fit beside its indent, which a scoped parser and two long plugin names manage easily.
 `--json` carries the whole object. A verdict without this is a claim you cannot go back and check,
 which is what `diff` and the nightly drift guard are built on.
 
@@ -441,11 +442,16 @@ Each entry may carry `settings`, `parser` and `extraDeps`, the same configuratio
 npm ci
 npm run build                                    # both packages
 npm run lint                                     # this repo lints itself, on ESLint 10
-npm test                                         # 112 tests, vitest (build first: the end-to-end tests drive the built CLI)
+npm test                                         # 237 tests, vitest (build first: the end-to-end tests drive the built CLI)
 node packages/runner/dist/run.js --only eslint-plugin-react   # one plugin
 node packages/runner/dist/run.js                 # full pass, ~4 minutes at concurrency 6
 node site/build.mjs --in matrix.json --out site/dist
+node site/build.mjs --in matrix.json --out site/dist --since HEAD:matrix.json   # with the "what moved" panel
 ```
+
+`--since` takes the same things `--matrix` does: a file, an http(s) URL, or a git revision. The
+nightly passes it the board it is about to replace, so the page opens with what moved since the one
+you last looked at and why. A baseline it cannot read costs the panel and nothing else.
 
 The README screenshots are generated, not drawn. `node scripts/terminal-shot.mjs --in <captured
 output> --out docs/scan-terminal.png` turns a real `--color` run into the terminal image above.
