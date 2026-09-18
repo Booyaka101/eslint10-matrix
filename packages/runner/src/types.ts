@@ -6,6 +6,7 @@ export type {
   HarnessReport,
   HarnessRule,
   Matrix,
+  MeasuredEnv,
   PluginRow,
   PluginRunResult,
   RescueResult,

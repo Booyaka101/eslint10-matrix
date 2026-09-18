@@ -1,0 +1,90 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-09-18T02:41:07.004Z",
+  "eslintVersions": {
+    "v9": "9.39.5",
+    "v10": "10.10.0"
+  },
+  "plugins": [
+    {
+      "name": "eslint-plugin-jest",
+      "version": "29.16.6",
+      "declaredPeerRange": "^8.57.0 || ^9.0.0 || ^10.0.0",
+      "weeklyDownloads": 12463399,
+      "results": {
+        "9.39.5": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 71,
+          "measuredWith": {
+            "node": "22.18.0",
+            "npm": "10.9.3",
+            "deps": {
+              "eslint": "9.39.5",
+              "eslint-plugin-jest": "29.16.6",
+              "jest": "30.5.1"
+            }
+          }
+        },
+        "10.10.0": {
+          "status": "rule-crash",
+          "crashingRules": [
+            {
+              "rule": "no-deprecated-functions",
+              "message": "Unable to detect Jest version"
+            }
+          ],
+          "totalRules": 71,
+          "measuredWith": {
+            "node": "22.18.0",
+            "npm": "10.9.3",
+            "deps": {
+              "eslint": "10.10.0",
+              "eslint-plugin-jest": "29.16.6",
+              "jest": "31.0.0"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "eslint-plugin-promise",
+      "version": "7.3.0",
+      "declaredPeerRange": "^7.0.0 || ^8.0.0 || ^9.0.0 || ^10.0.0",
+      "weeklyDownloads": 5430594,
+      "results": {
+        "9.39.5": {
+          "status": "clean",
+          "crashingRules": [],
+          "totalRules": 17,
+          "measuredWith": {
+            "node": "22.18.0",
+            "npm": "10.9.3",
+            "deps": {
+              "eslint": "9.39.5",
+              "eslint-plugin-promise": "7.3.0"
+            }
+          }
+        },
+        "10.10.0": {
+          "status": "rule-crash",
+          "crashingRules": [
+            {
+              "rule": "param-names",
+              "message": "nothing under this row changed"
+            }
+          ],
+          "totalRules": 17,
+          "measuredWith": {
+            "node": "22.18.0",
+            "npm": "10.9.3",
+            "deps": {
+              "eslint": "10.10.0",
+              "eslint-plugin-promise": "7.3.0"
+            }
+          }
+        }
+      }
+    }
+  ]
+}

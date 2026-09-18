@@ -1,8 +1,11 @@
+import { palette } from './colour.js';
 import { displayPath } from './display-path.js';
-import type { HarnessRule, Matrix, PluginRow, PluginRunResult, RescueResult } from './matrix.js';
+import type { MeasuredDrift } from './env-drift.js';
+import type { HarnessRule, Matrix, MeasuredEnv, PluginRow, PluginRunResult, RescueResult } from './matrix.js';
 import { rowFor } from './matrix.js';
 import { satisfies } from './semver-lite.js';
 import { pluginNamespace, rescueSnippet } from './snippet.js';
+import { wrapList } from './wrap.js';
 
 export type Bucket =
   | 'blocked'
@@ -42,6 +45,8 @@ export interface Report {
   overrides: Record<string, { eslint: string }>;
   /** Set by `scan`: what was executed here instead of read from the board. */
   measured?: Measured;
+  /** Rows whose verdict was measured against versions this repo does not have. */
+  measuredDrift?: MeasuredDrift[];
   /** Anything the reader needs to know about how the answer was reached. */
   notes: string[];
 }
@@ -125,6 +130,7 @@ export function buildReport(
     projectDir: string;
     configPath: string;
     measured?: Measured;
+    measuredDrift?: MeasuredDrift[];
     notes?: string[];
   }
 ): Report {
@@ -144,6 +150,7 @@ export function buildReport(
     unknown: [],
     overrides: {},
     ...(input.measured ? { measured: input.measured } : {}),
+    ...(input.measuredDrift?.length ? { measuredDrift: input.measuredDrift } : {}),
     notes: input.notes ?? [],
   };
 
@@ -266,16 +273,24 @@ function harnessExclusionNote(entry: Entry): string | null {
   return `${count} ${count === 1 ? 'rule' : 'rules'} excluded as harness misconfiguration (${causes})`;
 }
 
+/** The column every note in the report is clipped or wrapped to fit inside. */
+const WIDTH = 120;
+
 /** Keeps a long crash message from running a terminal line past readability. */
-function clip(text: string, max = 96): string {
+function clip(text: string, max: number): string {
   return text.length > max ? `${text.slice(0, max - 1)}…` : text;
+}
+
+/** What is left for a note printed under `indent` spaces. Never less than legible. */
+function budget(indent: number, used = 0): number {
+  return Math.max(40, WIDTH - indent - used);
 }
 
 /**
  * The file citation `scan` adds: the corpus board has no file to name, so this
  * is empty for a report built from the published matrix.
  */
-function crashEvidence(entry: Entry): string | null {
+function crashEvidence(entry: Entry, indent: number): string | null {
   const crash = entry.result?.crashingRules.find((r) => r.file);
   if (!crash?.file) return null;
   const others = (crash.fileCount ?? 1) - 1;
@@ -284,14 +299,50 @@ function crashEvidence(entry: Entry): string | null {
   // The message is what gets clipped, never the file count: how much of the repo
   // a rule breaks is the part a reader cannot reconstruct from anywhere else.
   const head = `${pluginNamespace(entry.name)}/${crash.rule} crashed on ${crash.file}: `;
-  return `${head}${clip(crash.message, Math.max(40, 120 - head.length - more.length))}${more}`;
+  return `${head}${clip(crash.message, budget(indent, head.length + more.length))}${more}`;
+}
+
+/**
+ * eslint leads because it is the axis the board is about; the rest are
+ * alphabetical so two runs of the same row print in the same order. The site
+ * calls this with no cap, having room for the whole list.
+ */
+export function describeMeasuredEnv(env: MeasuredEnv, max = Number.POSITIVE_INFINITY): string {
+  const names = Object.keys(env.deps).sort((a, b) => {
+    if (a === 'eslint' || b === 'eslint') return a === 'eslint' ? -1 : 1;
+    return a.localeCompare(b);
+  });
+  const shown = names.slice(0, max).map((name) => `${name} ${env.deps[name] ?? '(missing)'}`);
+  const rest = names.length - shown.length;
+  if (rest > 0) shown.push(`+${rest} more`);
+  shown.push(`node ${env.node}`);
+  if (env.npm) shown.push(`npm ${env.npm}`);
+  return `measured with ${shown.join(', ')}`;
+}
+
+/**
+ * The dim line naming the environment the row's ESLint 10 run happened in.
+ * Names drop out until it fits: a scoped parser and two long plugin names run
+ * this past 170 columns, and it was the one note in the report nothing clipped.
+ */
+function measuredNote(entry: Entry, indent: number): string | null {
+  const env = entry.result?.measuredWith;
+  if (!env) return null;
+  const room = budget(indent);
+  for (let shown = 6; shown > 1; shown -= 1) {
+    const line = describeMeasuredEnv(env, shown);
+    if (line.length <= room) return line;
+  }
+  return describeMeasuredEnv(env, 1);
 }
 
 /** The one-line "why this is still blocked" note under a BLOCKED plugin. */
-function blockedRescueNote(rescue: RescueResult | undefined): string | null {
+function blockedRescueNote(rescue: RescueResult | undefined, indent: number): string | null {
   if (!rescue) return null;
-  if (!rescue.attempted) return clip(`@eslint/compat not attempted: ${rescue.skipReason ?? 'no reason recorded'}`);
-  return clip(`@eslint/compat did not help: ${rescue.detail ?? 'the wrap changed nothing'}`);
+  const room = budget(indent);
+  if (!rescue.attempted)
+    return clip(`@eslint/compat not attempted: ${rescue.skipReason ?? 'no reason recorded'}`, room);
+  return clip(`@eslint/compat did not help: ${rescue.detail ?? 'the wrap changed nothing'}`, room);
 }
 
 /**
@@ -330,12 +381,7 @@ export function renderOverrides(overrides: Record<string, { eslint: string }>): 
 }
 
 export function renderReport(report: Report, options: { color?: boolean } = {}): string {
-  const c = options.color ?? false;
-  const dim = (s: string) => (c ? `\u001B[2m${s}\u001B[0m` : s);
-  const bold = (s: string) => (c ? `\u001B[1m${s}\u001B[0m` : s);
-  const red = (s: string) => (c ? `\u001B[31m${s}\u001B[0m` : s);
-  const yellow = (s: string) => (c ? `\u001B[33m${s}\u001B[0m` : s);
-  const green = (s: string) => (c ? `\u001B[32m${s}\u001B[0m` : s);
+  const { dim, bold, red, yellow, green } = palette(options.color ?? false);
 
   const total =
     report.blocked.length +
@@ -364,7 +410,13 @@ export function renderReport(report: Report, options: { color?: boolean } = {}):
     const width = Math.max(...report.blocked.map((e) => label(e).length));
     for (const entry of report.blocked) {
       out.push(`  ${pad(label(entry), width + 2)}${entry.reason}`);
-      for (const line of [crashEvidence(entry), blockedRescueNote(entry.rescue), harnessExclusionNote(entry)]) {
+      const indent = width + 4;
+      for (const line of [
+        crashEvidence(entry, indent),
+        blockedRescueNote(entry.rescue, indent),
+        harnessExclusionNote(entry),
+        measuredNote(entry, indent),
+      ]) {
         if (line) out.push(dim(`  ${' '.repeat(width + 2)}${line}`));
       }
     }
@@ -379,7 +431,7 @@ export function renderReport(report: Report, options: { color?: boolean } = {}):
     for (const entry of entries) {
       out.push('');
       out.push(`  ${label(entry)}  ${rescueLine(entry, report.eslintVersions.v10)}`);
-      for (const line of [crashEvidence(entry), harnessExclusionNote(entry)]) {
+      for (const line of [crashEvidence(entry, 4), harnessExclusionNote(entry), measuredNote(entry, 4)]) {
         if (line) out.push(dim(`    ${line}`));
       }
       out.push('');
@@ -442,6 +494,8 @@ export function renderReport(report: Report, options: { color?: boolean } = {}):
         out.push(dim(`  ${indent}${finding.detail}`));
         out.push(dim(`  ${indent}fix: ${finding.fix}`));
       }
+      const measured = measuredNote(entry, width + 4);
+      if (measured) out.push(dim(`  ${indent}${measured}`));
       out.push(dim(`  ${indent}${ISSUE_URL}?title=${encodeURIComponent(`${entry.name}: measured with a broken harness`)}`));
     }
     out.push('');
@@ -450,6 +504,24 @@ export function renderReport(report: Report, options: { color?: boolean } = {}):
   if (report.unknown.length > 0) {
     out.push(bold(`UNKNOWN (${report.unknown.length})`));
     for (const entry of report.unknown) out.push(`  ${entry.name}  ${dim(entry.reason)}`);
+    out.push('');
+  }
+
+  if (report.measuredDrift?.length) {
+    out.push(
+      yellow(bold(`MEASURED DIFFERENTLY (${report.measuredDrift.length})`)) +
+        '  the board reached these verdicts with versions this repo does not have'
+    );
+    const width = Math.max(...report.measuredDrift.map((d) => d.plugin.length));
+    for (const drift of report.measuredDrift) {
+      const head = `  ${pad(drift.plugin, width + 2)}`;
+      const items = drift.deltas.map((d) => `${d.package} ${d.before}, here ${d.after}`);
+      for (const line of wrapList(head, items, WIDTH)) out.push(dim(line));
+    }
+    // The section states a disagreement and cannot say whether it matters. The
+    // command that can is the one that runs the plugins here, so say so rather
+    // than leaving the reader with a fact and no move.
+    out.push(dim('  eslint10-matrix scan measures these against the versions you have'));
     out.push('');
   }
 

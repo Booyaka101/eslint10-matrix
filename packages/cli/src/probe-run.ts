@@ -6,8 +6,9 @@ import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { classify, installFail, type ProbeResult } from './classify.js';
+import { readJsonFile } from './installed.js';
 import { cacheDir } from './matrix.js';
-import type { PluginRunResult, RescueResult } from './matrix.js';
+import type { MeasuredEnv, PluginRunResult, RescueResult } from './matrix.js';
 import { COMPAT_SPEC, deriveRescue, rescueEligibility, skippedRescue } from './rescue.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -16,6 +17,7 @@ const PROBE = resolve(HERE, '..', 'probe', 'probe.mjs');
 
 const INSTALL_TIMEOUT_MS = 5 * 60_000;
 const PROBE_TIMEOUT_MS = 6 * 60_000;
+const NPM_VERSION_TIMEOUT_MS = 30_000;
 
 export interface ProbePlan {
   /** npm specs installed into the isolated environment, eslint included. */
@@ -93,7 +95,8 @@ export function run(
   });
 }
 
-function envKey(deps: readonly string[]): string {
+/** Exported so a test can build a cache hit the way prepareEnvironment finds one. */
+export function envKey(deps: readonly string[]): string {
   return createHash('sha256').update([...deps].sort().join('\n')).digest('hex').slice(0, 16);
 }
 
@@ -226,9 +229,61 @@ async function prepareEnvironment(deps: string[], options: ProbeOptions): Promis
   return { dir: target, reused: false, install };
 }
 
+/**
+ * The package a spec installs. The leading `@` of a scoped name is at index 0,
+ * so only a later one can be the range separator.
+ */
+export function specName(spec: string): string {
+  const at = spec.lastIndexOf('@');
+  return at > 0 ? spec.slice(0, at) : spec;
+}
+
+/** One `npm --version` per process: it is the same answer for every install. */
+let npmVersion: string | null | undefined;
+
+async function npmVersionOnce(cwd: string): Promise<string | null> {
+  if (npmVersion !== undefined) return npmVersion;
+  const result = await run('npm', ['--version'], cwd, NPM_VERSION_TIMEOUT_MS, true);
+  const reported = result.stdout.trim().split('\n').pop()?.trim() ?? '';
+  npmVersion = result.code === 0 && /^\d/.test(reported) ? reported : null;
+  return npmVersion;
+}
+
+/**
+ * Reads back what npm actually put in the probe's node_modules. Deliberately not
+ * `readInstalled`: that walks up from its starting directory, and a probe
+ * environment lives under the shared cache, where an upward walk could report a
+ * package that was never installed into this run.
+ */
+export async function measureEnvironment(dir: string, deps: readonly string[]): Promise<MeasuredEnv> {
+  const resolved: Record<string, string | null> = {};
+  for (const spec of deps) {
+    const name = specName(spec);
+    const manifest = await readJsonFile<{ version?: string }>(
+      join(dir, 'node_modules', ...name.split('/'), 'package.json')
+    );
+    resolved[name] = typeof manifest?.version === 'string' ? manifest.version : null;
+  }
+  return { node: process.versions.node, npm: await npmVersionOnce(dir), deps: resolved };
+}
+
 /** Installs an isolated environment, runs the probe in it, and classifies the result. */
 export async function probe(plan: ProbePlan, options: ProbeOptions = {}): Promise<PluginRunResult> {
   const environment = await prepareEnvironment(plan.deps, options);
+  // Measured on a cache hit too: a reused environment can be a fortnight old, so
+  // the specs are not evidence of what this run was measured against.
+  const measuredWith = existsSync(join(environment.dir, 'node_modules'))
+    ? await measureEnvironment(environment.dir, plan.deps)
+    : null;
+  const result = await runProbe(environment, plan, options);
+  return measuredWith ? { ...result, measuredWith } : result;
+}
+
+async function runProbe(
+  environment: Environment,
+  plan: ProbePlan,
+  options: ProbeOptions
+): Promise<PluginRunResult> {
   const dir = environment.dir;
   const disposable = environment.temporary === true && !options.keepTemp;
   let runDir: string | null = null;

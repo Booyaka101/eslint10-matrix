@@ -74,10 +74,23 @@ jobs:
       - name: Merge shards into matrix.json
         run: node scripts/merge-shards.mjs shards matrix.json
 
-      - name: Build the static site
+      # Before the deploy below replaces it. Afterwards the drift guard would be
+      # diffing this build against itself and never see a thing, and the site
+      # would have nothing to say about what moved.
+      - name: Keep the board this run replaces
         run: |
           npm run build --workspace packages/cli
-          node site/build.mjs --in matrix.json --out site/dist
+          node scripts/fetch-published.mjs published-matrix.json
+
+      - name: Build the static site
+        run: node site/build.mjs --in matrix.json --out site/dist --since published-matrix.json
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: published-matrix
+          path: published-matrix.json
+          retention-days: 7
+          if-no-files-found: ignore
 
       - name: Commit matrix.json
         run: |
@@ -91,7 +104,7 @@ jobs:
             git push
           fi
 
-      - name: Keep the merged board for the harness guard
+      - name: Keep the merged board for the guards
         uses: actions/upload-artifact@v7
         with:
           name: matrix
@@ -125,6 +138,41 @@ jobs:
 
       - name: Fail if any row was measured with a broken environment
         run: node scripts/check-harness.mjs matrix.json
+
+  # Advisory, like the harness guard. It turns the run red and says why, but it does
+  # not gate the deploy: a guard that blocked publishing would leave main ahead of
+  # Pages, and every following night would re-diff the fresh board against the same
+  # stale one and fail again until somebody intervened.
+  drift-guard:
+    name: drift guard
+    needs: merge
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+      # The guard reads the CLI's diff, so the CLI has to be compiled first.
+      - run: npm run build --workspace packages/cli
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: matrix
+
+      # Absent when Pages had nothing to serve, or was unreachable at capture time.
+      # check-drift.mjs reads that as no baseline and skips.
+      - uses: actions/download-artifact@v8
+        continue-on-error: true
+        with:
+          name: published-matrix
+
+      - name: Fail if a verdict moved unexplained, or a row left the board
+        run: node scripts/check-drift.mjs matrix.json published-matrix.json
 
   deploy:
     name: deploy pages

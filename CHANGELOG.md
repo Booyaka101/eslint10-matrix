@@ -1,5 +1,107 @@
 # Changelog
 
+## 1.4.0 - 2026-09-18
+
+The board has always been able to say a plugin broke and never able to say what it was measured
+against. Issue #11 asked for the fix the obvious way round: pin `settings.jest.version` in
+`plugins.json` so the run stops depending on whichever jest npm resolves that night. That was
+rejected, and rightly. A pin is a declaration, and the board's entire claim is that its verdicts
+come from execution rather than from declarations. Pinning would also have frozen the measurement
+at whatever was true the day somebody typed the number, which is the opposite of what a nightly is
+for. The real defect was never what we install. It is that we never wrote down what we got.
+
+So 1.4.0 records instead of declaring. Nothing about what gets installed changed, and
+`plugins.json` gained no version pins, only a sentence in its comment saying where the versions
+live now.
+
+- **Every result carries `measuredWith`.** After the install, the probe reads the version out of
+  each dependency's own `package.json` in the environment it is about to run in, and stores those
+  alongside the Node and npm that did the work. A dependency we asked for and did not get is
+  recorded as `null` rather than dropped, because "it was not there" is the interesting case. This
+  happens on a cache hit too: an environment reused from `~/.cache/eslint10-matrix/envs` can be
+  thirteen days old, so its specs are not evidence of anything. Resolving the spec against the
+  registry instead would have been wrong in a way that is easy to miss. npm 10 backtracks a
+  `latest` direct dependency to satisfy a transitive peer, so the version a spec installs is a
+  property of the installer and the day, not of the spec.
+- **`eslint10-matrix diff <before> <after>`.** Pairs two boards by plugin name and prints every row
+  whose status on either ESLint major, or whose rescue verdict, moved, with the first cause that
+  applies beside it: `eslint` if the boards were built against different releases, `plugin` if the
+  plugin shipped, `env` if something installed around it moved (named, with both versions),
+  `unknown-env` if one of the boards predates this release and recorded nothing, `unexplained` if
+  every version both boards recorded is identical. Attribution is scoped to the major the row
+  actually moved on, so an install that never wrote a `node_modules` on ESLint 9 cannot cost the
+  ESLint 10 answer its cause. `--ci` exits 1 on `unexplained` and on a row that left the board, and
+  0 on everything else, because plugins changing is the board working. Either argument can be a
+  path or an `https://` URL.
+- **A `drift-guard` job in the nightly.** `scripts/check-drift.mjs` diffs the freshly built board
+  against the published one, prints every change with its cause and fails when one has none. It
+  also says out loud when rows left the board, which is what a shard that died looks like. The
+  baseline is captured by `scripts/fetch-published.mjs` while the merge job runs, before the deploy
+  replaces it, because a guard that fetched it afterwards would be comparing the build with itself.
+  The guard is advisory and does not gate the deploy: blocking publishing would leave main ahead of
+  Pages, and the next night would re-diff against the same stale board and fail again. An
+  unreachable baseline is not drift either, it is the absence of one, so the guard says so and
+  passes.
+- `diff` given one board compares it against the published one, the same default `check` reads, so
+  "how does my build differ from what is live" is `eslint10-matrix diff ./matrix.json`.
+- **A board can be a git revision.** `eslint10-matrix diff HEAD~7:matrix.json matrix.json` answers
+  "what moved this week" with nothing to keep and nothing to fetch, because the nightly has been
+  committing `matrix.json` every day and that history is the time series. `--matrix` takes one too.
+  The path after the colon is repository-root relative, the way `git show` takes it, and a path
+  that really exists on disk is still read as a file, so a Windows drive letter is never mistaken
+  for a revision.
+- **The site opens with what moved.** `site/build.mjs --since <board>` renders a panel above the
+  table naming every row that changed since that board, where it moved to and why, in the same
+  words `diff` uses. The nightly hands it the board it is about to replace, which is the one a
+  reader last saw. Every row on the board carries a verdict and no history at all, so somebody who
+  checked last week had no way to tell which verdicts were new. `--since` takes a file, a URL or a
+  git revision, and a baseline it cannot read costs the panel and nothing else.
+- The report prints one dim line per row naming the environment behind the verdict, ESLint first
+  then alphabetical. Names drop off the end with a `+N more` once the line would not fit beside its
+  indent: six real dependencies with a scoped parser among them ran it to 178 columns, which wrapped
+  twice in an ordinary terminal and was the one line in the report nothing clipped. The site shows
+  the full list per major inside the expanded row, because the two majors install separately and the
+  versions around the plugin can differ between them.
+- **`check` says when the board's versions are not yours.** A MEASURED DIFFERENTLY section names
+  every plugin whose ESLint 10 verdict was reached against a package version this repo does not
+  have, with both numbers: `vue-eslint-parser 10.3.0, here 9.1.0`. Until the board recorded what it
+  installed there was no way to say this at all, and it is the thing the recording is for. A repo
+  on an older parser was being told a plugin is clean on the strength of a run it is not
+  reproducing. Only packages both sides have are compared, ESLint itself is excluded because a repo
+  running `check` is on 9 by definition, and versions are read from `node_modules` first and the
+  lockfile second, the same as `scan`. It never moves a row between buckets and never changes the
+  `--ci` exit code: the board knows the versions disagree, not that the disagreement matters.
+- **`scan --against [board]`.** After the report, `scan` says where this repo and a board disagree
+  and why, in the words `diff` already uses: the board is the before, this repo is the after. Both
+  sides are matrices carrying what they were measured in, so the attribution comes free and nobody
+  has to run two commands and compare by eye. Only rows the board also measures are compared, since
+  a plugin it has never heard of would otherwise read as `added to the board`, and a board with none
+  of them in common says so rather than printing an empty diff, which reads as agreement.
+- **`diff --only <a,b>`.** Narrows a comparison to the plugins you named, out of the changes and out
+  of the counts both, so `--ci` judges exactly what was printed. A repo watching its own five
+  plugins should not be failed by a sixth it does not use moving overnight. The header counts the
+  rows compared rather than the rows each board holds, so a narrowed run does not report 49 plugins
+  going missing.
+- The MEASURED DIFFERENTLY section ends by naming the command that can settle it. It can say the
+  versions disagree and not whether the disagreement matters, and `scan` is the one that runs the
+  plugins against what you actually have.
+- `check` falls back to the ESLint 9 run's environment when the ESLint 10 one recorded none. A row
+  whose ESLint 10 install failed wrote nothing, and the ESLint 9 run of the same row was installed
+  the same night out of the same registry, so it answers the question instead of leaving the row
+  silent.
+- The screenshot scripts report a bad flag or a missing file as one line instead of a stack.
+- `examples/react-app` pins `typescript` again. Its lockfile had drifted to TypeScript 7, which
+  `@typescript-eslint/parser@8` refuses to load, so the example the README walks you through
+  reported HARNESS MISCONFIG instead of the rescue story it is there to show. The measured line is
+  what made that visible in one read.
+- `packages/cli/README.md` is now generated from the repo README by `npm run sync:readme`, and a
+  test fails when it is stale. The hand-kept copy had missed the entire 1.3.0 release.
+
+`schemaVersion` is still 1. `measuredWith` is additive exactly as `harness` was in 1.3.0, so a
+1.3.0 CLI reads a 1.4.0 board and prints the same verdicts it always did. That was checked by
+running `npx eslint10-matrix@1.3.0 check` against a board built by this release: identical output,
+minus the lines 1.3.0 has no field for.
+
 ## 1.3.0 - 2026-09-14
 
 Two rows reached the published board saying a plugin was broken when what was broken was the

@@ -1,7 +1,11 @@
+import { execFile } from 'node:child_process';
 import { mkdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { promisify } from 'node:util';
+
+const run = promisify(execFile);
 
 export const DEFAULT_MATRIX_URL = 'https://booyaka101.github.io/eslint10-matrix/matrix.json';
 
@@ -36,6 +40,19 @@ export interface CrashingRule {
   fileCountCapped?: boolean;
 }
 
+/**
+ * What was actually on disk when the run happened, read back out of the probe's
+ * own node_modules. A spec is a wish and a range resolves differently on
+ * different days, so a verdict that does not carry this cannot say which
+ * environment produced it. `null` means we asked npm for the package and it was
+ * not there afterwards, which is the interesting case.
+ */
+export interface MeasuredEnv {
+  node: string;
+  npm: string | null;
+  deps: Record<string, string | null>;
+}
+
 export interface PluginRunResult {
   status: Status;
   crashingRules: CrashingRule[];
@@ -56,6 +73,8 @@ export interface PluginRunResult {
   lintedFiles?: number;
   /** Present when `partitionHarness` moved rules off this result. */
   harness?: HarnessReport;
+  /** The resolved environment this run happened in. Absent when nothing installed. */
+  measuredWith?: MeasuredEnv;
 }
 
 export type FixupFunction = 'fixupPluginRules' | 'fixupConfigRules';
@@ -96,7 +115,7 @@ export interface Matrix {
 
 export interface MatrixLoad {
   matrix: Matrix;
-  source: 'network' | 'cache' | 'file';
+  source: 'network' | 'cache' | 'file' | 'git';
   /** Set when the network failed and a cached copy was used instead. */
   staleReason?: string;
   cachedAt?: string;
@@ -160,6 +179,18 @@ function isHttpUrl(source: string): boolean {
   }
 }
 
+/** Parses and shape-checks a board from anywhere, naming the source if it is bad. */
+function parseBoard(raw: string, label: string): Matrix {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    throw new MatrixError(`${label} is not valid JSON`);
+  }
+  assertMatrixShape(parsed);
+  return parsed;
+}
+
 async function loadFromFile(path: string): Promise<MatrixLoad> {
   let raw: string;
   try {
@@ -168,17 +199,56 @@ async function loadFromFile(path: string): Promise<MatrixLoad> {
     const code = (err as NodeJS.ErrnoException).code;
     throw new MatrixError(
       code === 'ENOENT' ? `matrix file not found: ${resolve(path)}` : `could not read ${resolve(path)}: ${String(err)}`,
-      'Pass --matrix with a path to a matrix.json, or omit it to fetch the published one.'
+      'Give a matrix.json path, an http(s) URL, or a git revision like HEAD~7:matrix.json.'
     );
   }
-  let parsed: unknown;
+  return { matrix: parseBoard(raw, resolve(path)), source: 'file' };
+}
+
+/**
+ * Splits `HEAD~7:matrix.json` into the revision and the path git wants. Null for
+ * anything that is not one: a leading colon, and `C:\boards\matrix.json`, where the
+ * colon is a Windows drive letter rather than a revision.
+ */
+function gitSource(source: string): { ref: string; path: string } | null {
+  const at = source.indexOf(':');
+  // A leading dash would reach `git show` as an option, and some of those write
+  // files. Nothing shaped like a flag is a revision.
+  if (at < 2 || source.startsWith('-')) return null;
+  const path = source.slice(at + 1);
+  return path ? { ref: source.slice(0, at), path } : null;
+}
+
+/**
+ * Reads a board out of git history. The nightly commits matrix.json every day, so
+ * every past board is already in the repository; this is how you address one
+ * without checking anything out. The path is relative to the repository root,
+ * the way `git show` takes it, unless it starts with `./`.
+ */
+async function loadFromGit(ref: string, path: string): Promise<MatrixLoad> {
+  const spec = `${ref}:${path}`;
+  let raw: string;
   try {
-    parsed = JSON.parse(raw);
-  } catch {
-    throw new MatrixError(`${resolve(path)} is not valid JSON`);
+    // The board is 27kB today. The cap is only here so a wrong revision pointing at
+    // something enormous fails instead of buffering it.
+    const { stdout } = await run('git', ['show', spec], { maxBuffer: 32 * 1024 * 1024 });
+    raw = stdout;
+  } catch (err) {
+    const said = (err as { stderr?: string }).stderr?.trim().split('\n')[0];
+    throw new MatrixError(
+      `git could not read ${spec}${said ? `: ${said}` : ''}`,
+      'Inside a git repository, the path is relative to the repository root. Prefix it with ./ to make it relative to where you are.'
+    );
   }
-  assertMatrixShape(parsed);
-  return { matrix: parsed, source: 'file' };
+  return { matrix: parseBoard(raw, spec), source: 'git' };
+}
+
+async function onDisk(path: string): Promise<boolean> {
+  try {
+    return (await stat(resolve(path))).isFile();
+  } catch {
+    return false;
+  }
 }
 
 export async function loadMatrix(options: {
@@ -196,7 +266,13 @@ export async function loadMatrix(options: {
   // Anything that is not http(s) is a path. A bare `--matrix matrix.json` used to
   // parse as a URL, fail to fetch, and fall back to the cached board without
   // saying that the file had been ignored.
-  if (!isHttpUrl(source)) return loadFromFile(source);
+  if (!isHttpUrl(source)) {
+    const git = gitSource(source);
+    // A file that is actually there wins. A colon in a directory name is rarer than
+    // a revision, but when the path exists there is nothing left to guess about.
+    if (git && !(await onDisk(source))) return loadFromGit(git.ref, git.path);
+    return loadFromFile(source);
+  }
   const url = source;
 
   let networkError: string;
@@ -209,7 +285,7 @@ export async function loadMatrix(options: {
         const retryAfter = res.headers.get('retry-after');
         throw new Error(`rate limited (HTTP 429)${retryAfter ? `, retry after ${retryAfter}s` : ''}`);
       }
-      if (res.status === 404) throw new Error(`HTTP 404 - no matrix published at ${url}`);
+      if (res.status === 404) throw new Error('HTTP 404 - nothing published there');
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const parsed = (await res.json()) as unknown;
       assertMatrixShape(parsed);
@@ -231,9 +307,11 @@ export async function loadMatrix(options: {
     }
   }
 
+  // "no cached copy" would be a lie when --no-cache told us not to look for one.
+  const cacheNote = options.noCache ? '' : ' and no cached copy is available';
   throw new MatrixError(
-    `could not fetch the matrix from ${url} (${networkError}) and no cached copy is available`,
-    'Check your network, or pass --matrix <path-to-matrix.json> to use a local copy.'
+    `could not fetch the matrix from ${url}: ${networkError}${cacheNote}`,
+    'Check your network, or point the command at a local matrix.json instead.'
   );
 }
 

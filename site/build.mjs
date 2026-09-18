@@ -5,7 +5,9 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 // Shared with the CLI so a row cannot be "blocked" in one and "ready" in the other.
 // Requires `npm run build --workspace packages/cli` first; both workflows do that.
-import { verdictFor } from '../packages/cli/dist/report.js';
+import { describeMeasuredEnv, verdictFor } from '../packages/cli/dist/report.js';
+import { diffMatrices } from '../packages/cli/dist/diff.js';
+import { loadMatrix } from '../packages/cli/dist/matrix.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(HERE, '..');
@@ -18,6 +20,8 @@ function flag(name, fallback) {
 
 const inputPath = resolve(flag('--in', join(REPO_ROOT, 'matrix.json')));
 const outDir = resolve(flag('--out', join(HERE, 'dist')));
+// Anything loadMatrix takes: a file, a URL, or a revision like HEAD~1:matrix.json.
+const sincePath = flag('--since', null);
 
 const ESCAPES = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
 const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (ch) => ESCAPES[ch]);
@@ -64,13 +68,29 @@ function cell(result) {
   return `<td class="s"><span class="pill ${esc(result.status)}">${esc(label)}</span><span class="sub">${esc(detail)}</span></td>`;
 }
 
-/** A row is expandable when it has rules to list, a rescue to explain, or both. */
+/** A row is expandable when it has rules to list, a rescue to explain, or an environment to show. */
 function hasDetail(row, v10) {
   return (
     (row.results[v10]?.crashingRules.length ?? 0) > 0 ||
     (row.results[v10]?.harness?.rules.length ?? 0) > 0 ||
-    Boolean(row.rescue)
+    Boolean(row.rescue) ||
+    Object.values(row.results).some((result) => result?.measuredWith)
   );
+}
+
+/**
+ * One line per ESLint major: each installs separately, so the versions around
+ * the plugin can differ between them and the reader should see which is which.
+ */
+function measuredDetail(row) {
+  return Object.entries(row.results)
+    .filter(([, result]) => result?.measuredWith)
+    .map(
+      ([version, result]) =>
+        `<li class="measured"><code>eslint ${esc(version)}</code>` +
+        `<span>${esc(describeMeasuredEnv(result.measuredWith))}</span></li>`
+    )
+    .join('');
 }
 
 /** One line per distinct cause: four rules failing the same way are one repair. */
@@ -93,6 +113,7 @@ function crashDetail(row, v10) {
   const items =
     harnessDetail(row, v10) +
     rescueDetail(row) +
+    measuredDetail(row) +
     (row.results[v10]?.crashingRules ?? [])
       .map((r) => `<li><code>${esc(r.rule)}</code><span>${esc(r.message)}</span></li>`)
       .join('');
@@ -117,7 +138,54 @@ function rescueDetail(row) {
   return `<li class="rescue"><code>@eslint/compat@${esc(rescue.compatVersion)}</code><span>${esc(summary)}. Run <code>npx eslint10-matrix check</code> for the config to paste.</span></li>`;
 }
 
-function render(matrix) {
+/** How a changed row is explained, in the same words the CLI uses. */
+const CAUSE_TEXT = {
+  eslint: 'ESLint moved',
+  plugin: 'the plugin moved',
+  env: 'a dependency moved',
+  'unknown-env': 'the older board recorded no environment',
+  unexplained: 'nothing recorded moved',
+};
+
+/**
+ * The "what moved" panel. Every row on the board carries a verdict but no
+ * history, so a reader who checked last week has no way to tell which of these
+ * verdicts is new. The rows are already sorted by downloads, so the loudest
+ * changes come first without sorting again.
+ */
+function movedPanel(result) {
+  if (!result) return '';
+  const { changes, counts, before } = result;
+  if (changes.length === 0) {
+    return `<p class="moved none">Nothing moved since the board published ${esc(before.generatedAt)}.</p>`;
+  }
+  const items = changes
+    .map((change) => {
+      if (change.kind !== 'changed') {
+        const what = change.kind === 'added' ? 'now measured' : 'no longer measured';
+        return `<li class="m-${change.kind}"><code>${esc(change.name)}</code><span>${what}</span></li>`;
+      }
+      const moves = change.statuses
+        .map((s) => `${esc(STATUS_LABEL[s.before] ?? s.before)} &rarr; ${esc(STATUS_LABEL[s.after] ?? s.after)} on ${esc(s.eslintVersion)}`)
+        .join('; ');
+      const why = change.causeDetail ? `${CAUSE_TEXT[change.cause]}: ${esc(change.causeDetail)}` : CAUSE_TEXT[change.cause];
+      return `<li class="m-${change.cause}"><code>${esc(change.name)}</code><span>${moves} &middot; ${why}</span></li>`;
+    })
+    .join('');
+  const tally = [
+    `${counts.changed} changed`,
+    counts.added > 0 ? `${counts.added} added` : '',
+    counts.removed > 0 ? `${counts.removed} removed` : '',
+  ]
+    .filter(Boolean)
+    .join(', ');
+  return `<details class="moved" open>
+    <summary>What moved since ${esc(before.generatedAt)} &middot; ${tally}</summary>
+    <ul class="crashes">${items}</ul>
+  </details>`;
+}
+
+function render(matrix, moved) {
   const { v9, v10 } = matrix.eslintVersions;
   const counts = { blocked: 0, rescuable: 0, 'partial-rescue': 0, force: 0, clean: 0, 'harness-misconfig': 0, untested: 0 };
   for (const row of matrix.plugins) counts[verdictFor(row, matrix.eslintVersions).verdict] += 1;
@@ -188,6 +256,16 @@ tr.row:hover{background:#1c2230}
 .crashes li.rescue span{color:var(--fg)}
 .crashes li.harness{padding-bottom:6px;border-bottom:1px solid var(--line);margin-bottom:2px}
 .crashes li.harness code{color:var(--muted)}
+.crashes li.measured{padding-bottom:6px;border-bottom:1px solid var(--line);margin-bottom:2px}
+.crashes li.measured code,.crashes li.measured span{color:var(--muted)}
+.moved{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:22px}
+.moved summary{cursor:pointer;font-weight:600;font-size:14px}
+.moved .crashes{margin-top:12px}
+.moved .crashes li{grid-template-columns:260px 1fr}
+.moved code{color:var(--accent)}
+.moved li.m-unexplained code,.moved li.m-removed code{color:var(--bad)}
+.moved li.m-unknown-env code{color:var(--muted)}
+.moved.none{color:var(--muted);font-size:13.5px}
 .empty{padding:26px;text-align:center;color:var(--muted)}
 footer{color:var(--muted);font-size:13px;margin-top:34px}
 a{color:var(--accent)}
@@ -202,6 +280,7 @@ a{color:var(--accent)}
   <p class="lede">Blocked plugins are re-run wrapped in <a href="https://www.npmjs.com/package/@eslint/compat">@eslint/compat</a>. <strong>rescuable</strong> means every crashing rule recovered under the wrap; <strong>partial rescue</strong> means most did and the leftovers are listed. Run <code>npx eslint10-matrix check</code> in your repo for the exact config to paste.</p>
   <p class="meta">Generated ${esc(matrix.generatedAt)} · ${matrix.plugins.length} plugins · schema v${esc(matrix.schemaVersion)} · <a href="./matrix.json">matrix.json</a></p>
 
+${movedPanel(moved)}
   <div class="cards">
     <div class="card blocked"><b>${counts.blocked}</b><span>blocked on ${esc(v10)}</span></div>
     <div class="card rescue"><b>${counts.rescuable + counts['partial-rescue']}</b><span>rescuable with @eslint/compat</span></div>
@@ -302,6 +381,22 @@ ${rows}
 `;
 }
 
+/**
+ * The board this one replaces, if there is one. A baseline that cannot be read
+ * is not an error and not news: the page renders without the panel, the same
+ * way the nightly drift guard skips rather than failing on a CDN hiccup.
+ */
+async function movedSince(matrix) {
+  if (!sincePath) return null;
+  try {
+    const { matrix: before } = await loadMatrix({ url: sincePath, noCache: true });
+    return diffMatrices({ matrix: before, source: sincePath }, { matrix, source: inputPath });
+  } catch (err) {
+    console.error(`site: no "what moved" panel, ${sincePath} did not load: ${err.message}`);
+    return null;
+  }
+}
+
 async function main() {
   let matrix;
   try {
@@ -321,7 +416,7 @@ async function main() {
   }
 
   await mkdir(outDir, { recursive: true });
-  const html = render(matrix);
+  const html = render(matrix, await movedSince(matrix));
   await writeFile(join(outDir, 'index.html'), html, 'utf8');
   await writeFile(join(outDir, 'matrix.json'), JSON.stringify(matrix, null, 2), 'utf8');
   await writeFile(join(outDir, '.nojekyll'), '', 'utf8');

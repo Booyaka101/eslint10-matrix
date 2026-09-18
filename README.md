@@ -46,7 +46,9 @@ with the board in both directions: a plugin the board calls clean can crash on a
 uses and nothing in the corpus does, and a plugin the board calls blocked may be fine at the older
 version you have pinned.
 
-Run `check` to see where the ecosystem is. Run `scan` before you actually do the upgrade.
+Run `check` to see where the ecosystem is. Run `scan` before you actually do the upgrade. There is a
+third command, `diff`, for the question that comes after both: a row changed its verdict overnight,
+what moved under it.
 
 ## `scan`: your versions, your files
 
@@ -58,13 +60,15 @@ executed here against your installed versions on 7 files, baseline eslint 9.39.5
 
 BLOCKED (1)
   eslint-plugin-vitest@0.5.4  fails to load on 10.10.0
-                              @eslint/compat did not help: still fails to load with @eslint/compat installed: Class extends v…
+                              @eslint/compat did not help: still fails to load with @eslint/compat installed: Class ext…
+                              measured with eslint 10.10.0, +4 more, node 22.18.0, npm 10.9.3
 
 RESCUABLE (2)  crashes as published, verified clean when wrapped with @eslint/compat
   npm install --save-dev @eslint/compat, then in eslint.config.js:
 
   eslint-plugin-import@2.32.0  4 rules crash on 10.10.0, all recover wrapped in fixupPluginRules()
     import/order crashed on src\components\Catalogue.jsx: sourceCode.getTokenOrCommentBefore is not a function
+    measured with eslint 10.10.0, @typescript-eslint/parser 8.67.0, +2 more, node 22.18.0, npm 10.9.3
 
     import { fixupPluginRules } from '@eslint/compat';
     import pluginImport from 'eslint-plugin-import';
@@ -77,7 +81,8 @@ RESCUABLE (2)  crashes as published, verified clean when wrapped with @eslint/co
     ];
 
   eslint-plugin-react@7.37.5  6 rules crash on 10.10.0, all recover wrapped in fixupPluginRules()
-    react/forward-ref-uses-ref crashed on eslint.config.js: Error while loading rule 'react/forward-ref-uses… (6 more files)
+    react/forward-ref-uses-ref crashed on eslint.config.js: Error while loading rule 'react/forward-ref-… (6 more files)
+    measured with eslint 10.10.0, @typescript-eslint/parser 8.67.0, +2 more, node 22.18.0, npm 10.9.3
 
     import { fixupPluginRules } from '@eslint/compat';
     import react from 'eslint-plugin-react';
@@ -126,6 +131,33 @@ versions your lockfile pins, so the numbers are about your repo and nothing else
 cached under `~/.cache/eslint10-matrix/envs` and pruned after 14 days, so the second run is much
 faster than the first.
 
+### Where your answer and the board's differ
+
+`scan --against` prints the report, then says where this repo and a board disagree, in the same
+words `diff` uses:
+
+```
+$ eslint10-matrix scan . --against board.json
+
+board.json -> this repo
+generated 2026-09-15T03:31:54.929Z -> 2026-09-18T06:22:24.900Z, 5 -> 5 plugins
+
+eslint-plugin-promise  rule-crash -> clean on 10.10.0
+  plugin: eslint-plugin-promise 7.4.0 -> 7.3.0
+
+1 row changed, 0 added, 0 removed. 1 attributed, 0 with no recorded environment.
+```
+
+The board is the before and this repo is the after, so a cause line reads as what is different here:
+that board measured eslint-plugin-promise at 7.4.0 and this app is on 7.3.0. Pass the flag bare to
+compare against the published board, or name one to compare against that. Only
+plugins the board also measures are compared: a plugin it has never heard of is on the report above
+with its own verdict, and calling it `added to the board` would be a sentence about the board that
+is not true. If the board measures none of them, the command says so rather than printing an empty
+diff, which would read as agreement. The board is fetched fresh and never read from or written to
+the cache, the same as `diff`, and the report is printed before the fetch, so a board that cannot be
+reached costs you the comparison and not the scan you waited for.
+
 What it refuses to do:
 
 - **No `node_modules`**: it stops with exit 2 and tells you to install. It will never quietly fall back to whatever npm publishes as latest, because that is the question `check` answers.
@@ -141,11 +173,11 @@ What it refuses to do:
 $ cd examples/react-app && npx eslint10-matrix check --matrix ../../matrix.json
 
 ESLint 10.10.0 readiness for react-app (5 plugins)
-matrix generated 2026-09-10T01:34:04.617Z
+matrix generated 2026-09-15T03:31:54.929Z
 
 BLOCKED (1)
   eslint-plugin-vitest@0.5.4  fails to load on 10.10.0
-                              @eslint/compat did not help: still fails to load with @eslint/compat installed: Class extends v…
+                              @eslint/compat did not help: still fails to load with @eslint/compat installed: Class ext…
 
 RESCUABLE (2)  crashes as published, verified clean when wrapped with @eslint/compat
   npm install --save-dev @eslint/compat, then in eslint.config.js:
@@ -207,6 +239,46 @@ The buckets are the whole point:
 - **CLEAN**. Already declares `^10`. Nothing to do.
 - **HARNESS MISCONFIG**. Not a verdict about the plugin at all: the same rules failed the same way on ESLint 9 and 10, which means the environment they were measured in was wrong, not the plugin. The row names the cause and the fix, and is left out of the blocking count and the `--ci` exit code.
 
+Every row the report prints on a line of its own carries one more dim line naming the environment
+it was measured in. That is BLOCKED, both rescue tiers and HARNESS MISCONFIG. CLEAN and UNTESTED
+are summarised as a single list, so there is no row to hang it on; `--json` has it for all of them:
+
+```
+  eslint-plugin-react@7.37.5  38 rules crash on 10.10.0, all recover wrapped in fixupPluginRules()
+    measured with eslint 10.10.0, eslint-plugin-react 7.37.5, react 19.3.0, node 22.18.0, npm 10.9.3
+```
+
+ESLint leads, the rest are alphabetical, and names drop off the end with a `+N more` once the line
+would not fit beside its indent, which a scoped parser and two long plugin names manage easily.
+`--json` carries the whole object. A verdict without this is a claim you cannot go back and check,
+which is what `diff` and the nightly drift guard are built on.
+
+### When the board's versions are not yours
+
+A verdict is only as good as what it was measured against, so `check` says when the two disagree:
+
+```
+CLEAN (1)  already declares ^10
+  eslint-plugin-vue@10.5.0
+
+MEASURED DIFFERENTLY (1)  the board reached these verdicts with versions this repo does not have
+  eslint-plugin-vue  vue-eslint-parser 10.3.0, here 9.1.0
+  eslint10-matrix scan measures these against the versions you have
+```
+
+The board says eslint-plugin-vue is clean on ESLint 10. It got there with vue-eslint-parser 10.3.0,
+and this repo is on 9.1.0, so that clean result is about a setup this repo does not have. It is a
+note and not a verdict: the section never moves a row between buckets and never changes the `--ci`
+exit code, because the board cannot know whether the older parser is a problem for you.
+
+Only packages both sides have are compared, so a peer the probe installed and you do not use stays
+out of the way. ESLint itself is left out too, since a repo running `check` is on 9 by definition.
+Versions are read from `node_modules` first and the lockfile second, the same way `scan` reads them,
+and `--json` carries the full list under `measuredDrift`. Boards published before 1.4.0 recorded no
+environment, so nothing appears against them. The section can say the versions disagree and not
+whether the disagreement matters, so it ends by naming the command that can: `scan` runs the same
+plugins against what you actually have installed.
+
 ## Rescue verdicts, measured not assumed
 
 ESLint 9 reached end of life on 2026-08-06, so waiting on 9 is no longer a plan. For plugins that
@@ -251,6 +323,71 @@ A plugin that also crashes on ESLint 9 keeps that breakage after the wrap, and t
 rather than claiming a clean run. `eslint-plugin-node` is the case: 12 of its rules crash on both
 versions, 8 more only on 10, and only those 8 are what RESCUABLE speaks to.
 
+## `diff`: what changed between two boards, and why
+
+A verdict that moves is only useful if you can say what moved under it. Every run since 1.4.0
+records the versions npm actually installed, so `diff` can pair two boards row by row and put a
+reason beside each change.
+
+```
+$ eslint10-matrix diff yesterday.json today.json
+
+yesterday.json -> today.json
+generated 2026-09-17T03:31:19.232Z -> 2026-09-18T02:41:07.004Z, 54 -> 54 plugins
+
+eslint-plugin-jest     clean -> rule-crash on 10.10.0
+  env: jest 30.5.1 -> 31.0.0
+eslint-plugin-promise  clean -> rule-crash on 10.10.0
+  unexplained: no recorded version changed
+
+2 rows changed, 0 added, 0 removed. 1 attributed, 0 with no recorded environment.
+1 change has no recorded cause: every version both boards recorded is identical.
+```
+
+Either argument can be a local path or an `https://` URL. Give it one board and the published one
+is the other, so checking your build against what is live is just `eslint10-matrix diff
+./matrix.json`.
+
+It can also be a git revision, written the way `git show` takes one:
+
+```
+$ eslint10-matrix diff HEAD~7:matrix.json matrix.json
+```
+
+The nightly commits `matrix.json` every day, so a week of boards is already in the repository and
+there is nothing to keep or fetch. The path after the colon is relative to the repository root
+unless you start it with `./`. A path that really exists on disk is read as a file, colon or not.
+
+`--only eslint-plugin-vue,eslint-plugin-jest` narrows the comparison to the plugins you named.
+Everything else stays out of the changes and out of the counts, so `--ci` judges exactly what was
+printed: a repo watching its own five plugins is not failed by a sixth it does not use moving
+overnight. A name neither board has is a row that has not changed by any measure, not an error.
+
+The cause is the first of these that applies, most specific first:
+
+| cause | means |
+| --- | --- |
+| `eslint` | the two boards were built against different ESLint releases |
+| `plugin` | the plugin shipped a new version between the runs |
+| `env` | something else installed alongside it moved, named with both versions |
+| `unknown-env` | one of the boards predates 1.4.0 and recorded no environment, so nothing can be ruled out |
+| `unexplained` | every version both boards recorded is identical and the verdict moved anyway |
+
+`unexplained` is the one worth waking up for. It means the board is about to publish a change it
+cannot reproduce, so `--ci` exits 1 on it, and on a row that left the board entirely. An attributed
+change exits 0: plugins change, and that is the board doing its job.
+
+Attribution is scoped to the ESLint major the row actually moved on. A row that moved on 10 is not
+explained by something that happened around 9, and an install that failed before it wrote a
+`node_modules` on one major does not cost the other major its answer.
+
+`scripts/check-drift.mjs` is this wired up as the nightly's `drift-guard` job: it diffs the freshly
+built board against the published one, prints every change with its cause and fails the run on the
+same two things `--ci` does: a change nothing recorded explains, or a row that left the board. The baseline comes from `scripts/fetch-published.mjs`, which saves the
+published board during the merge, before the deploy overwrites it. The guard does not gate the
+deploy. It reports, the same way the harness guard does, so a red night does not leave main ahead
+of what is published and every night after it re-failing against the same stale board.
+
 ![The rescuable tier on the live matrix](docs/rescuable-tier.png)
 
 Clicking a row opens what was measured: the `@eslint/compat` line first, then every rule that
@@ -265,20 +402,26 @@ eslint10-matrix check [dir]      read the published board for a repo (default: .
 eslint10-matrix scan [dir]       execute your installed plugin versions against ESLint 10
                                  on your own source files
 eslint10-matrix plugins          list every plugin in the published matrix
+eslint10-matrix diff [a] <b>     what changed between two boards, and why. Each board is a
+                                 path, an https:// URL, or a git revision such as
+                                 HEAD~7:matrix.json. One board is compared against
+                                 the published one.
 ```
 
 ### Options
 
 | flag | applies to | effect |
 | --- | --- | --- |
-| `--ci` | both | exit 1 when any plugin is BLOCKED, RESCUABLE or PARTIAL-RESCUE. Without it the command always exits 0. |
-| `--color` | both | force ANSI colour when the output is not a terminal |
-| `--json` | both | machine-readable output, including the `overrides` object |
-| `--no-cache` | both | never read or write `~/.cache/eslint10-matrix` |
-| `--no-color` | both | disable ANSI colour |
-| `--plugins <a,b>` | both | skip config resolution and use these package names. The way past a config this tool cannot read, at the cost of the config's `ignores` and `settings`. |
-| `--matrix <src>` | `check` | use a local `matrix.json` path or a different URL |
-| `--timeout <ms>` | `check` | network timeout for fetching the matrix (default 15000) |
+| `--ci` | all | `check` and `scan`: exit 1 when any plugin is BLOCKED, RESCUABLE or PARTIAL-RESCUE. `diff`: exit 1 when a change has no recorded cause, or a row left the board. Without it the command always exits 0. |
+| `--color` | all | force ANSI colour when the output is not a terminal |
+| `--json` | all | machine-readable output. `check` and `scan` include the `overrides` object; `diff` prints both board summaries, every change and the counts. |
+| `--no-cache` | `check`, `scan` | never read or write `~/.cache/eslint10-matrix`. `diff` never touches the cache at all: it compares the two boards you named, so a board it cannot fetch is an error rather than a silent fall back to the last one `check` saw. |
+| `--no-color` | all | disable ANSI colour |
+| `--plugins <a,b>` | `check`, `scan` | skip config resolution and use these package names. The way past a config this tool cannot read, at the cost of the config's `ignores` and `settings`. |
+| `--only <a,b>` | `diff` | compare only these plugins. The counts and `--ci` then cover exactly what was printed. |
+| `--against [board]` | `scan` | after the report, say where this repo disagrees with a board and why. No board named means the published one. |
+| `--matrix <src>` | `check` | read a board from a local path, a different URL, or a git revision such as `HEAD~7:matrix.json` |
+| `--timeout <ms>` | `check`, `diff` | network timeout for fetching a board (default 15000) |
 | `--eslint <version>` | `scan` | the ESLint 10 release to measure against (default 10.10.0) |
 | `--max-files <n>` | `scan` | how many of the repo's files to lint (default 200) |
 | `--concurrency <n>` | `scan` | plugins measured in parallel (default 3) |
@@ -300,7 +443,7 @@ Fails the job while anything is blocked, passes the moment the last blocker ship
 `scan --ci` does the same thing against your own versions and files. It is the slower, more accurate
 gate: run it nightly rather than on every push.
 
-Exit codes: `0` report printed, `1` `--ci` and something is BLOCKED, `2` the command could not run (no flat config, no `node_modules`, no matrix, bad arguments).
+Exit codes: `0` report printed, `1` `--ci` and something is BLOCKED, or a `diff` change has no recorded cause, `2` the command could not run (no flat config, no `node_modules`, no matrix, bad arguments).
 
 ## How the matrix is produced
 
@@ -316,14 +459,19 @@ Nightly, for each plugin and each of ESLint 9.39.5 and 10.10.0:
    install, a parser that did not load, or an AST field the parser never produced are moved out of
    the crash list and recorded with the fix that repairs them. A crash that appears only on 10
    stays a crash whatever its message looks like.
-6. For a plugin that regressed on 10, install `@eslint/compat@2.1.1` into a fresh isolated directory
+6. Read the resolved version of every dependency back out of that directory's `node_modules` and
+   record it on the result as `measuredWith`, alongside the Node and npm the run used. Step 2 asks
+   for a spec, and a spec is a wish: `--legacy-peer-deps` backtracks, `latest` moves, and an
+   environment reused from the cache can be a fortnight old. The only truthful answer to "what was
+   this measured against" is the one read off disk after the install.
+7. For a plugin that regressed on 10, install `@eslint/compat@2.1.1` into a fresh isolated directory
    (its peer range covers 10, no extra forcing needed) and repeat the identical run with the plugin
    wrapped. Crashes at zero is RESCUABLE, fewer is PARTIAL-RESCUE with the residual rules stored, no
    change stays BLOCKED. A failure that reproduces identically on ESLint 9, and a plugin that is
    SAFE TO FORCE or CLEAN, never enters the rescue pass, so a no-op wrap can never be reported as a
    rescue.
 
-`scan` runs steps 1 to 6 too. It differs in three places: the version installed at step 2 is the one
+`scan` runs steps 1 to 7 too. It differs in three places: the version installed at step 2 is the one
 your `node_modules` has rather than `latest`, the rules enabled at step 3 are only the ones your
 config turns on, and the files linted at step 4 are yours.
 
@@ -354,11 +502,16 @@ Each entry may carry `settings`, `parser` and `extraDeps`, the same configuratio
 npm ci
 npm run build                                    # both packages
 npm run lint                                     # this repo lints itself, on ESLint 10
-npm test                                         # 112 tests, vitest (build first: the end-to-end tests drive the built CLI)
+npm test                                         # 271 tests, vitest (build first: the end-to-end tests drive the built CLI)
 node packages/runner/dist/run.js --only eslint-plugin-react   # one plugin
 node packages/runner/dist/run.js                 # full pass, ~4 minutes at concurrency 6
 node site/build.mjs --in matrix.json --out site/dist
+node site/build.mjs --in matrix.json --out site/dist --since HEAD:matrix.json   # with the "what moved" panel
 ```
+
+`--since` takes the same things `--matrix` does: a file, an http(s) URL, or a git revision. The
+nightly passes it the board it is about to replace, so the page opens with what moved since the one
+you last looked at and why. A baseline it cannot read costs the panel and nothing else.
 
 The README screenshots are generated, not drawn. `node scripts/terminal-shot.mjs --in <captured
 output> --out docs/scan-terminal.png` turns a real `--color` run into the terminal image above.
@@ -409,6 +562,15 @@ report prints in grey: files left unscanned, a version read from the lockfile ra
           "status": "rule-crash",              // clean | rule-crash | load-fail | install-fail | harness-misconfig
           "crashingRules": [{ "rule": "display-name", "message": "..." }],
           "totalRules": 101,
+          "measuredWith": {                    // what was on disk when this ran, read back out
+            "node": "22.18.0",                 // of the probe's own node_modules. Absent when
+            "npm": "10.9.3",                   // nothing installed; a dep that did not install
+            "deps": {                          // is null rather than missing.
+              "eslint": "10.10.0",
+              "eslint-plugin-react": "7.37.5",
+              "react": "19.3.0"
+            }
+          },
           "harness": {                         // only when the environment, not the plugin, broke a rule
             "rules": [
               {
@@ -442,7 +604,8 @@ A `scan` row adds `file` to each crashing rule, naming a file in your repo that 
 `fileCount` when more than one did. Attribution stops after 25 files per rule, and a count that hit
 that cap carries `fileCountCapped` and reads as "at least 24 more files" in the report. The `rescue`
 field is additive: nothing existing was renamed or removed and the schema version is still 1, so
-tools reading the old shape keep working.
+tools reading the old shape keep working. `measuredWith` is additive the same way, which is why an
+older CLI reads a 1.4.0 board and reports exactly the verdicts it always did.
 
 ## Telling people about it
 
