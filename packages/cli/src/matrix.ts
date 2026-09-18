@@ -212,7 +212,9 @@ async function loadFromFile(path: string): Promise<MatrixLoad> {
  */
 function gitSource(source: string): { ref: string; path: string } | null {
   const at = source.indexOf(':');
-  if (at < 2) return null;
+  // A leading dash would reach `git show` as an option, and some of those write
+  // files. Nothing shaped like a flag is a revision.
+  if (at < 2 || source.startsWith('-')) return null;
   const path = source.slice(at + 1);
   return path ? { ref: source.slice(0, at), path } : null;
 }

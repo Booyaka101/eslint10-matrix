@@ -1,4 +1,5 @@
 import { execFile } from 'node:child_process';
+import { existsSync } from 'node:fs';
 import { mkdir, mkdtemp, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -74,6 +75,18 @@ describe('a board addressed as a git revision', () => {
     expect(err).toBeInstanceOf(MatrixError);
     expect((err as MatrixError).message).toContain('git could not read v9.9.9:matrix.json');
     expect((err as MatrixError).hint).toContain('relative to the repository root');
+  });
+
+  /**
+   * `git show --output=some:file` writes a file. The CLI's own parser would take
+   * that for a flag long before here, but loadMatrix is called from the scripts too.
+   */
+  it('does not hand git anything shaped like an option', async () => {
+    process.chdir(repo);
+    const err = await loadMatrix({ url: '--output=written:matrix.json' }).catch((e: unknown) => e);
+
+    expect((err as MatrixError).message).toContain('matrix file not found');
+    expect(existsSync(join(repo, 'written:matrix.json'))).toBe(false);
   });
 
   it('names a path that revision does not have', async () => {
