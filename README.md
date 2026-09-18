@@ -290,9 +290,19 @@ eslint-plugin-promise  clean -> rule-crash on 10.10.0
 1 change has no recorded cause: the boards agree on eslint, plugin and dependency versions.
 ```
 
-Either argument can be a local path or an `https://` URL, so diffing your build against the
-published board is `eslint10-matrix diff https://booyaka101.github.io/eslint10-matrix/matrix.json
+Either argument can be a local path or an `https://` URL. Give it one board and the published one
+is the other, so checking your build against what is live is just `eslint10-matrix diff
 ./matrix.json`.
+
+It can also be a git revision, written the way `git show` takes one:
+
+```
+$ eslint10-matrix diff HEAD~7:matrix.json matrix.json
+```
+
+The nightly commits `matrix.json` every day, so a week of boards is already in the repository and
+there is nothing to keep or fetch. The path after the colon is relative to the repository root
+unless you start it with `./`. A path that really exists on disk is read as a file, colon or not.
 
 The cause is the first of these that applies, most specific first:
 
@@ -333,8 +343,10 @@ eslint10-matrix check [dir]      read the published board for a repo (default: .
 eslint10-matrix scan [dir]       execute your installed plugin versions against ESLint 10
                                  on your own source files
 eslint10-matrix plugins          list every plugin in the published matrix
-eslint10-matrix diff <a> <b>     what changed between two boards, and why. Each board is a
-                                 path or an https:// URL.
+eslint10-matrix diff [a] <b>     what changed between two boards, and why. Each board is a
+                                 path, an https:// URL, or a git revision such as
+                                 HEAD~7:matrix.json. One board is compared against
+                                 the published one.
 ```
 
 ### Options
@@ -347,7 +359,7 @@ eslint10-matrix diff <a> <b>     what changed between two boards, and why. Each 
 | `--no-cache` | `check`, `scan` | never read or write `~/.cache/eslint10-matrix`. `diff` never touches the cache at all: it compares the two boards you named, so a board it cannot fetch is an error rather than a silent fall back to the last one `check` saw. |
 | `--no-color` | all | disable ANSI colour |
 | `--plugins <a,b>` | `check`, `scan` | skip config resolution and use these package names. The way past a config this tool cannot read, at the cost of the config's `ignores` and `settings`. |
-| `--matrix <src>` | `check` | use a local `matrix.json` path or a different URL |
+| `--matrix <src>` | `check` | read a board from a local path, a different URL, or a git revision such as `HEAD~7:matrix.json` |
 | `--timeout <ms>` | `check`, `diff` | network timeout for fetching a board (default 15000) |
 | `--eslint <version>` | `scan` | the ESLint 10 release to measure against (default 10.10.0) |
 | `--max-files <n>` | `scan` | how many of the repo's files to lint (default 200) |

@@ -3,8 +3,8 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
 import { diffBlocks, diffMatrices, renderDiff, type DiffResult } from '../packages/cli/src/diff.js';
-import { main } from '../packages/cli/src/index.js';
-import { cacheDir, cachePath, type Matrix, type MeasuredEnv, type PluginRunResult, type Status } from '../packages/cli/src/matrix.js';
+import { main, parseArgs } from '../packages/cli/src/index.js';
+import { cacheDir, cachePath, DEFAULT_MATRIX_URL, type Matrix, type MeasuredEnv, type PluginRunResult, type Status } from '../packages/cli/src/matrix.js';
 
 const V9 = '9.39.5';
 const V10 = '10.10.0';
@@ -304,11 +304,30 @@ describe('the diff command', () => {
     expect(parsed.before.eslintVersions).toEqual({ v9: V9, v10: V10 });
   });
 
-  it('exits 2 with a usage error when given one board', async () => {
+  /**
+   * Parsed rather than run: the default is a real URL, and a test that reaches the
+   * network is a test that fails on a train.
+   */
+  it('compares a single board against the published one', () => {
+    expect(parseArgs(['diff', 'matrix.json']).boards).toEqual([DEFAULT_MATRIX_URL, 'matrix.json']);
+    expect(parseArgs(['diff', 'a.json', 'b.json']).boards).toEqual(['a.json', 'b.json']);
+  });
+
+  it('exits 2 with a usage error when given no board at all', async () => {
     const error = vi.spyOn(console, 'error').mockImplementation(() => {});
     try {
-      expect(await main(['diff', 'only-one.json'])).toBe(2);
-      expect(error.mock.calls.flat().join('\n')).toContain('diff needs two boards');
+      expect(await main(['diff'])).toBe(2);
+      expect(error.mock.calls.flat().join('\n')).toContain('diff needs a board');
+    } finally {
+      error.mockRestore();
+    }
+  });
+
+  it('exits 2 when given more boards than it can compare', async () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      expect(await main(['diff', 'a.json', 'b.json', 'c.json'])).toBe(2);
+      expect(error.mock.calls.flat().join('\n')).toContain('diff takes at most two boards, got 3');
     } finally {
       error.mockRestore();
     }

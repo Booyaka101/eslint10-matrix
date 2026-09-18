@@ -42,6 +42,14 @@ live now.
   Pages, and the next night would re-diff against the same stale board and fail again. An
   unreachable baseline is not drift either, it is the absence of one, so the guard says so and
   passes.
+- `diff` given one board compares it against the published one, the same default `check` reads, so
+  "how does my build differ from what is live" is `eslint10-matrix diff ./matrix.json`.
+- **A board can be a git revision.** `eslint10-matrix diff HEAD~7:matrix.json matrix.json` answers
+  "what moved this week" with nothing to keep and nothing to fetch, because the nightly has been
+  committing `matrix.json` every day and that history is the time series. `--matrix` takes one too.
+  The path after the colon is repository-root relative, the way `git show` takes it, and a path
+  that really exists on disk is still read as a file, so a Windows drive letter is never mistaken
+  for a revision.
 - The report prints one dim line per row naming the environment behind the verdict, ESLint first
   then alphabetical, capped at six packages with a `+N more`. The site shows the full list per
   major inside the expanded row, because the two majors install separately and the versions around
