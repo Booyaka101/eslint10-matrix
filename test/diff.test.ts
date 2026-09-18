@@ -265,6 +265,66 @@ describe('attributing a changed row', () => {
   });
 });
 
+describe('the cause line under a changed row', () => {
+  /** A scoped parser, three packages, and the runtime moving together in one week. */
+  const CROWDED = {
+    before: env(
+      {
+        eslint: V10,
+        '@typescript-eslint/parser': '8.67.0',
+        'eslint-plugin-testing-library': '7.13.1',
+        '@testing-library/dom': '10.4.0',
+        typescript: '5.9.3',
+      },
+      { node: '22.18.0', npm: '10.9.3' }
+    ),
+    after: env(
+      {
+        eslint: V10,
+        '@typescript-eslint/parser': '8.68.0',
+        'eslint-plugin-testing-library': '7.14.0',
+        '@testing-library/dom': '10.4.1',
+        typescript: '5.9.4',
+      },
+      { node: '22.19.0', npm: '11.0.0' }
+    ),
+  };
+
+  const crowded = (): string =>
+    renderDiff(
+      diff(
+        board([{ name: 'eslint-plugin-testing-library', ten: result('clean', CROWDED.before) }]),
+        board([{ name: 'eslint-plugin-testing-library', ten: result('rule-crash', CROWDED.after) }])
+      )
+    );
+
+  /**
+   * Six versions moving at once ran this to 210 columns, which wraps twice in a
+   * normal terminal and puts the answer to "why" where nobody can read it.
+   */
+  it('wraps rather than running off the terminal', () => {
+    for (const line of crowded().split('\n')) expect(line.length).toBeLessThanOrEqual(100);
+  });
+
+  /** Wrapping must not be dropping: this line is the evidence, not a footnote. */
+  it('names every version that moved, across however many lines it takes', () => {
+    const rendered = crowded();
+    for (const name of Object.keys(CROWDED.after.deps)) {
+      if (CROWDED.before.deps[name] !== CROWDED.after.deps[name]) expect(rendered).toContain(name);
+    }
+    expect(rendered).toContain('node 22.18.0 -> 22.19.0');
+    expect(rendered).toContain('npm 10.9.3 -> 11.0.0');
+  });
+
+  /** Continuations line up under the first version, not under `env:`. */
+  it('indents what it wrapped to the width of the cause label', () => {
+    const lines = crowded().split('\n');
+    const first = lines.findIndex((l) => l.startsWith('  env: '));
+    expect(lines[first]).toMatch(/,$/);
+    expect(lines[first + 1]).toMatch(/^ {7}\S/);
+  });
+});
+
 describe('the diff command', () => {
   async function boardFile(matrix: Matrix): Promise<string> {
     const dir = await mkdtemp(join(tmpdir(), 'e10m-diff-'));

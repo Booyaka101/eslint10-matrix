@@ -288,7 +288,7 @@ eslint-plugin-promise  clean -> rule-crash on 10.10.0
   unexplained: no recorded version changed
 
 2 rows changed, 0 added, 0 removed. 1 attributed, 0 with no recorded environment.
-1 change has no recorded cause: the boards agree on eslint, plugin and dependency versions.
+1 change has no recorded cause: every version both boards recorded is identical.
 ```
 
 Either argument can be a local path or an `https://` URL. Give it one board and the published one
@@ -324,8 +324,8 @@ explained by something that happened around 9, and an install that failed before
 `node_modules` on one major does not cost the other major its answer.
 
 `scripts/check-drift.mjs` is this wired up as the nightly's `drift-guard` job: it diffs the freshly
-built board against the published one, prints every change with its cause and fails the run if any
-of them is unexplained. The baseline comes from `scripts/fetch-published.mjs`, which saves the
+built board against the published one, prints every change with its cause and fails the run on the
+same two things `--ci` does: a change nothing recorded explains, or a row that left the board. The baseline comes from `scripts/fetch-published.mjs`, which saves the
 published board during the merge, before the deploy overwrites it. The guard does not gate the
 deploy. It reports, the same way the harness guard does, so a red night does not leave main ahead
 of what is published and every night after it re-failing against the same stale board.

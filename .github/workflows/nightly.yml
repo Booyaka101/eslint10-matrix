@@ -171,7 +171,7 @@ jobs:
         with:
           name: published-matrix
 
-      - name: Fail if a verdict moved with nothing recorded to explain it
+      - name: Fail if a verdict moved unexplained, or a row left the board
         run: node scripts/check-drift.mjs matrix.json published-matrix.json
 
   deploy:

@@ -46,7 +46,7 @@ function parseArgs(argv) {
  * target has to be the page we asked for: anything else on this port is somebody
  * else's browser, and this script is about to click inside whatever it gets.
  */
-async function debuggerUrl(port, wanted, deadline = Date.now() + 15_000) {
+async function debuggerUrl(port, wanted, child, deadline = Date.now() + 15_000) {
   for (;;) {
     try {
       const response = await fetch(`http://127.0.0.1:${port}/json/list`);
@@ -57,10 +57,17 @@ async function debuggerUrl(port, wanted, deadline = Date.now() + 15_000) {
     } catch {
       // Not listening yet.
     }
+    // A Chrome that died is not going to start listening, and spending the rest of
+    // the deadline finding that out buries the exit code under a timeout message.
+    if (!alive(child)) throw new Error(`chrome exited (${exitReason(child)}) before opening ${wanted}`);
     if (Date.now() > deadline) throw new Error(`chrome never opened ${wanted} on port ${port}`);
     await new Promise((done) => setTimeout(done, 100));
   }
 }
+
+const alive = (child) => child.exitCode === null && child.signalCode === null;
+
+const exitReason = (child) => (child.signalCode ? `signal ${child.signalCode}` : `code ${child.exitCode}`);
 
 function connect(url, timeoutMs = 20_000) {
   const socket = new WebSocket(url);
@@ -146,7 +153,7 @@ const chrome = spawn(
 
 let cdp;
 try {
-  cdp = connect(await debuggerUrl(opts.port, url));
+  cdp = connect(await debuggerUrl(opts.port, url, chrome));
   await cdp.send('Page.enable');
   await cdp.send('Runtime.enable');
 
@@ -200,13 +207,20 @@ try {
   const out = resolve(opts.out);
   await writeFile(out, Buffer.from(data, 'base64'));
   console.log(`wrote ${out} (${Math.round((box.width + PAD * 2) * SCALE)}x${Math.round((box.height + PAD) * SCALE)})`);
+} catch (err) {
+  console.error(`site-shot: ${err.message}`);
+  process.exitCode = 1;
 } finally {
   cdp?.close();
   // Only the Chrome this script started, by pid. Windows keeps the profile's
-  // lockfile open until it has actually gone, so the wait is not politeness.
-  const gone = new Promise((done) => chrome.once('exit', done));
-  chrome.kill();
-  await gone;
+  // lockfile open until it has actually gone, so the wait is not politeness. A
+  // child that already exited never emits `exit` again, and awaiting one that
+  // will not fire strands the process with whatever threw above unreported.
+  if (alive(chrome)) {
+    const gone = new Promise((done) => chrome.once('exit', done));
+    chrome.kill();
+    await gone;
+  }
   // A temp directory left behind is not worth failing a screenshot that worked.
   await rm(profile, { recursive: true, force: true }).catch(() => {});
 }

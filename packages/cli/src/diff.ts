@@ -297,6 +297,33 @@ function pad(text: string, width: number): string {
   return text.length >= width ? text : text + ' '.repeat(width - text.length);
 }
 
+/** Narrower than the report's notes: this line is read against the names above it. */
+const CAUSE_WIDTH = 100;
+
+/**
+ * The "why" under a changed row, wrapped with continuations aligned under the
+ * first version. `eslint` and `env` details are lists, and a week where node,
+ * npm and four packages all moved a patch runs past 200 columns. Nothing is
+ * dropped the way the report's environment note drops names: there the line is
+ * a footnote, here it is the answer.
+ */
+function causeLines(cause: DiffCause, detail: string): string[] {
+  const head = `  ${cause}: `;
+  if (cause !== 'eslint' && cause !== 'env') return [head + detail];
+  const lines: string[] = [];
+  let current = '';
+  for (const part of detail.split(', ')) {
+    const next = current === '' ? head + part : `${current}, ${part}`;
+    // The comma it grows if anything follows it counts against the budget too.
+    if (current !== '' && next.length + 1 > CAUSE_WIDTH) {
+      lines.push(`${current},`);
+      current = ' '.repeat(head.length) + part;
+    } else current = next;
+  }
+  lines.push(current);
+  return lines;
+}
+
 export function renderDiff(result: DiffResult, options: { color?: boolean } = {}): string {
   const { dim, bold, red, green } = palette(options.color ?? false);
 
@@ -320,8 +347,8 @@ export function renderDiff(result: DiffResult, options: { color?: boolean } = {}
   for (const change of result.changes) {
     out.push(`${pad(change.name, width + 2)}${headline(change)}`);
     if (!change.cause) continue;
-    const line = `  ${change.cause}: ${change.causeDetail}`;
-    out.push(change.cause === 'unexplained' ? red(line) : dim(line));
+    const paint = change.cause === 'unexplained' ? red : dim;
+    for (const line of causeLines(change.cause, change.causeDetail ?? '')) out.push(paint(line));
   }
   out.push('');
 

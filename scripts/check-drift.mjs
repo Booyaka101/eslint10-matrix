@@ -4,10 +4,11 @@
  * each row moved. A change nothing recorded can account for fails the job: the
  * board's whole claim is that a verdict is a measurement, and a verdict that
  * moved with no eslint, plugin or dependency version behind it is a measurement
- * we cannot reproduce.
+ * we cannot reproduce. So does a row that left the board, which has no cause to
+ * attribute and is what a shard dying looks like.
  */
 import { resolve } from 'node:path';
-import { diffMatrices, renderDiff } from '../packages/cli/dist/diff.js';
+import { diffBlocks, diffMatrices, renderDiff } from '../packages/cli/dist/diff.js';
 import { DEFAULT_MATRIX_URL, loadMatrix, MatrixError } from '../packages/cli/dist/matrix.js';
 
 const [matrixFile = 'matrix.json', publishedUrl = DEFAULT_MATRIX_URL] = process.argv.slice(2);
@@ -49,19 +50,30 @@ process.stdout.write(renderDiff(result));
 const { changed, added, removed, unexplained } = result.counts;
 const moved = changed + added + removed;
 
-// renderDiff already names the dropped rows. This is the part only CI can say.
-if (removed > 0) console.error('drift: check no shard failed before this board replaces the published one.');
-
-if (unexplained === 0) {
+// The same predicate `diff --ci` exits on, so the guard cannot pass a board the
+// CLI would reject. A dropped row used to print in red and still let the job go
+// green, which is the exact shape a shard that died leaves behind.
+if (!diffBlocks(result)) {
   console.log(
     `drift: ${moved} ${moved === 1 ? 'change' : 'changes'}, no verdict moved without a recorded reason`
   );
   process.exit(0);
 }
 
-console.error(
-  '\nA verdict moved without any recorded version moving with it. Re-run the shard before publishing:\n' +
-    '  node packages/runner/dist/run.js --only <plugin> --out /tmp/recheck.json\n' +
-    'and compare again. Publishing this board would state a change we cannot reproduce.'
-);
+if (unexplained > 0) {
+  console.error(
+    '\nA verdict moved without any recorded version moving with it. Re-run the shard before publishing:\n' +
+      '  node packages/runner/dist/run.js --only <plugin> --out /tmp/recheck.json\n' +
+      'and compare again. Publishing this board would state a change we cannot reproduce.'
+  );
+}
+
+if (removed > 0) {
+  console.error(
+    '\nRows on the published board are missing from this one. Check no shard failed before\n' +
+      'this board replaces the published one. If the plugins were dropped from plugins.json\n' +
+      'on purpose, this run is meant to be red once, and green again tomorrow.'
+  );
+}
+
 process.exit(1);

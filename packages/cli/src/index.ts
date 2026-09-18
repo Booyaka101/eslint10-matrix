@@ -53,8 +53,8 @@ OPTIONS
 
 EXIT CODES
   0  report printed
-  1  --ci and at least one plugin blocks the upgrade, or a diff change
-     has no recorded cause
+  1  --ci and at least one plugin blocks the upgrade, or a diff change has
+     no recorded cause, or a row left the board
   2  the command could not run (no flat config, no node_modules, bad arguments)
 `;
 

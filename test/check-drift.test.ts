@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import type { Matrix } from '../packages/cli/src/matrix.js';
-import { FIXTURES, runScript } from './run-script.js';
+import { FIXTURES, ROOT, runNode, runScript } from './run-script.js';
 
 const BEFORE = join(FIXTURES, 'drift-before.json');
 const AFTER = join(FIXTURES, 'drift-after.json');
@@ -14,6 +14,15 @@ const AFTER = join(FIXTURES, 'drift-after.json');
  * test that reaches the network is a test that fails on a train.
  */
 const guard = (fresh: string, published = BEFORE) => runScript('check-drift.mjs', [fresh, published]);
+
+/**
+ * Puts a row back the way the published board has it, so the only thing left
+ * moving is the one change the fixture records a dependency for.
+ */
+const settle = (name: string) => (matrix: Matrix) => {
+  const row = matrix.plugins.find((p) => p.name === name)!;
+  row.results['10.10.0']!.status = 'clean';
+};
 
 /** The fresh board, edited, as a file the guard can be pointed at. */
 async function boardFile(edit: (matrix: Matrix) => void): Promise<string> {
@@ -51,25 +60,42 @@ describe('the nightly drift guard', () => {
   });
 
   it('passes when every change has a version behind it', async () => {
-    const explained = await boardFile((matrix) => {
-      matrix.plugins = matrix.plugins.filter((row) => row.name === 'eslint-plugin-jest');
-    });
+    const explained = await boardFile(settle('eslint-plugin-promise'));
     const { code, out } = await guard(explained);
     expect(code).toBe(0);
+    expect(out).toContain('env: jest 30.5.1 -> 31.0.0');
     expect(out).toContain('no verdict moved without a recorded reason');
   });
 
   /**
-   * A shard that died leaves exactly this shape, and a maintainer reading
-   * "nothing unexplained" deserves to be told the board also got shorter.
+   * A shard that died leaves exactly this shape. The guard used to print the
+   * dropped rows in red and exit 0 under a line reading "no verdict moved
+   * without a recorded reason", while `diff --ci` on the same pair exited 1.
    */
-  it('says out loud when rows left the board', async () => {
+  it('fails when a row left the board, even with nothing else unexplained', async () => {
+    const shorter = await boardFile((matrix) => {
+      settle('eslint-plugin-promise')(matrix);
+      matrix.plugins = matrix.plugins.filter((row) => row.name === 'eslint-plugin-jest');
+    });
+    const { code, out } = await guard(shorter);
+    expect(code).toBe(1);
+    expect(out).toContain('1 row left the board');
+    expect(out).toContain('Check no shard failed');
+    expect(out).not.toContain('no verdict moved without a recorded reason');
+  });
+
+  /** The guard gates CI, so it must not pass a board `diff --ci` would reject. */
+  it('agrees with diff --ci on the same pair of boards', async () => {
     const shorter = await boardFile((matrix) => {
       matrix.plugins = matrix.plugins.filter((row) => row.name === 'eslint-plugin-jest');
     });
-    const { out } = await guard(shorter);
-    expect(out).toContain('1 row left the board');
-    expect(out).toContain('check no shard failed');
+    const cli = await runNode(join(ROOT, 'packages', 'cli', 'dist', 'index.js'), [
+      'diff',
+      BEFORE,
+      shorter,
+      '--ci',
+    ]);
+    expect((await guard(shorter)).code).toBe(cli.code);
   });
 
   it('exits 2 on a board it cannot read', async () => {
