@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-09-18T06:40:20.126Z",
+  "generatedAt": "2026-09-19T03:29:59.631Z",
   "eslintVersions": {
     "v9": "9.39.5",
-    "v10": "10.10.0"
+    "v10": "10.11.0"
   },
   "plugins": [
     {
@@ -30,7 +30,7 @@
             }
           }
         },
-        "10.10.0": {
+        "10.11.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 126,
@@ -40,7 +40,7 @@
             "node": "22.23.2",
             "npm": "10.9.8",
             "deps": {
-              "eslint": "10.10.0",
+              "eslint": "10.11.0",
               "@typescript-eslint/eslint-plugin": "8.70.0",
               "@typescript-eslint/parser": "8.70.0",
               "typescript": "6.0.3",
@@ -69,7 +69,7 @@
             }
           }
         },
-        "10.10.0": {
+        "10.11.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 29,
@@ -77,7 +77,7 @@
             "node": "22.23.2",
             "npm": "10.9.8",
             "deps": {
-              "eslint": "10.10.0",
+              "eslint": "10.11.0",
               "eslint-plugin-react-hooks": "7.1.1"
             }
           }
@@ -104,7 +104,7 @@
             }
           }
         },
-        "10.10.0": {
+        "10.11.0": {
           "status": "rule-crash",
           "crashingRules": [
             {
@@ -265,7 +265,7 @@
             "node": "22.23.2",
             "npm": "10.9.8",
             "deps": {
-              "eslint": "10.10.0",
+              "eslint": "10.11.0",
               "eslint-plugin-react": "7.37.5",
               "react": "19.3.0"
             }
@@ -273,7 +273,7 @@
         }
       },
       "rescue": {
-        "eslintVersion": "10.10.0",
+        "eslintVersion": "10.11.0",
         "compatVersion": "2.1.1",
         "attempted": true,
         "verdict": "rescuable",
@@ -301,7 +301,7 @@
             }
           }
         },
-        "10.10.0": {
+        "10.11.0": {
           "status": "rule-crash",
           "crashingRules": [
             {
@@ -322,14 +322,14 @@
             "node": "22.23.2",
             "npm": "10.9.8",
             "deps": {
-              "eslint": "10.10.0",
+              "eslint": "10.11.0",
               "eslint-plugin-import": "2.32.0"
             }
           }
         }
       },
       "rescue": {
-        "eslintVersion": "10.10.0",
+        "eslintVersion": "10.11.0",
         "compatVersion": "2.1.1",
         "attempted": true,
         "verdict": "rescuable",
@@ -357,7 +357,7 @@
             }
           }
         },
-        "10.10.0": {
+        "10.11.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 39,
@@ -365,7 +365,7 @@
             "node": "22.23.2",
             "npm": "10.9.8",
             "deps": {
-              "eslint": "10.10.0",
+              "eslint": "10.11.0",
               "eslint-plugin-jsx-a11y": "6.10.2"
             }
           }
@@ -392,7 +392,7 @@
             }
           }
         },
-        "10.10.0": {
+        "10.11.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 1,
@@ -400,7 +400,7 @@
             "node": "22.23.2",
             "npm": "10.9.8",
             "deps": {
-              "eslint": "10.10.0",
+              "eslint": "10.11.0",
               "eslint-plugin-prettier": "5.5.6",
               "prettier": "3.9.8"
             }
@@ -427,7 +427,7 @@
             }
           }
         },
-        "10.10.0": {
+        "10.11.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 1,
@@ -435,7 +435,7 @@
             "node": "22.23.2",
             "npm": "10.9.8",
             "deps": {
-              "eslint": "10.10.0",
+              "eslint": "10.11.0",
               "eslint-plugin-react-refresh": "0.5.7"
             }
           }
@@ -461,7 +461,7 @@
             }
           }
         },
-        "10.10.0": {
+        "10.11.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 22,
@@ -469,7 +469,7 @@
             "node": "22.23.2",
             "npm": "10.9.8",
             "deps": {
-              "eslint": "10.10.0",
+              "eslint": "10.11.0",
               "@next/eslint-plugin-next": "16.3.5"
             }
           }
@@ -492,11 +492,11 @@
             "deps": {
               "eslint": "9.39.5",
               "eslint-plugin-jest": "29.16.6",
-              "jest": "30.5.1"
+              "jest": "30.5.2"
             }
           }
         },
-        "10.10.0": {
+        "10.11.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 71,
@@ -504,9 +504,9 @@
             "node": "22.23.2",
             "npm": "10.9.8",
             "deps": {
-              "eslint": "10.10.0",
+              "eslint": "10.11.0",
               "eslint-plugin-jest": "29.16.6",
-              "jest": "30.5.1"
+              "jest": "30.5.2"
             }
           }
         }
@@ -536,7 +536,7 @@
             }
           }
         },
-        "10.10.0": {
+        "10.11.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 16,
@@ -546,7 +546,7 @@
             "node": "22.23.2",
             "npm": "10.9.8",
             "deps": {
-              "eslint": "10.10.0",
+              "eslint": "10.11.0",
               "eslint-plugin-storybook": "10.6.0",
               "@typescript-eslint/parser": "8.70.0",
               "typescript": "6.0.3",
@@ -575,7 +575,7 @@
             }
           }
         },
-        "10.10.0": {
+        "10.11.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 29,
@@ -583,7 +583,7 @@
             "node": "22.23.2",
             "npm": "10.9.8",
             "deps": {
-              "eslint": "10.10.0",
+              "eslint": "10.11.0",
               "eslint-plugin-testing-library": "7.16.2"
             }
           }
@@ -609,7 +609,7 @@
             }
           }
         },
-        "10.10.0": {
+        "10.11.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 30,
@@ -617,7 +617,7 @@
             "node": "22.23.2",
             "npm": "10.9.8",
             "deps": {
-              "eslint": "10.10.0",
+              "eslint": "10.11.0",
               "eslint-plugin-n": "18.3.0"
             }
           }
@@ -643,7 +643,7 @@
             }
           }
         },
-        "10.10.0": {
+        "10.11.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 346,
@@ -651,7 +651,7 @@
             "node": "22.23.2",
             "npm": "10.9.8",
             "deps": {
-              "eslint": "10.10.0",
+              "eslint": "10.11.0",
               "eslint-plugin-unicorn": "75.0.0"
             }
           }
@@ -677,7 +677,7 @@
             }
           }
         },
-        "10.10.0": {
+        "10.11.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 369,
@@ -685,7 +685,7 @@
             "node": "22.23.2",
             "npm": "10.9.8",
             "deps": {
-              "eslint": "10.10.0",
+              "eslint": "10.11.0",
               "eslint-plugin-es-x": "10.0.0"
             }
           }
@@ -711,7 +711,7 @@
             }
           }
         },
-        "10.10.0": {
+        "10.11.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 17,
@@ -719,7 +719,7 @@
             "node": "22.23.2",
             "npm": "10.9.8",
             "deps": {
-              "eslint": "10.10.0",
+              "eslint": "10.11.0",
               "eslint-plugin-promise": "7.3.0"
             }
           }
@@ -751,7 +751,7 @@
             }
           }
         },
-        "10.10.0": {
+        "10.11.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 253,
@@ -763,7 +763,7 @@
             "node": "22.23.2",
             "npm": "10.9.8",
             "deps": {
-              "eslint": "10.10.0",
+              "eslint": "10.11.0",
               "eslint-plugin-vue": "10.11.0",
               "vue-eslint-parser": "10.4.1",
               "vue": "3.5.43"
@@ -791,7 +791,7 @@
             }
           }
         },
-        "10.10.0": {
+        "10.11.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 67,
@@ -799,7 +799,7 @@
             "node": "22.23.2",
             "npm": "10.9.8",
             "deps": {
-              "eslint": "10.10.0",
+              "eslint": "10.11.0",
               "@stylistic/eslint-plugin": "5.10.0"
             }
           }
@@ -808,7 +808,7 @@
     },
     {
       "name": "eslint-plugin-jsdoc",
-      "version": "64.5.2",
+      "version": "64.5.3",
       "declaredPeerRange": "^7.0.0 || ^8.0.0 || ^9.0.0 || ^10.0.0",
       "weeklyDownloads": 5288500,
       "results": {
@@ -821,11 +821,11 @@
             "npm": "10.9.8",
             "deps": {
               "eslint": "9.39.5",
-              "eslint-plugin-jsdoc": "64.5.2"
+              "eslint-plugin-jsdoc": "64.5.3"
             }
           }
         },
-        "10.10.0": {
+        "10.11.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 78,
@@ -833,8 +833,8 @@
             "node": "22.23.2",
             "npm": "10.9.8",
             "deps": {
-              "eslint": "10.10.0",
-              "eslint-plugin-jsdoc": "64.5.2"
+              "eslint": "10.11.0",
+              "eslint-plugin-jsdoc": "64.5.3"
             }
           }
         }
@@ -859,7 +859,7 @@
             }
           }
         },
-        "10.10.0": {
+        "10.11.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 47,
@@ -867,7 +867,7 @@
             "node": "22.23.2",
             "npm": "10.9.8",
             "deps": {
-              "eslint": "10.10.0",
+              "eslint": "10.11.0",
               "eslint-plugin-import-x": "4.17.1"
             }
           }
@@ -893,7 +893,7 @@
             }
           }
         },
-        "10.10.0": {
+        "10.11.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 2,
@@ -901,7 +901,7 @@
             "node": "22.23.2",
             "npm": "10.9.8",
             "deps": {
-              "eslint": "10.10.0",
+              "eslint": "10.11.0",
               "eslint-plugin-simple-import-sort": "14.0.0"
             }
           }
@@ -927,7 +927,7 @@
             }
           }
         },
-        "10.10.0": {
+        "10.11.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 67,
@@ -935,7 +935,7 @@
             "node": "22.23.2",
             "npm": "10.9.8",
             "deps": {
-              "eslint": "10.10.0",
+              "eslint": "10.11.0",
               "eslint-plugin-playwright": "2.12.0"
             }
           }
@@ -961,7 +961,7 @@
             }
           }
         },
-        "10.10.0": {
+        "10.11.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 14,
@@ -969,7 +969,7 @@
             "node": "22.23.2",
             "npm": "10.9.8",
             "deps": {
-              "eslint": "10.10.0",
+              "eslint": "10.11.0",
               "eslint-plugin-security": "4.0.1"
             }
           }
@@ -995,7 +995,7 @@
             }
           }
         },
-        "10.10.0": {
+        "10.11.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 295,
@@ -1003,7 +1003,7 @@
             "node": "22.23.2",
             "npm": "10.9.8",
             "deps": {
-              "eslint": "10.10.0",
+              "eslint": "10.11.0",
               "eslint-plugin-sonarjs": "4.2.1"
             }
           }
@@ -1029,7 +1029,7 @@
             }
           }
         },
-        "10.10.0": {
+        "10.11.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 13,
@@ -1037,7 +1037,7 @@
             "node": "22.23.2",
             "npm": "10.9.8",
             "deps": {
-              "eslint": "10.10.0",
+              "eslint": "10.11.0",
               "eslint-plugin-cypress": "7.0.2"
             }
           }
@@ -1063,7 +1063,7 @@
             }
           }
         },
-        "10.10.0": {
+        "10.11.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 79,
@@ -1071,7 +1071,7 @@
             "node": "22.23.2",
             "npm": "10.9.8",
             "deps": {
-              "eslint": "10.10.0",
+              "eslint": "10.11.0",
               "@vitest/eslint-plugin": "1.6.27"
             }
           }
@@ -1146,7 +1146,7 @@
             }
           }
         },
-        "10.10.0": {
+        "10.11.0": {
           "status": "rule-crash",
           "crashingRules": [
             {
@@ -1235,14 +1235,14 @@
             "node": "22.23.2",
             "npm": "10.9.8",
             "deps": {
-              "eslint": "10.10.0",
+              "eslint": "10.11.0",
               "eslint-plugin-node": "11.1.0"
             }
           }
         }
       },
       "rescue": {
-        "eslintVersion": "10.10.0",
+        "eslintVersion": "10.11.0",
         "compatVersion": "2.1.1",
         "attempted": true,
         "verdict": "rescuable",
@@ -1270,7 +1270,7 @@
             }
           }
         },
-        "10.10.0": {
+        "10.11.0": {
           "status": "rule-crash",
           "crashingRules": [
             {
@@ -1311,14 +1311,14 @@
             "node": "22.23.2",
             "npm": "10.9.8",
             "deps": {
-              "eslint": "10.10.0",
+              "eslint": "10.11.0",
               "eslint-plugin-eslint-comments": "3.2.0"
             }
           }
         }
       },
       "rescue": {
-        "eslintVersion": "10.10.0",
+        "eslintVersion": "10.11.0",
         "compatVersion": "2.1.1",
         "attempted": true,
         "verdict": "rescuable",
@@ -1351,7 +1351,7 @@
             }
           }
         },
-        "10.10.0": {
+        "10.11.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 51,
@@ -1361,7 +1361,7 @@
             "node": "22.23.2",
             "npm": "10.9.8",
             "deps": {
-              "eslint": "10.10.0",
+              "eslint": "10.11.0",
               "@angular-eslint/eslint-plugin": "22.5.0",
               "@typescript-eslint/parser": "8.70.0",
               "typescript": "6.0.3",
@@ -1390,7 +1390,7 @@
             }
           }
         },
-        "10.10.0": {
+        "10.11.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 8,
@@ -1398,7 +1398,7 @@
             "node": "22.23.2",
             "npm": "10.9.8",
             "deps": {
-              "eslint": "10.10.0",
+              "eslint": "10.11.0",
               "@tanstack/eslint-plugin-query": "5.103.1"
             }
           }
@@ -1424,7 +1424,7 @@
             }
           }
         },
-        "10.10.0": {
+        "10.11.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 23,
@@ -1432,7 +1432,7 @@
             "node": "22.23.2",
             "npm": "10.9.8",
             "deps": {
-              "eslint": "10.10.0",
+              "eslint": "10.11.0",
               "eslint-plugin-perfectionist": "5.11.1"
             }
           }
@@ -1441,7 +1441,7 @@
     },
     {
       "name": "eslint-plugin-turbo",
-      "version": "2.10.13",
+      "version": "2.11.2",
       "declaredPeerRange": ">6.6.0",
       "weeklyDownloads": 2206157,
       "results": {
@@ -1454,11 +1454,11 @@
             "npm": "10.9.8",
             "deps": {
               "eslint": "9.39.5",
-              "eslint-plugin-turbo": "2.10.13"
+              "eslint-plugin-turbo": "2.11.2"
             }
           }
         },
-        "10.10.0": {
+        "10.11.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 1,
@@ -1466,8 +1466,8 @@
             "node": "22.23.2",
             "npm": "10.9.8",
             "deps": {
-              "eslint": "10.10.0",
-              "eslint-plugin-turbo": "2.10.13"
+              "eslint": "10.11.0",
+              "eslint-plugin-turbo": "2.11.2"
             }
           }
         }
@@ -1492,7 +1492,7 @@
             }
           }
         },
-        "10.10.0": {
+        "10.11.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 1,
@@ -1500,7 +1500,7 @@
             "node": "22.23.2",
             "npm": "10.9.8",
             "deps": {
-              "eslint": "10.10.0",
+              "eslint": "10.11.0",
               "eslint-plugin-no-only-tests": "3.4.0"
             }
           }
@@ -1526,7 +1526,7 @@
             }
           }
         },
-        "10.10.0": {
+        "10.11.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 9,
@@ -1534,7 +1534,7 @@
             "node": "22.23.2",
             "npm": "10.9.8",
             "deps": {
-              "eslint": "10.10.0",
+              "eslint": "10.11.0",
               "@eslint-community/eslint-plugin-eslint-comments": "4.8.1"
             }
           }
@@ -1560,7 +1560,7 @@
             }
           }
         },
-        "10.10.0": {
+        "10.11.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 82,
@@ -1568,7 +1568,7 @@
             "node": "22.23.2",
             "npm": "10.9.8",
             "deps": {
-              "eslint": "10.10.0",
+              "eslint": "10.11.0",
               "eslint-plugin-regexp": "3.3.0"
             }
           }
@@ -1594,7 +1594,7 @@
             }
           }
         },
-        "10.10.0": {
+        "10.11.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 12,
@@ -1602,7 +1602,7 @@
             "node": "22.23.2",
             "npm": "10.9.8",
             "deps": {
-              "eslint": "10.10.0",
+              "eslint": "10.11.0",
               "eslint-plugin-jest-dom": "5.10.1"
             }
           }
@@ -1633,7 +1633,7 @@
             }
           }
         },
-        "10.10.0": {
+        "10.11.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 82,
@@ -1643,7 +1643,7 @@
             "node": "22.23.2",
             "npm": "10.9.8",
             "deps": {
-              "eslint": "10.10.0",
+              "eslint": "10.11.0",
               "@eslint-react/eslint-plugin": "5.19.1",
               "@typescript-eslint/parser": "8.70.0",
               "typescript": "6.0.3",
@@ -1672,7 +1672,7 @@
             }
           }
         },
-        "10.10.0": {
+        "10.11.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 33,
@@ -1680,7 +1680,7 @@
             "node": "22.23.2",
             "npm": "10.9.8",
             "deps": {
-              "eslint": "10.10.0",
+              "eslint": "10.11.0",
               "eslint-plugin-mocha": "12.0.2"
             }
           }
@@ -1727,7 +1727,7 @@
             }
           }
         },
-        "10.10.0": {
+        "10.11.0": {
           "status": "rule-crash",
           "crashingRules": [
             {
@@ -1756,7 +1756,7 @@
             "node": "22.23.2",
             "npm": "10.9.8",
             "deps": {
-              "eslint": "10.10.0",
+              "eslint": "10.11.0",
               "eslint-plugin-tailwindcss": "4.4.0"
             }
           }
@@ -1782,7 +1782,7 @@
             }
           }
         },
-        "10.10.0": {
+        "10.11.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 10,
@@ -1790,7 +1790,7 @@
             "node": "22.23.2",
             "npm": "10.9.8",
             "deps": {
-              "eslint": "10.10.0",
+              "eslint": "10.11.0",
               "eslint-plugin-boundaries": "7.2.0"
             }
           }
@@ -1818,11 +1818,11 @@
               "eslint": "9.39.5",
               "eslint-plugin-svelte": "3.23.0",
               "svelte-eslint-parser": "1.8.1",
-              "svelte": "5.57.0"
+              "svelte": "5.57.1"
             }
           }
         },
-        "10.10.0": {
+        "10.11.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 84,
@@ -1834,10 +1834,10 @@
             "node": "22.23.2",
             "npm": "10.9.8",
             "deps": {
-              "eslint": "10.10.0",
+              "eslint": "10.11.0",
               "eslint-plugin-svelte": "3.23.0",
               "svelte-eslint-parser": "1.8.1",
-              "svelte": "5.57.0"
+              "svelte": "5.57.1"
             }
           }
         }
@@ -1862,7 +1862,7 @@
             }
           }
         },
-        "10.10.0": {
+        "10.11.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 1,
@@ -1870,7 +1870,7 @@
             "node": "22.23.2",
             "npm": "10.9.8",
             "deps": {
-              "eslint": "10.10.0",
+              "eslint": "10.11.0",
               "eslint-plugin-react-compiler": "19.1.0-rc.2"
             }
           }
@@ -1896,7 +1896,7 @@
             }
           }
         },
-        "10.10.0": {
+        "10.11.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 42,
@@ -1904,7 +1904,7 @@
             "node": "22.23.2",
             "npm": "10.9.8",
             "deps": {
-              "eslint": "10.10.0",
+              "eslint": "10.11.0",
               "eslint-plugin-jsonc": "3.4.2"
             }
           }
@@ -1930,7 +1930,7 @@
             }
           }
         },
-        "10.10.0": {
+        "10.11.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 1,
@@ -1938,7 +1938,7 @@
             "node": "22.23.2",
             "npm": "10.9.8",
             "deps": {
-              "eslint": "10.10.0",
+              "eslint": "10.11.0",
               "eslint-plugin-compat": "7.0.2"
             }
           }
@@ -1964,7 +1964,7 @@
             }
           }
         },
-        "10.10.0": {
+        "10.11.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 1,
@@ -1972,7 +1972,7 @@
             "node": "22.23.2",
             "npm": "10.9.8",
             "deps": {
-              "eslint": "10.10.0",
+              "eslint": "10.11.0",
               "eslint-plugin-i18next": "6.1.5"
             }
           }
@@ -1998,7 +1998,7 @@
             }
           }
         },
-        "10.10.0": {
+        "10.11.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 29,
@@ -2006,7 +2006,7 @@
             "node": "22.23.2",
             "npm": "10.9.8",
             "deps": {
-              "eslint": "10.10.0",
+              "eslint": "10.11.0",
               "eslint-plugin-yml": "3.8.1"
             }
           }
@@ -2032,7 +2032,7 @@
             }
           }
         },
-        "10.10.0": {
+        "10.11.0": {
           "status": "rule-crash",
           "crashingRules": [
             {
@@ -2045,14 +2045,14 @@
             "node": "22.23.2",
             "npm": "10.9.8",
             "deps": {
-              "eslint": "10.10.0",
+              "eslint": "10.11.0",
               "eslint-plugin-lodash": "8.1.0"
             }
           }
         }
       },
       "rescue": {
-        "eslintVersion": "10.10.0",
+        "eslintVersion": "10.11.0",
         "compatVersion": "2.1.1",
         "attempted": true,
         "verdict": "rescuable",
@@ -2080,7 +2080,7 @@
             }
           }
         },
-        "10.10.0": {
+        "10.11.0": {
           "status": "load-fail",
           "crashingRules": [],
           "totalRules": 0,
@@ -2089,14 +2089,14 @@
             "node": "22.23.2",
             "npm": "10.9.8",
             "deps": {
-              "eslint": "10.10.0",
+              "eslint": "10.11.0",
               "eslint-plugin-vitest": "0.5.4"
             }
           }
         }
       },
       "rescue": {
-        "eslintVersion": "10.10.0",
+        "eslintVersion": "10.11.0",
         "compatVersion": "2.1.1",
         "attempted": true,
         "verdict": "blocked",
@@ -2127,7 +2127,7 @@
             }
           }
         },
-        "10.10.0": {
+        "10.11.0": {
           "status": "load-fail",
           "crashingRules": [],
           "totalRules": 0,
@@ -2137,7 +2137,7 @@
             "node": "22.23.2",
             "npm": "10.9.8",
             "deps": {
-              "eslint": "10.10.0",
+              "eslint": "10.11.0",
               "eslint-plugin-deprecation": "3.0.0",
               "@typescript-eslint/parser": "8.70.0",
               "typescript": "6.0.3",
@@ -2147,7 +2147,7 @@
         }
       },
       "rescue": {
-        "eslintVersion": "10.10.0",
+        "eslintVersion": "10.11.0",
         "compatVersion": "2.1.1",
         "attempted": true,
         "verdict": "blocked",
@@ -2173,7 +2173,7 @@
             }
           }
         },
-        "10.10.0": {
+        "10.11.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 0,
@@ -2181,7 +2181,7 @@
             "node": "22.23.2",
             "npm": "10.9.8",
             "deps": {
-              "eslint": "10.10.0",
+              "eslint": "10.11.0",
               "eslint-plugin-markdown": "5.1.0"
             }
           }
@@ -2207,7 +2207,7 @@
             }
           }
         },
-        "10.10.0": {
+        "10.11.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 22,
@@ -2215,7 +2215,7 @@
             "node": "22.23.2",
             "npm": "10.9.8",
             "deps": {
-              "eslint": "10.10.0",
+              "eslint": "10.11.0",
               "eslint-plugin-toml": "1.5.0"
             }
           }
@@ -2241,7 +2241,7 @@
             }
           }
         },
-        "10.10.0": {
+        "10.11.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 38,
@@ -2249,7 +2249,7 @@
             "node": "22.23.2",
             "npm": "10.9.8",
             "deps": {
-              "eslint": "10.10.0",
+              "eslint": "10.11.0",
               "eslint-plugin-eslint-plugin": "7.6.2"
             }
           }
@@ -2275,7 +2275,7 @@
             }
           }
         },
-        "10.10.0": {
+        "10.11.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 65,
@@ -2283,7 +2283,7 @@
             "node": "22.23.2",
             "npm": "10.9.8",
             "deps": {
-              "eslint": "10.10.0",
+              "eslint": "10.11.0",
               "@html-eslint/eslint-plugin": "0.66.1"
             }
           }
@@ -2309,7 +2309,7 @@
             }
           }
         },
-        "10.10.0": {
+        "10.11.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 1,
@@ -2317,7 +2317,7 @@
             "node": "22.23.2",
             "npm": "10.9.8",
             "deps": {
-              "eslint": "10.10.0",
+              "eslint": "10.11.0",
               "eslint-plugin-depend": "1.5.0"
             }
           }
@@ -2344,7 +2344,7 @@
             }
           }
         },
-        "10.10.0": {
+        "10.11.0": {
           "status": "clean",
           "crashingRules": [],
           "totalRules": 20,
@@ -2352,7 +2352,7 @@
             "node": "22.23.2",
             "npm": "10.9.8",
             "deps": {
-              "eslint": "10.10.0",
+              "eslint": "10.11.0",
               "@ternaus/eslint-plugin-react": "8.0.2",
               "react": "19.3.0"
             }
