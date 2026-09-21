@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-09-20T03:31:26.888Z",
+  "generatedAt": "2026-09-21T03:34:18.699Z",
   "eslintVersions": {
     "v9": "9.39.5",
     "v10": "10.11.0"
@@ -660,7 +660,7 @@
     },
     {
       "name": "eslint-plugin-es-x",
-      "version": "10.0.0",
+      "version": "10.0.1",
       "declaredPeerRange": ">=10.6.0",
       "weeklyDownloads": 5645290,
       "results": {
@@ -673,7 +673,7 @@
             "npm": "10.9.8",
             "deps": {
               "eslint": "9.39.5",
-              "eslint-plugin-es-x": "10.0.0"
+              "eslint-plugin-es-x": "10.0.1"
             }
           }
         },
@@ -686,7 +686,7 @@
             "npm": "10.9.8",
             "deps": {
               "eslint": "10.11.0",
-              "eslint-plugin-es-x": "10.0.0"
+              "eslint-plugin-es-x": "10.0.1"
             }
           }
         }
@@ -1543,7 +1543,7 @@
     },
     {
       "name": "eslint-plugin-regexp",
-      "version": "3.3.0",
+      "version": "3.3.1",
       "declaredPeerRange": ">=9.38.0",
       "weeklyDownloads": 1622145,
       "results": {
@@ -1556,7 +1556,7 @@
             "npm": "10.9.8",
             "deps": {
               "eslint": "9.39.5",
-              "eslint-plugin-regexp": "3.3.0"
+              "eslint-plugin-regexp": "3.3.1"
             }
           }
         },
@@ -1569,7 +1569,7 @@
             "npm": "10.9.8",
             "deps": {
               "eslint": "10.11.0",
-              "eslint-plugin-regexp": "3.3.0"
+              "eslint-plugin-regexp": "3.3.1"
             }
           }
         }
@@ -1611,7 +1611,7 @@
     },
     {
       "name": "@eslint-react/eslint-plugin",
-      "version": "5.20.0",
+      "version": "5.20.3",
       "declaredPeerRange": "*",
       "weeklyDownloads": 1502554,
       "results": {
@@ -1626,7 +1626,7 @@
             "npm": "10.9.8",
             "deps": {
               "eslint": "9.39.5",
-              "@eslint-react/eslint-plugin": "5.20.0",
+              "@eslint-react/eslint-plugin": "5.20.3",
               "@typescript-eslint/parser": "8.70.0",
               "typescript": "6.0.3",
               "@typescript-eslint/utils": "8.70.0"
@@ -1644,7 +1644,7 @@
             "npm": "10.9.8",
             "deps": {
               "eslint": "10.11.0",
-              "@eslint-react/eslint-plugin": "5.20.0",
+              "@eslint-react/eslint-plugin": "5.20.3",
               "@typescript-eslint/parser": "8.70.0",
               "typescript": "6.0.3",
               "@typescript-eslint/utils": "8.70.0"
