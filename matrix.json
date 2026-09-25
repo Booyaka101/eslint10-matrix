@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-09-24T03:31:39.752Z",
+  "generatedAt": "2026-09-25T03:30:49.014Z",
   "eslintVersions": {
     "v9": "9.39.5",
     "v10": "10.11.0"
@@ -1407,7 +1407,7 @@
     },
     {
       "name": "eslint-plugin-perfectionist",
-      "version": "5.12.0",
+      "version": "5.12.1",
       "declaredPeerRange": "^8.45.0 || ^9.0.0 || ^10.0.0",
       "weeklyDownloads": 2337389,
       "results": {
@@ -1420,7 +1420,7 @@
             "npm": "10.9.8",
             "deps": {
               "eslint": "9.39.5",
-              "eslint-plugin-perfectionist": "5.12.0"
+              "eslint-plugin-perfectionist": "5.12.1"
             }
           }
         },
@@ -1433,7 +1433,7 @@
             "npm": "10.9.8",
             "deps": {
               "eslint": "10.11.0",
-              "eslint-plugin-perfectionist": "5.12.0"
+              "eslint-plugin-perfectionist": "5.12.1"
             }
           }
         }
@@ -1441,7 +1441,7 @@
     },
     {
       "name": "eslint-plugin-turbo",
-      "version": "2.11.3",
+      "version": "2.11.4",
       "declaredPeerRange": ">6.6.0",
       "weeklyDownloads": 2206157,
       "results": {
@@ -1454,7 +1454,7 @@
             "npm": "10.9.8",
             "deps": {
               "eslint": "9.39.5",
-              "eslint-plugin-turbo": "2.11.3"
+              "eslint-plugin-turbo": "2.11.4"
             }
           }
         },
@@ -1467,7 +1467,7 @@
             "npm": "10.9.8",
             "deps": {
               "eslint": "10.11.0",
-              "eslint-plugin-turbo": "2.11.3"
+              "eslint-plugin-turbo": "2.11.4"
             }
           }
         }
