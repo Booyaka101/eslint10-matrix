@@ -13,6 +13,7 @@ import {
   resolveConfig,
   looksLikePluginPackage,
   type ResolvedConfig,
+  type SharedConfigSource,
 } from './resolve-config.js';
 import { pluginNamespace } from './snippet.js';
 import { TESTED_ESLINT } from './versions.js';
@@ -43,6 +44,11 @@ export interface ScanResult {
   matrix: Matrix;
   plugins: string[];
   unknown: string[];
+  unknownReasons: Record<string, string>;
+  /** Plugins measured at the version a shared config installed, keyed by package. */
+  via: Record<string, SharedConfigSource>;
+  /** Parsers a shared config sets, which the scan does not measure. */
+  parsers: string[];
   projectDir: string;
   configPath: string;
   files: number;
@@ -57,13 +63,13 @@ export interface ScanResult {
  */
 async function peerSpecs(
   installed: InstalledPackage,
-  projectDir: string,
+  fromDir: string,
   lockfile: Lockfile | null
 ): Promise<string[]> {
   const specs: string[] = [];
   for (const [peer, range] of Object.entries(installed.peerDependencies)) {
     if (peer === 'eslint') continue;
-    const here = await resolveInstalled(peer, projectDir, lockfile);
+    const here = await resolveInstalled(peer, fromDir, lockfile);
     if (here) specs.push(`${peer}@${here.version}`);
     else if (!installed.optionalPeers.has(peer)) specs.push(`${peer}@${range}`);
   }
@@ -139,7 +145,19 @@ export async function scan(options: ScanOptions): Promise<ScanResult> {
   // are still the caller's, only the config's ignores and settings are lost.
   const resolved: ResolvedConfig =
     named.length > 0
-      ? { configPath: '(--plugins)', projectDir: rootDir, plugins: named, unknown: [], keys: {}, ignores: [], settings: {} }
+      ? {
+          configPath: '(--plugins)',
+          projectDir: rootDir,
+          plugins: named,
+          unknown: [],
+          keys: {},
+          ignores: [],
+          settings: {},
+          via: {},
+          unknownReasons: {},
+          notes: [],
+          parsers: [],
+        }
       : await resolveConfig(options.dir);
   const { projectDir, configPath } = resolved;
 
@@ -167,8 +185,13 @@ export async function scan(options: ScanOptions): Promise<ScanResult> {
   // still wants it installed: typescript-eslint's rules crash under espree for
   // a reason no ESLint 10 upgrade would hit.
   const typescriptFiles = collected.files.some(isTsFile);
-  const parser = await resolveInstalled(TS_PARSER, projectDir, lockfile);
-  const typescript = parser ? await resolveInstalled('typescript', projectDir, lockfile) : null;
+  // A plugin a shared config installed is measured at the version that config
+  // got, which under pnpm or a nested install is not whatever the root resolves.
+  // The parser is the one installed beside the typescript-eslint plugin.
+  const fromDir = (name: string): string => resolved.via[name]?.dir ?? projectDir;
+  const parserDir = fromDir('@typescript-eslint/eslint-plugin');
+  const parser = await resolveInstalled(TS_PARSER, parserDir, lockfile);
+  const typescript = parser ? await resolveInstalled('typescript', parserDir, lockfile) : null;
   if (typescriptFiles && !parser) {
     notes.push(`no ${TS_PARSER} installed, so the TypeScript files here were skipped`);
   }
@@ -181,12 +204,15 @@ export async function scan(options: ScanOptions): Promise<ScanResult> {
   }
 
   const deps = named.length > 0 ? {} : await readDependencies(projectDir);
+  // typescript-eslint is plugin-shaped by name, and it is in use whenever a plugin arrived through it.
+  const viaConfigs = new Set(Object.values(resolved.via).flatMap((source) => (source.through ? [source.config, source.through] : [source.config])));
   const unreferenced = Object.keys(deps)
-    .filter((name) => looksLikePluginPackage(name) && !resolved.plugins.includes(name))
+    .filter((name) => looksLikePluginPackage(name) && !resolved.plugins.includes(name) && !viaConfigs.has(name))
     .sort();
   if (unreferenced.length > 0) {
     notes.push(`installed but not used by ${displayPath(configPath)}, so not scanned: ${unreferenced.join(', ')}`);
   }
+  notes.push(...resolved.notes);
 
   const probeOptions: ProbeOptions = { cache: options.cache ?? true, onLog: options.onLog };
   if (probeOptions.cache) {
@@ -197,7 +223,7 @@ export async function scan(options: ScanOptions): Promise<ScanResult> {
   const rows: PluginRow[] = [];
 
   const specs = await Promise.all(
-    resolved.plugins.map(async (name) => ({ name, installed: await resolveInstalled(name, projectDir, lockfile) }))
+    resolved.plugins.map(async (name) => ({ name, installed: await resolveInstalled(name, fromDir(name), lockfile) }))
   );
 
   for (const { name, installed } of specs) {
@@ -211,7 +237,7 @@ export async function scan(options: ScanOptions): Promise<ScanResult> {
   const runnable = specs.filter((s): s is { name: string; installed: InstalledPackage } => s.installed !== null);
 
   const results = await mapWithConcurrency(runnable, options.concurrency ?? 3, async ({ name, installed }) => {
-    const peers = await peerSpecs(installed, projectDir, lockfile);
+    const peers = await peerSpecs(installed, fromDir(name), lockfile);
     const planFor = (eslintVersion: string): ProbePlan => ({
       deps: [
         `eslint@${eslintVersion}`,
@@ -273,6 +299,9 @@ export async function scan(options: ScanOptions): Promise<ScanResult> {
     },
     plugins: measured.sort(),
     unknown: resolved.unknown,
+    unknownReasons: resolved.unknownReasons,
+    via: resolved.via,
+    parsers: resolved.parsers,
     projectDir,
     configPath,
     files: collected.files.length,

@@ -4,7 +4,8 @@ import type { MeasuredDrift } from './env-drift.js';
 import type { HarnessRule, Matrix, MeasuredEnv, PluginRow, PluginRunResult, RescueResult } from './matrix.js';
 import { rowFor } from './matrix.js';
 import { satisfies } from './semver-lite.js';
-import { pluginNamespace, rescueSnippet } from './snippet.js';
+import type { SharedConfigSource } from './resolve-config.js';
+import { pluginNamespace, rescueSnippet, sharedConfigSnippet } from './snippet.js';
 import { wrapList } from './wrap.js';
 
 export type Bucket =
@@ -27,6 +28,13 @@ export interface Entry {
   rescue?: RescueResult;
   /** Copy-pasteable eslint.config.js wiring, present on rescue buckets. */
   snippet?: string;
+  /** Present when the plugin is not in package.json and arrives through this shared config. */
+  via?: Via;
+}
+
+export interface Via {
+  config: string;
+  configVersion: string;
 }
 
 export interface Report {
@@ -49,6 +57,8 @@ export interface Report {
   measuredDrift?: MeasuredDrift[];
   /** Anything the reader needs to know about how the answer was reached. */
   notes: string[];
+  /** Parsers a shared config sets, which nothing here measured. */
+  parsers?: string[];
 }
 
 export interface Measured {
@@ -127,11 +137,15 @@ export function buildReport(
   input: {
     plugins: string[];
     unknown: string[];
+    /** Overrides the default UNKNOWN reason for these keys. */
+    unknownReasons?: Record<string, string>;
+    via?: Record<string, Via & Pick<SharedConfigSource, 'spread'>>;
     projectDir: string;
     configPath: string;
     measured?: Measured;
     measuredDrift?: MeasuredDrift[];
     notes?: string[];
+    parsers?: string[];
   }
 ): Report {
   const { v9, v10 } = matrix.eslintVersions;
@@ -152,6 +166,7 @@ export function buildReport(
     ...(input.measured ? { measured: input.measured } : {}),
     ...(input.measuredDrift?.length ? { measuredDrift: input.measuredDrift } : {}),
     notes: input.notes ?? [],
+    ...(input.parsers?.length ? { parsers: input.parsers } : {}),
   };
 
   for (const key of input.unknown) {
@@ -160,17 +175,20 @@ export function buildReport(
       version: null,
       declaredPeerRange: null,
       bucket: 'unknown',
-      reason: 'used in eslint.config but not found in package.json dependencies',
+      reason: input.unknownReasons?.[key] ?? 'used in eslint.config but not found in package.json dependencies',
     });
   }
 
   for (const name of input.plugins) {
     const row: PluginRow | undefined = rowFor(matrix, name);
+    const source = input.via?.[name];
+    const via = source ? { via: { config: source.config, configVersion: source.configVersion } } : {};
     if (!row) {
       report.untested.push({
         name,
         version: null,
         declaredPeerRange: null,
+        ...via,
         bucket: 'untested',
         reason: `not in the matrix yet - request it at ${ISSUE_URL}?title=${encodeURIComponent(`Add ${name} to the matrix`)}`,
       });
@@ -183,13 +201,14 @@ export function buildReport(
         name,
         version: row.version,
         declaredPeerRange: row.declaredPeerRange,
+        ...via,
         bucket: 'untested',
         reason: `the matrix has no result for eslint ${v10}`,
       });
       continue;
     }
 
-    const base = { name, version: row.version, declaredPeerRange: row.declaredPeerRange };
+    const base = { name, version: row.version, declaredPeerRange: row.declaredPeerRange, ...via };
     const { verdict, regressedRules } = verdictFor(row, matrix.eslintVersions);
 
     if (verdict === 'harness-misconfig') {
@@ -215,7 +234,7 @@ export function buildReport(
       if (verdict === 'blocked') {
         report.blocked.push(entry);
       } else {
-        entry.snippet = rescueSnippet(row, row.rescue!, v10);
+        if (!source) entry.snippet = rescueSnippet(row, row.rescue!, v10);
         (verdict === 'rescuable' ? report.rescuable : report.partialRescue).push(entry);
       }
       continue;
@@ -239,6 +258,19 @@ export function buildReport(
       });
       report.overrides[name] = { eslint: '$eslint' };
     }
+  }
+
+  // Flat config registers a shared config's plugins together, so every plugin
+  // that config brings is rescued by one wrap round it.
+  const viaRescues = [...report.rescuable, ...report.partialRescue].filter((entry) => entry.via);
+  for (const config of new Set(viaRescues.map((entry) => entry.via!.config))) {
+    const entries = viaRescues.filter((entry) => entry.via!.config === config);
+    const snippet = sharedConfigSnippet(
+      { config, spread: input.via![entries[0]!.name]!.spread },
+      entries.map((entry) => ({ name: entry.name, rescue: entry.rescue! })),
+      v10
+    );
+    for (const entry of entries) entry.snippet = snippet;
   }
 
   const byName = (a: Entry, b: Entry) => a.name.localeCompare(b.name);
@@ -369,7 +401,18 @@ function pad(text: string, width: number): string {
 }
 
 function label(entry: Entry): string {
-  return entry.version ? `${entry.name}@${entry.version}` : entry.name;
+  return `${entry.version ? `${entry.name}@${entry.version}` : entry.name}${viaSuffix(entry)}`;
+}
+
+/** The package.json a reader searches will not name the plugin, so say what does. */
+function viaSuffix(entry: Entry): string {
+  if (!entry.via) return '';
+  return ` (via ${entry.via.configVersion ? `${entry.via.config}@${entry.via.configVersion}` : entry.via.config})`;
+}
+
+/** One line for the bucket, or one per plugin once via suffixes would run it past a terminal. */
+function labelLines(entries: Entry[]): string[] {
+  return entries.some((entry) => entry.via) ? entries.map((entry) => `  ${label(entry)}`) : [`  ${entries.map(label).join(', ')}`];
 }
 
 export function renderOverrides(overrides: Record<string, { eslint: string }>): string {
@@ -423,6 +466,8 @@ export function renderReport(report: Report, options: { color?: boolean } = {}):
     out.push('');
   }
 
+  // Plugins from one shared config share one wrap, across both rescue tiers.
+  const printed = new Set<string>();
   /** Both rescue tiers print the same shape: a headline, one install line, then a snippet each. */
   function pushRescueBucket(title: string, note: string, entries: Entry[]): void {
     if (entries.length === 0) return;
@@ -434,6 +479,11 @@ export function renderReport(report: Report, options: { color?: boolean } = {}):
       for (const line of [crashEvidence(entry, 4), harnessExclusionNote(entry), measuredNote(entry, 4)]) {
         if (line) out.push(dim(`    ${line}`));
       }
+      if (printed.has(entry.snippet!)) {
+        out.push(dim(`    the ${entry.via!.config} wrap above covers it`));
+        continue;
+      }
+      printed.add(entry.snippet!);
       out.push('');
       out.push(
         entry
@@ -462,7 +512,7 @@ export function renderReport(report: Report, options: { color?: boolean } = {}):
       yellow(bold(`SAFE TO FORCE (${report.safeToForce.length})`)) +
         `  declared below ^10, verified clean on ${report.eslintVersions.v10} with all rules enabled`
     );
-    out.push(`  ${report.safeToForce.map(label).join(', ')}`);
+    out.push(...labelLines(report.safeToForce));
     out.push('');
     out.push(dim('  Add to package.json to install them against ESLint 10 anyway:'));
     out.push(renderOverrides(report.overrides));
@@ -471,13 +521,13 @@ export function renderReport(report: Report, options: { color?: boolean } = {}):
 
   if (report.clean.length > 0) {
     out.push(green(bold(`CLEAN (${report.clean.length})`)) + '  already declares ^10');
-    out.push(`  ${report.clean.map(label).join(', ')}`);
+    out.push(...labelLines(report.clean));
     out.push('');
   }
 
   if (report.untested.length > 0) {
     out.push(bold(`UNTESTED (${report.untested.length})`));
-    for (const entry of report.untested) out.push(`  ${entry.name}  ${dim(entry.reason)}`);
+    for (const entry of report.untested) out.push(`  ${entry.name}${viaSuffix(entry)}  ${dim(entry.reason)}`);
     out.push('');
   }
 
@@ -531,7 +581,12 @@ export function renderReport(report: Report, options: { color?: boolean } = {}):
   }
 
   const blocking = report.blocked.length + report.rescuable.length + report.partialRescue.length;
-  if (blocking === 0) {
+  if (blocking === 0 && report.parsers?.length) {
+    out.push(
+      green(`No plugin blocks the upgrade to ESLint ${report.eslintVersions.v10}`) +
+        `, but the ${report.parsers.join(' and ')} ${report.parsers.length === 1 ? 'parser is' : 'parsers are'} not measured.`
+    );
+  } else if (blocking === 0) {
     out.push(green(`Nothing blocks the upgrade to ESLint ${report.eslintVersions.v10}.`));
   } else {
     const worst = report.blocked

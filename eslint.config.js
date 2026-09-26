@@ -14,6 +14,7 @@ export default [
       'packages/runner/fixtures/',
       'test/fixtures/',
       'test/.tmp/',
+      '.eslint10-matrix-tmp/',
       'examples/',
       'matrix.json',
     ],

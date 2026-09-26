@@ -3,6 +3,7 @@ import { existsSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { findUp } from './find-up.js';
+import { findInstalledManifest, readInstalled, readJsonFile } from './installed.js';
 
 const CONFIG_NAMES = [
   'eslint.config.js',
@@ -35,6 +36,29 @@ export interface ResolvedConfig {
   ignores: string[];
   /** Merged `settings`, minus anything that will not survive JSON. */
   settings: Record<string, unknown>;
+  /** Plugin packages that reach the config through a shared config rather than package.json. */
+  via: Record<string, SharedConfigSource>;
+  /** Why a key in `unknown` is there, where the default reason would mislead. */
+  unknownReasons: Record<string, string>;
+  /** Anything about how the plugins were attributed that the report should say. */
+  notes: string[];
+  /** Parsers a shared config sets, which run on ESLint 10 unmeasured. */
+  parsers: string[];
+}
+
+export interface SharedConfigSource {
+  /** The dependency package.json names, which is what the reader will recognise. */
+  config: string;
+  configVersion: string;
+  /** Where the plugin resolves from: that config's install, or the config it pulls in. */
+  dir: string;
+  /** The config the root pulls in that registers the plugin, when that is not the root itself. */
+  through?: string;
+  /**
+   * What of the config's main export goes in the array: the export itself when
+   * absent, a call to it for a factory like neostandard, or one of its `configs`.
+   */
+  spread?: 'call' | `configs.${string}`;
 }
 
 export function findConfigFile(startDir: string): string | null {
@@ -95,6 +119,15 @@ export function looksLikePluginPackage(name: string): boolean {
   );
 }
 
+/**
+ * A package that registers plugins on the caller's behalf. typescript-eslint is
+ * one in all but name: it depends on @typescript-eslint/eslint-plugin and its
+ * configs register it, and eslint-config-next pulls it in the same way.
+ */
+export function looksLikeSharedConfig(name: string): boolean {
+  return name === 'typescript-eslint' || /^(@[^/]+\/)?eslint-config(-|$)/.test(name);
+}
+
 /** `x` -> eslint-plugin-x, `@scope/x` -> @scope/eslint-plugin-x, `@scope` -> @scope/eslint-plugin. */
 export function conventionalPackageNames(configKey: string): string[] {
   if (configKey.startsWith('@')) {
@@ -114,6 +147,8 @@ interface ConfigContents {
   plugins: Map<string, unknown>;
   ignores: string[];
   settings: Record<string, unknown>;
+  /** Parser meta.name to the `files` of the first block that sets it. */
+  parsers: Map<string, string[]>;
 }
 
 /** Walks arrays, nested arrays and single objects; flat config permits all three. */
@@ -124,7 +159,14 @@ function collectPluginEntries(value: unknown, out: ConfigContents, depth = 0): v
     return;
   }
   if (typeof value !== 'object') return;
-  const entry = value as { plugins?: unknown; ignores?: unknown; settings?: unknown; basePath?: unknown };
+  const entry = value as {
+    plugins?: unknown;
+    ignores?: unknown;
+    settings?: unknown;
+    basePath?: unknown;
+    files?: unknown;
+    languageOptions?: { parser?: { meta?: { name?: unknown } } };
+  };
   if (entry.plugins && typeof entry.plugins === 'object' && !Array.isArray(entry.plugins)) {
     for (const [key, mod] of Object.entries(entry.plugins as Record<string, unknown>)) {
       if (!out.plugins.has(key)) out.plugins.set(key, mod);
@@ -142,6 +184,10 @@ function collectPluginEntries(value: unknown, out: ConfigContents, depth = 0): v
       const scoped = base ? `${base.replace(/\/+$/, '')}/${pattern.replace(/^\.\//, '')}` : pattern;
       if (!out.ignores.includes(scoped)) out.ignores.push(scoped);
     }
+  }
+  const parser = entry.languageOptions?.parser?.meta?.name;
+  if (typeof parser === 'string' && !out.parsers.has(parser)) {
+    out.parsers.set(parser, Array.isArray(entry.files) ? entry.files.filter((f) => typeof f === 'string') : []);
   }
   if (entry.settings && typeof entry.settings === 'object') {
     Object.assign(out.settings, jsonSafe(entry.settings) as Record<string, unknown>);
@@ -178,42 +224,156 @@ function jsonSafe(value: unknown, depth = 0): unknown {
  * `vitest`, which in a repo that also depends on the test runner would resolve
  * to the wrong package entirely, so a declared name that is not plugin-shaped
  * only counts once the naming convention has had its turn.
+ *
+ * `deps` and `fromDir` are the project's own, or a shared config's when the
+ * plugin arrives through one: the same three steps answer both. A package not
+ * named like a config gets no say by name, since depending on eslint-plugin-react
+ * does not mean registering it: only meta.name or the object itself counts.
  */
 async function identifyPackage(
   configKey: string,
   pluginModule: unknown,
   deps: Record<string, string>,
-  projectDir: string
+  fromDir: string,
+  guessByName = true
 ): Promise<string | null> {
   const meta = (pluginModule as { meta?: { name?: unknown } } | null)?.meta;
   const declared = typeof meta?.name === 'string' ? meta.name : null;
   if (declared && deps[declared] && looksLikePluginPackage(declared)) return declared;
 
-  for (const candidate of conventionalPackageNames(configKey)) {
-    if (deps[candidate]) return candidate;
+  // The bare key is a candidate only when it names a plugin package: `react` is
+  // the key eslint-plugin-react registers under and also a dependency of every
+  // React app, so reached through a shared config it would name the library.
+  for (const candidate of guessByName ? conventionalPackageNames(configKey) : []) {
+    if (deps[candidate] && (candidate !== configKey || looksLikePluginPackage(candidate))) return candidate;
   }
 
-  if (pluginModule && typeof pluginModule === 'object') {
-    for (const dep of Object.keys(deps).filter(looksLikePluginPackage)) {
-      try {
-        const mod = (await import(await resolveFrom(dep, projectDir))) as Record<string, unknown>;
-        const exported = mod.default ?? mod;
-        if (exported === pluginModule) return dep;
-        if ((exported as { default?: unknown })?.default === pluginModule) return dep;
-      } catch {
-        /* dependency not installed or not importable: keep looking */
-      }
-    }
+  for (const dep of Object.keys(deps).filter(looksLikePluginPackage)) {
+    if (await isLoadedFrom(dep, fromDir, pluginModule)) return dep;
   }
 
   if (declared) return deps[declared] ? declared : null;
   return null;
 }
 
+/** Whether `dep`, resolved the way Node would from `fromDir`, is the object the config registered. */
+async function isLoadedFrom(dep: string, fromDir: string, pluginModule: unknown): Promise<boolean> {
+  if (!pluginModule || typeof pluginModule !== 'object') return false;
+  try {
+    const mod = (await import(await resolveFrom(dep, fromDir))) as Record<string, unknown>;
+    const exported = mod.default ?? mod;
+    return exported === pluginModule || (exported as { default?: unknown })?.default === pluginModule;
+  } catch {
+    return false;
+  }
+}
+
+/** A factory is called and typescript-eslint is spread through its configs; anything else is spread as is. */
+async function spreadOf(name: string, projectDir: string): Promise<SharedConfigSource['spread']> {
+  try {
+    const mod = (await import(await resolveFrom(name, projectDir))) as { default?: unknown };
+    const exported = mod.default ?? mod;
+    if (typeof exported === 'function') return 'call';
+    const configs = (exported as { configs?: unknown } | null)?.configs;
+    if (!Array.isArray(exported) && configs && typeof configs === 'object') {
+      const keys = Object.keys(configs);
+      const key = keys.find((k) => /recommended/i.test(k)) ?? keys[0];
+      if (key) return `configs.${key}`;
+    }
+  } catch {
+    /* no importable main entry: the plain spread is the best guess */
+  }
+  return undefined;
+}
+
+/** The first source whose copy of `pkg` is the very object the config registered. */
+async function sourceThatLoads(pkg: string, pluginModule: unknown, sources: SharedSource[]): Promise<SharedSource | undefined> {
+  for (const source of sources) {
+    if (source.from.deps[pkg] && (await isLoadedFrom(pkg, source.from.dir, pluginModule))) return source;
+  }
+  return undefined;
+}
+
+async function viaSource({ root, from }: SharedSource, projectDir: string): Promise<SharedConfigSource> {
+  const spread = await spreadOf(root.name, projectDir);
+  return {
+    config: root.name,
+    configVersion: root.version,
+    dir: from.dir,
+    ...(from !== root ? { through: from.name } : {}),
+    ...(spread ? { spread } : {}),
+  };
+}
+
 async function resolveFrom(specifier: string, fromDir: string): Promise<string> {
   const { createRequire } = await import('node:module');
   const require = createRequire(pathToFileURL(join(fromDir, 'package.json')));
   return pathToFileURL(require.resolve(specifier)).href;
+}
+
+interface SharedConfig {
+  name: string;
+  version: string;
+  /** Real path, so a pnpm symlink lands in the store where its own deps sit beside it. */
+  dir: string;
+  deps: Record<string, string>;
+}
+
+async function readSharedConfig(name: string, fromDir: string): Promise<SharedConfig | null> {
+  const manifestPath = findInstalledManifest(name, fromDir);
+  if (!manifestPath) return null;
+  const dir = await realpath(dirname(manifestPath)).catch(() => null);
+  const doc = dir
+    ? await readJsonFile<{ version?: string; dependencies?: Record<string, string>; optionalDependencies?: Record<string, string> }>(
+        join(dir, 'package.json')
+      )
+    : null;
+  if (!dir || !doc) return null;
+  // A peer is the caller's to install, so it is already a direct dependency or not there at all.
+  return { name, version: String(doc.version ?? ''), dir, deps: { ...doc.dependencies, ...doc.optionalDependencies } };
+}
+
+interface SharedSource {
+  /** The direct dependency, named in the report. */
+  root: SharedConfig;
+  /** Whose dependencies are searched: the root itself, or a config the root depends on. */
+  from: SharedConfig;
+  /** Whether the root is named like a config, and so trusted to register what it depends on. */
+  named: boolean;
+}
+
+/**
+ * Every shared config in package.json order, each followed by the configs it
+ * depends on, one level down: eslint-config-next brings typescript-eslint, and
+ * that is where @typescript-eslint/eslint-plugin comes from. After them, any
+ * other dependency that depends on plugins, since neostandard and angular-eslint
+ * register theirs without being named like a config.
+ */
+async function sharedSources(
+  deps: Record<string, string>,
+  projectDir: string
+): Promise<{ sources: SharedSource[]; missing: string[] }> {
+  const sources: SharedSource[] = [];
+  const missing: string[] = [];
+  // Yarn PnP has no node_modules to walk, and "run install" would be false advice there.
+  if (findUp(projectDir, '.pnp.cjs', '.pnp.js')) return { sources, missing };
+  const names = Object.keys(deps);
+  const bringsPlugins = (dep: string) => looksLikePluginPackage(dep) || looksLikeSharedConfig(dep);
+  for (const name of [...names.filter(looksLikeSharedConfig), ...names.filter((n) => !looksLikeSharedConfig(n))]) {
+    const named = looksLikeSharedConfig(name);
+    const root = await readSharedConfig(name, projectDir);
+    if (!root) {
+      if (named) missing.push(name);
+      continue;
+    }
+    if (!named && !Object.keys(root.deps).some(bringsPlugins)) continue;
+    sources.push({ root, from: root, named });
+    for (const nested of Object.keys(root.deps).filter(looksLikeSharedConfig)) {
+      const from = await readSharedConfig(nested, root.dir);
+      if (from) sources.push({ root, from, named });
+    }
+  }
+  return { sources, missing };
 }
 
 export async function resolveConfig(startDir: string): Promise<ResolvedConfig> {
@@ -256,20 +416,84 @@ export async function resolveConfig(startDir: string): Promise<ResolvedConfig> {
     );
   }
 
-  const contents: ConfigContents = { plugins: new Map(), ignores: [], settings: {} };
+  const contents: ConfigContents = { plugins: new Map(), ignores: [], settings: {}, parsers: new Map() };
   collectPluginEntries(exported, contents);
 
   const plugins: string[] = [];
   const unknown: string[] = [];
   const keys: Record<string, string> = {};
+  const via: Record<string, SharedConfigSource> = {};
+  const unknownReasons: Record<string, string> = {};
+  const notes: string[] = [];
+  let shared: Awaited<ReturnType<typeof sharedSources>> | undefined;
   for (const [key, mod] of contents.plugins) {
-    const pkg = await identifyPackage(key, mod, deps, projectDir);
+    let pkg = await identifyPackage(key, mod, deps, projectDir);
+    // package.json names the plugin, but a config that nests its own copy
+    // registers that one, and it is the copy ESLint runs.
+    if (pkg && looksLikePluginPackage(pkg) && !via[pkg] && !(await isLoadedFrom(pkg, projectDir, mod))) {
+      shared ??= await sharedSources(deps, projectDir);
+      const source = await sourceThatLoads(pkg, mod, shared.sources);
+      if (source) {
+        via[pkg] = await viaSource(source, projectDir);
+        const [ours, theirs] = await Promise.all([readInstalled(pkg, projectDir), readInstalled(pkg, source.from.dir)]);
+        notes.push(
+          `${pkg}${ours ? `@${ours.version}` : ''} in package.json is not the copy eslint.config loads: ` +
+            `${source.root.name} registers its own${theirs ? ` ${theirs.version}` : ''}, so that is the one measured`
+        );
+      }
+    }
+    if (!pkg) {
+      shared ??= await sharedSources(deps, projectDir);
+      let first: SharedSource | undefined;
+      for (const source of shared.sources) {
+        pkg = await identifyPackage(key, mod, source.from.deps, source.from.dir, source.named);
+        if (pkg) {
+          first = source;
+          break;
+        }
+      }
+      if (pkg && first && !via[pkg] && !deps[pkg]) {
+        // Configs that each nest their own copy register different objects, and
+        // only the one eslint.config loaded says which copy runs.
+        const loaded = await sourceThatLoads(pkg, mod, shared.sources);
+        const source = loaded ?? first;
+        via[pkg] = await viaSource(source, projectDir);
+        const also = [
+          ...new Set(
+            shared.sources.filter((s) => s.named && s.root !== source.root && s.from.deps[pkg!]).map((s) => s.root.name)
+          ),
+        ];
+        if (also.length > 0) {
+          notes.push(
+            `${pkg} arrives through ${[source.root.name, ...also].join(' and ')}; measured the copy ${source.root.name} ` +
+              (loaded ? 'registers, which is the one eslint.config loads' : 'installed, which comes first in package.json')
+          );
+        }
+      }
+      if (!pkg && shared.missing.length > 0) {
+        unknownReasons[key] =
+          `may arrive through ${shared.missing.join(' or ')}, which ${shared.missing.length === 1 ? 'is' : 'are'} ` +
+          'not installed where eslint10-matrix looked; run install and try again';
+      }
+    }
     if (pkg) {
       keys[key] = pkg;
       if (!plugins.includes(pkg)) plugins.push(pkg);
     } else if (!unknown.includes(key)) {
       unknown.push(key);
     }
+  }
+
+  // A parser a shared config bundles is not on the board, and it runs on every
+  // file its block matches whether or not the plugins do: eslint-config-next's
+  // crashes ESLint 10 on .js and .mjs files with every plugin rescued.
+  const parsers: string[] = [];
+  for (const [parser, files] of contents.parsers) {
+    const config = /^(@[^/]+\/)?[^/]+/.exec(parser)?.[0];
+    if (!config || config === parser || config === 'typescript-eslint' || !looksLikeSharedConfig(config)) continue;
+    parsers.push(parser);
+    const scope = files.length > 0 ? ` for ${files.join(', ')}` : '';
+    notes.push(`${config} sets its own parser (${parser})${scope}; eslint10-matrix measures plugins, not parsers, so nothing here says it runs on ESLint 10`);
   }
 
   return {
@@ -280,6 +504,10 @@ export async function resolveConfig(startDir: string): Promise<ResolvedConfig> {
     keys,
     ignores: contents.ignores,
     settings: contents.settings,
+    via,
+    unknownReasons,
+    notes,
+    parsers,
   };
 }
 

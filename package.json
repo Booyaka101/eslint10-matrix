@@ -1,6 +1,6 @@
 {
   "name": "eslint10-matrix-workspace",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "private": true,
   "type": "module",
   "description": "Nightly-executed ESLint 10 compatibility matrix for popular ESLint plugins",
