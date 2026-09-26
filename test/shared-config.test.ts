@@ -1,4 +1,4 @@
-import { cp, mkdir, readFile, symlink, writeFile } from 'node:fs/promises';
+import { cp, mkdir, readFile, realpath, symlink, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it, vi } from 'vitest';
@@ -9,7 +9,10 @@ import type { Matrix } from '../packages/cli/src/matrix.js';
 import { buildReport, renderReport } from '../packages/cli/src/report.js';
 import { resolveConfig } from '../packages/cli/src/resolve-config.js';
 import { sharedConfigSnippet } from '../packages/cli/src/snippet.js';
-import { tempDir } from './fake-repo.js';
+import { tempDir as shortTempDir } from './fake-repo.js';
+
+/** Real path, since that is what `via.dir` reports and a Windows runner's temp dir is an 8.3 short name. */
+const tempDir = async (prefix: string) => realpath(await shortTempDir(prefix));
 
 const FIXTURE = join(dirname(fileURLToPath(import.meta.url)), 'fixtures', 'next-app');
 const NEXT = { config: 'eslint-config-next', configVersion: '16.3.6' };
@@ -22,8 +25,11 @@ async function write(dir: string, files: Record<string, string>): Promise<void> 
 }
 
 /** The fixture in a scratch directory, with package.json edited by `edit`. */
-async function copyFixture(edit: (manifest: Record<string, Record<string, string>>) => void = () => {}): Promise<string> {
-  const dir = await tempDir('e10m-shared-');
+async function copyFixture(
+  edit: (manifest: Record<string, Record<string, string>>) => void = () => {},
+  scratch = tempDir
+): Promise<string> {
+  const dir = await scratch('e10m-shared-');
   await cp(FIXTURE, dir, { recursive: true });
   const manifest = JSON.parse(await readFile(join(dir, 'package.json'), 'utf8'));
   edit(manifest);
@@ -105,6 +111,15 @@ describe('plugins that arrive through a shared config', () => {
     expect(resolved.plugins).toContain('eslint-plugin-react');
     expect(resolved.via['eslint-plugin-react']).toBeUndefined();
     expect(resolved.via['eslint-plugin-import']).toMatchObject(NEXT);
+  });
+
+  it('keeps it direct from a path the OS has not expanded, like a Windows RUNNER~1 temp dir', async () => {
+    const dir = await copyFixture((m) => {
+      m.devDependencies!['eslint-plugin-react'] = '^7.37.5';
+    }, shortTempDir);
+    const resolved = await resolveConfig(dir);
+    expect(resolved.via['eslint-plugin-react']).toBeUndefined();
+    expect(resolved.notes.join('\n')).not.toContain('is not the copy eslint.config loads');
   });
 
   it('measures the copy the config loads when package.json names an older one', async () => {

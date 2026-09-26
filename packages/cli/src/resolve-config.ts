@@ -308,7 +308,9 @@ async function viaSource({ root, from }: SharedSource, projectDir: string): Prom
 async function resolveFrom(specifier: string, fromDir: string): Promise<string> {
   const { createRequire } = await import('node:module');
   const require = createRequire(pathToFileURL(join(fromDir, 'package.json')));
-  return pathToFileURL(require.resolve(specifier)).href;
+  // Real path, as the config itself is imported: under an 8.3 short name the
+  // same file would otherwise load as a second module and fail the identity check.
+  return pathToFileURL(await realpath(require.resolve(specifier))).href;
 }
 
 interface SharedConfig {
