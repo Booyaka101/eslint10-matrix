@@ -20,5 +20,6 @@ coverage/
 # Local build notes, not for the public repo
 PROGRESS.md
 
-# The scan fixture repo ships a hand-built node_modules: it is the input under test.
+# These fixture repos ship a hand-built node_modules: it is the input under test.
 !test/fixtures/scan-repo/node_modules/
+!test/fixtures/next-app/node_modules/

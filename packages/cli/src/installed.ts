@@ -39,11 +39,16 @@ interface Manifest {
  * not run install yet.
  */
 export async function readInstalled(name: string, fromDir: string): Promise<InstalledPackage | null> {
-  const manifestPath = findUp(fromDir, join('node_modules', ...name.split('/'), 'package.json'));
+  const manifestPath = findInstalledManifest(name, fromDir);
   if (!manifestPath) return null;
   const doc = await readJsonFile<Manifest>(manifestPath);
   if (!doc?.version) return null;
   return describe(name, doc, 'node_modules', dirname(manifestPath));
+}
+
+/** The manifest Node would load for `name` from `fromDir`: nearest node_modules first. */
+export function findInstalledManifest(name: string, fromDir: string): string | null {
+  return findUp(fromDir, join('node_modules', ...name.split('/'), 'package.json'));
 }
 
 function describe(

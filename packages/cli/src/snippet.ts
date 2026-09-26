@@ -36,6 +36,11 @@ const RESERVED = new Set([
   'super', 'switch', 'this', 'throw', 'true', 'try', 'typeof', 'var', 'void', 'while', 'with', 'yield',
 ]);
 
+/** `.recommended`, or `['flat/recommended']` for a key that is not an identifier. */
+function propertyAccess(key: string): string {
+  return /^[A-Za-z_$][\w$]*$/.test(key) ? `.${key}` : `['${key}']`;
+}
+
 /** `jsx-a11y` -> jsxA11y, `@typescript-eslint` -> typescriptEslint, `import` -> pluginImport. */
 export function importBinding(namespace: string): string {
   const camel = namespace
@@ -48,6 +53,16 @@ export function importBinding(namespace: string): string {
   return `plugin${camel.charAt(0).toUpperCase()}${camel.slice(1)}`;
 }
 
+/** The rules-off block for rules that still crash wrapped, empty when there are none. */
+function rulesOff(rows: { name: string; rescue: RescueResult }[], eslintV10: string): string[] {
+  const off = rows.flatMap(({ name, rescue }) =>
+    (rescue.residualRules ?? []).map((r) => `      '${pluginNamespace(name)}/${r.rule}': 'off',`)
+  );
+  return off.length > 0
+    ? ['    rules: {', `      // still crash on ESLint ${eslintV10} even wrapped; keep them off`, ...off, '    },']
+    : [];
+}
+
 /**
  * The copy-pasteable eslint.config.js wiring for a RESCUABLE or PARTIAL-RESCUE
  * plugin, using whichever @eslint/compat function the matrix measured as the
@@ -57,17 +72,7 @@ export function rescueSnippet(row: Pick<PluginRow, 'name'>, rescue: RescueResult
   const namespace = pluginNamespace(row.name);
   const binding = importBinding(namespace);
   const fn = rescue.fixupFunction ?? 'fixupPluginRules';
-  const residual = rescue.residualRules ?? [];
-
-  const rulesOff =
-    residual.length > 0
-      ? [
-          '    rules: {',
-          `      // still crash on ESLint ${eslintV10} even wrapped; keep them off`,
-          ...residual.map((r) => `      '${namespace}/${r.rule}': 'off',`),
-          '    },',
-        ]
-      : [];
+  const residual = rulesOff([{ name: row.name, rescue }], eslintV10);
 
   if (fn === 'fixupConfigRules' && rescue.fixupConfigKey) {
     return [
@@ -77,7 +82,7 @@ export function rescueSnippet(row: Pick<PluginRow, 'name'>, rescue: RescueResult
       'export default [',
     '  // ...the rest of your config',
       `  ...fixupConfigRules(${binding}.configs['${rescue.fixupConfigKey}']),`,
-      ...(rulesOff.length > 0 ? ['  {', ...rulesOff, '  },'] : []),
+      ...(residual.length > 0 ? ['  {', ...residual, '  },'] : []),
       '];',
       '',
     ].join('\n');
@@ -91,8 +96,41 @@ export function rescueSnippet(row: Pick<PluginRow, 'name'>, rescue: RescueResult
     '  // ...the rest of your config',
     '  {',
     `    plugins: { ${objectKey(namespace)}: fixupPluginRules(${binding}) },`,
-    ...rulesOff,
+    ...residual,
     '  },',
+    '];',
+    '',
+  ].join('\n');
+}
+
+/**
+ * The wiring for plugins a shared config registers. Flat config refuses a
+ * second definition under the same key, so the wrap goes round the config, and
+ * one wrap rescues every plugin it brings.
+ */
+export function sharedConfigSnippet(
+  source: { config: string; spread?: 'call' | `configs.${string}` },
+  rows: { name: string; rescue: RescueResult }[],
+  eslintV10: string
+): string {
+  const binding = importBinding(source.config);
+  const residual = rulesOff(rows, eslintV10);
+  const [spread, hint] =
+    source.spread === 'call'
+      ? [`${binding}({ /* your options */ })`, 'keeping the options you pass it now']
+      : source.spread
+        ? [`${binding}.configs${propertyAccess(source.spread.slice('configs.'.length))}`, 'and each of its other configs you spread']
+        : [binding, 'whichever of its entry points you import'];
+  return [
+    `import { fixupConfigRules } from '@eslint/compat';`,
+    `import ${binding} from '${source.config}';`,
+    '',
+    'export default [',
+    `  // ${source.config} registers its plugins itself: wrap it where you spread it,`,
+    `  // ${hint}`,
+    `  ...fixupConfigRules(${spread}),`,
+    '  // ...the rest of your config',
+    ...(residual.length > 0 ? ['  {', ...residual, '  },'] : []),
     '];',
     '',
   ].join('\n');

@@ -1,5 +1,98 @@
 # Changelog
 
+## 1.5.0 - 2026-09-26
+
+A Next.js app lists eslint-config-next in package.json, not the plugins it registers. So 1.4.0
+looked at a stock Next app and printed this:
+
+```
+ESLint 10.10.0 readiness for examples\next-app (1 plugin)
+
+UNTESTED (1)
+  react  not in the matrix yet - request it at https://github.com/Booyaka101/eslint10-matrix/issues/new?title=Add%20react%20to%20the%20matrix
+
+UNKNOWN (5)
+  @next/next  used in eslint.config but not found in package.json dependencies
+  @typescript-eslint  used in eslint.config but not found in package.json dependencies
+  import  used in eslint.config but not found in package.json dependencies
+  jsx-a11y  used in eslint.config but not found in package.json dependencies
+  react-hooks  used in eslint.config but not found in package.json dependencies
+
+Nothing blocks the upgrade to ESLint 10.10.0.
+```
+
+Five plugins it could not name, the React library mistaken for a plugin, and a verdict that was
+wrong: on ESLint 10 that app's lint crashes in 37 `react/*` rules and 3 `import/*` rules. 1.5.0
+reads the same app as six plugins, zero unknown, two blocking and both rescuable:
+
+```
+  eslint-plugin-import@2.32.0 (via eslint-config-next@16.3.6)  3 rules crash on 10.10.0, all recover wrapped in fixupPluginRules()
+  eslint-plugin-react@7.37.5 (via eslint-config-next@16.3.6)  37 rules crash on 10.10.0, all recover wrapped in fixupPluginRules()
+  ...
+2 of 6 plugins block the upgrade to ESLint 10.10.0 (2 of them rescuable with @eslint/compat).
+```
+
+- **Plugins that come through a shared config are attributed and measured.** When a config key does
+  not match anything in package.json, `scan` and `check` look in the shared configs you depend on
+  (`eslint-config-*`, `@scope/eslint-config*`) and run the same identification over each one's own
+  dependencies, from where it is installed. The version is read from beside the config too, so
+  under pnpm it is the copy in the store and not whatever the root can see. A config that depends on
+  another config is followed one more level, which is how eslint-config-next's
+  `@typescript-eslint` plugin is found through `typescript-eslint`. A dependency not named like a
+  config is searched too, since neostandard and angular-eslint register plugins without the name,
+  but it only gets a plugin it can be shown to have registered: the object in your config is the one
+  it installed, or the plugin names itself in `meta.name`. The report labels each one
+  `(via eslint-config-next@16.3.6)`, one plugin per line in a bucket that has any, and `--json`
+  carries `via: { config, configVersion }`.
+- **`typescript-eslint` counts as a shared config.** It depends on
+  `@typescript-eslint/eslint-plugin` and registers it, so a repo on the `typescript-eslint` package
+  used to get `@typescript-eslint` in UNKNOWN. 1.4.0 says exactly that about this repo.
+- **The rescue snippet wraps the config, not the plugin.** eslint-config-next registers `react`
+  itself, and adding `plugins: { react: fixupPluginRules(react) }` beside it stops ESLint 10 with
+  `Cannot redefine plugin "react"`. The snippet is `...fixupConfigRules(eslintConfigNext)` instead.
+  A config that exports a factory gets `...fixupConfigRules(neostandard({ /* your options */ }))`,
+  and one that exports an object of configs, like typescript-eslint or angular-eslint, gets one of
+  those configs wrapped, since the object itself is not a config. Plugins from the same config share
+  one wrap across RESCUABLE and PARTIAL-RESCUE, carrying every rule that still has to stay off.
+- **A parser a shared config brings is named.** eslint-config-next parses every JS and TS file with
+  a Babel parser Next bundles, and on ESLint 10.10.0 it crashes `.js`, `.jsx` and `.mjs` files with
+  `scopeManager.addGlobals is not a function` whatever you do to the plugins. The tool measures
+  plugins, not parsers, so it cannot give that a verdict, but it now says in a note that the parser
+  is there. When no plugin blocks, the last line reads `No plugin blocks the upgrade to ESLint
+  10.10.0, but the eslint-config-next/parser parser is not measured.` instead of `Nothing blocks`.
+  The README has the config that got the example app through ESLint 10 by hand.
+- `scan` reads `@typescript-eslint/parser` from beside the typescript-eslint plugin when that came
+  through a config. It used to resolve from the project root, which under pnpm does not have it,
+  and in a project nested inside another install picked up the outer one's copy.
+- A config key is no longer matched to a dependency of the same bare name unless that name is a
+  plugin package. `react` is the key eslint-plugin-react registers under and also a dependency of
+  every React app, which is how 1.4.0 came to list the React library as an untested plugin. This
+  one reaches repos without a shared config too: a local plugin object registered under `react`
+  used to show as the `react` package in UNTESTED and now shows as the key in UNKNOWN.
+- Edges, each with a test: a plugin you depend on directly stays direct, unless a config nests its
+  own copy and that copy is the object your config loads, in which case the config's copy is
+  measured and a note says package.json names a different version; when two configs bring the same
+  plugin, the copy your config loads is measured, falling back to the first in package.json when
+  nothing tells them apart, and the report says which; a config listed but not installed leaves its
+  plugins in UNKNOWN with `may arrive through eslint-config-next, which is not installed where
+  eslint10-matrix looked; run install and try again`; a plugin a config lists only as a peer is not
+  looked for inside it; Yarn PnP stays as it was; `--plugins` is unchanged.
+- A parser whose `meta.name` is empty or starts with `/` no longer crashes the config read.
+- neostandard is the other shape this was checked against. On `neostandard({ ts: true })` 1.4.0
+  printed five UNKNOWN keys and `Nothing blocks the upgrade to ESLint 10.11.0.`, and ESLint 10.11.0
+  on that repo stops with `sourceCode.isSpaceBetweenTokens is not a function` from the
+  @stylistic/eslint-plugin 2.11.0 that neostandard 0.13.0 pins. `scan` now measures that copy,
+  finds 6 `@stylistic/*` rules and 2 `react/*` rules crashing, and prints one
+  `fixupConfigRules(neostandard(...))` wrap for both, which lints the repo clean on 10.11.0. `check`
+  reads the board's @stylistic 5.10.0 instead, calls it clean, and lists the version gap under
+  MEASURED DIFFERENTLY, which is what that section is for.
+- `examples/next-app` is a small Next.js 16 app on eslint-config-next 16.3.6, and
+  `test/fixtures/next-app` is a hand-built install of the same shape for the tests.
+
+Apart from the bare-key case above, repos without a shared config do not move. The `--json`
+output of `scan` and `check` on every existing fixture and on `examples/react-app` was recorded
+before the change and is byte-identical after it.
+
 ## 1.4.0 - 2026-09-18
 
 The board has always been able to say a plugin broke and never able to say what it was measured

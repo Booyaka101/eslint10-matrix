@@ -1,3 +1,4 @@
+import { join } from 'node:path';
 import { readLockfile, resolveInstalled } from './installed.js';
 import type { MeasuredEnv } from './matrix.js';
 import { versionDeltas, type VersionDelta } from './version-delta.js';
@@ -11,6 +12,8 @@ export interface MeasuredDrift {
 export interface DriftInput {
   name: string;
   measuredWith: MeasuredEnv | undefined;
+  /** Where this row's versions resolve from, when a shared config installed the plugin. */
+  fromDir?: string;
 }
 
 /**
@@ -47,18 +50,21 @@ export async function measuredDrift(rows: readonly DriftInput[], projectDir: str
   if (wanted.length === 0) return [];
   const lockfile = await readLockfile(projectDir);
   // Plugins name overlapping peers: five rows can each list the same parser, and
-  // this repo's answer for it is the same every time.
+  // this repo's answer for it is the same every time it is asked from one place.
   const seen = new Map<string, Promise<string | null>>();
-  const installed: Resolver = (name) => {
-    const known = seen.get(name);
-    if (known) return known;
-    const lookup = resolveInstalled(name, projectDir, lockfile).then((found) => found?.version ?? null);
-    seen.set(name, lookup);
-    return lookup;
-  };
+  const installedFrom =
+    (fromDir: string): Resolver =>
+    (name) => {
+      const key = join(fromDir, name);
+      const known = seen.get(key);
+      if (known) return known;
+      const lookup = resolveInstalled(name, fromDir, lockfile).then((found) => found?.version ?? null);
+      seen.set(key, lookup);
+      return lookup;
+    };
   const found: MeasuredDrift[] = [];
   for (const row of wanted) {
-    const deltas = await driftForRow(row.measuredWith!, installed);
+    const deltas = await driftForRow(row.measuredWith!, installedFrom(row.fromDir ?? projectDir));
     if (deltas.length > 0) found.push({ plugin: row.name, deltas });
   }
   return found;

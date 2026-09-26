@@ -7,7 +7,7 @@ import { displayPath } from './display-path.js';
 import { measuredDrift } from './env-drift.js';
 import { DEFAULT_MATRIX_URL, loadMatrix, MatrixError, rowFor, type Matrix } from './matrix.js';
 import { buildReport, renderReport, type Report } from './report.js';
-import { ConfigError, resolveConfig } from './resolve-config.js';
+import { ConfigError, resolveConfig, type ResolvedConfig } from './resolve-config.js';
 import { scan, ScanError } from './scan.js';
 import { TESTED_ESLINT } from './versions.js';
 
@@ -284,10 +284,13 @@ async function commandScan(opts: Options): Promise<number> {
   const report = buildReport(result.matrix, {
     plugins: result.plugins,
     unknown: result.unknown,
+    unknownReasons: result.unknownReasons,
+    via: result.via,
     projectDir: result.projectDir,
     configPath: result.configPath,
     measured: { files: result.files, baseline: result.baseline },
     notes: result.notes,
+    parsers: result.parsers,
   });
 
   // json is one document, so the board has to be in hand before anything is
@@ -339,23 +342,20 @@ async function commandDiff(opts: Options): Promise<number> {
 }
 
 async function commandCheck(opts: Options): Promise<number> {
-  let plugins: string[];
-  let unknown: string[];
-  let configPath: string;
-  let projectDir: string;
-
-  if (opts.plugins.length > 0) {
-    plugins = [...new Set(opts.plugins)].sort();
-    unknown = [];
-    configPath = '(--plugins)';
-    projectDir = opts.dir;
-  } else {
-    const resolved = await resolveConfig(opts.dir);
-    plugins = resolved.plugins;
-    unknown = resolved.unknown;
-    configPath = resolved.configPath;
-    projectDir = resolved.projectDir;
-  }
+  const resolved: Pick<ResolvedConfig, 'plugins' | 'unknown' | 'unknownReasons' | 'via' | 'notes' | 'parsers' | 'configPath' | 'projectDir'> =
+    opts.plugins.length > 0
+      ? {
+          plugins: [...new Set(opts.plugins)].sort(),
+          unknown: [],
+          unknownReasons: {},
+          via: {},
+          notes: [],
+          parsers: [],
+          configPath: '(--plugins)',
+          projectDir: opts.dir,
+        }
+      : await resolveConfig(opts.dir);
+  const { plugins, unknown, unknownReasons, via, notes, parsers, configPath, projectDir } = resolved;
 
   const load = await loadMatrix({ url: opts.matrix, noCache: opts.noCache, timeoutMs: opts.timeoutMs });
   // The ESLint 10 run is the one the report is about, so it is the environment
@@ -367,11 +367,25 @@ async function commandCheck(opts: Options): Promise<number> {
   const drift = await measuredDrift(
     plugins.map((name) => {
       const row = rowFor(load.matrix, name);
-      return { name, measuredWith: row?.results[v10]?.measuredWith ?? row?.results[v9]?.measuredWith };
+      return {
+        name,
+        measuredWith: row?.results[v10]?.measuredWith ?? row?.results[v9]?.measuredWith,
+        fromDir: via[name]?.dir,
+      };
     }),
     projectDir
   );
-  const report = buildReport(load.matrix, { plugins, unknown, projectDir, configPath, measuredDrift: drift });
+  const report = buildReport(load.matrix, {
+    plugins,
+    unknown,
+    unknownReasons,
+    via,
+    projectDir,
+    configPath,
+    measuredDrift: drift,
+    notes,
+    parsers,
+  });
 
   if (opts.json) {
     console.log(jsonReport(report, load.source, load.staleReason));
