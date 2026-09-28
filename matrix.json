@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-09-27T03:33:34.462Z",
+  "generatedAt": "2026-09-28T03:38:06.826Z",
   "eslintVersions": {
     "v9": "9.39.5",
     "v10": "10.11.0"
@@ -944,33 +944,33 @@
     },
     {
       "name": "eslint-plugin-security",
-      "version": "4.0.1",
+      "version": "4.1.0",
       "declaredPeerRange": null,
       "weeklyDownloads": 3455629,
       "results": {
         "9.39.5": {
           "status": "clean",
           "crashingRules": [],
-          "totalRules": 14,
+          "totalRules": 15,
           "measuredWith": {
             "node": "22.23.2",
             "npm": "10.9.8",
             "deps": {
               "eslint": "9.39.5",
-              "eslint-plugin-security": "4.0.1"
+              "eslint-plugin-security": "4.1.0"
             }
           }
         },
         "10.11.0": {
           "status": "clean",
           "crashingRules": [],
-          "totalRules": 14,
+          "totalRules": 15,
           "measuredWith": {
             "node": "22.23.2",
             "npm": "10.9.8",
             "deps": {
               "eslint": "10.11.0",
-              "eslint-plugin-security": "4.0.1"
+              "eslint-plugin-security": "4.1.0"
             }
           }
         }
@@ -1441,7 +1441,7 @@
     },
     {
       "name": "eslint-plugin-turbo",
-      "version": "2.11.4",
+      "version": "2.11.5",
       "declaredPeerRange": ">6.6.0",
       "weeklyDownloads": 2206157,
       "results": {
@@ -1454,7 +1454,7 @@
             "npm": "10.9.8",
             "deps": {
               "eslint": "9.39.5",
-              "eslint-plugin-turbo": "2.11.4"
+              "eslint-plugin-turbo": "2.11.5"
             }
           }
         },
@@ -1467,7 +1467,7 @@
             "npm": "10.9.8",
             "deps": {
               "eslint": "10.11.0",
-              "eslint-plugin-turbo": "2.11.4"
+              "eslint-plugin-turbo": "2.11.5"
             }
           }
         }
@@ -1611,7 +1611,7 @@
     },
     {
       "name": "@eslint-react/eslint-plugin",
-      "version": "5.20.8",
+      "version": "5.21.0",
       "declaredPeerRange": "*",
       "weeklyDownloads": 1502554,
       "results": {
@@ -1626,7 +1626,7 @@
             "npm": "10.9.8",
             "deps": {
               "eslint": "9.39.5",
-              "@eslint-react/eslint-plugin": "5.20.8",
+              "@eslint-react/eslint-plugin": "5.21.0",
               "@typescript-eslint/parser": "8.70.1",
               "typescript": "6.0.3",
               "@typescript-eslint/utils": "8.70.1"
@@ -1644,7 +1644,7 @@
             "npm": "10.9.8",
             "deps": {
               "eslint": "10.11.0",
-              "@eslint-react/eslint-plugin": "5.20.8",
+              "@eslint-react/eslint-plugin": "5.21.0",
               "@typescript-eslint/parser": "8.70.1",
               "typescript": "6.0.3",
               "@typescript-eslint/utils": "8.70.1"
