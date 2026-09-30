@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-09-29T03:34:25.357Z",
+  "generatedAt": "2026-09-30T03:35:04.410Z",
   "eslintVersions": {
     "v9": "9.39.5",
     "v10": "10.11.0"
@@ -444,7 +444,7 @@
     },
     {
       "name": "@next/eslint-plugin-next",
-      "version": "16.3.6",
+      "version": "16.3.7",
       "declaredPeerRange": null,
       "weeklyDownloads": 29073121,
       "results": {
@@ -457,7 +457,7 @@
             "npm": "10.9.8",
             "deps": {
               "eslint": "9.39.5",
-              "@next/eslint-plugin-next": "16.3.6"
+              "@next/eslint-plugin-next": "16.3.7"
             }
           }
         },
@@ -470,7 +470,7 @@
             "npm": "10.9.8",
             "deps": {
               "eslint": "10.11.0",
-              "@next/eslint-plugin-next": "16.3.6"
+              "@next/eslint-plugin-next": "16.3.7"
             }
           }
         }
@@ -514,7 +514,7 @@
     },
     {
       "name": "eslint-plugin-storybook",
-      "version": "10.6.0",
+      "version": "10.6.1",
       "declaredPeerRange": ">=8",
       "weeklyDownloads": 7567976,
       "results": {
@@ -529,7 +529,7 @@
             "npm": "10.9.8",
             "deps": {
               "eslint": "9.39.5",
-              "eslint-plugin-storybook": "10.6.0",
+              "eslint-plugin-storybook": "10.6.1",
               "@typescript-eslint/parser": "8.71.0",
               "typescript": "6.0.3",
               "@typescript-eslint/utils": "8.71.0"
@@ -547,7 +547,7 @@
             "npm": "10.9.8",
             "deps": {
               "eslint": "10.11.0",
-              "eslint-plugin-storybook": "10.6.0",
+              "eslint-plugin-storybook": "10.6.1",
               "@typescript-eslint/parser": "8.71.0",
               "typescript": "6.0.3",
               "@typescript-eslint/utils": "8.71.0"
@@ -1611,7 +1611,7 @@
     },
     {
       "name": "@eslint-react/eslint-plugin",
-      "version": "5.22.1",
+      "version": "5.23.1",
       "declaredPeerRange": "*",
       "weeklyDownloads": 1502554,
       "results": {
@@ -1626,7 +1626,7 @@
             "npm": "10.9.8",
             "deps": {
               "eslint": "9.39.5",
-              "@eslint-react/eslint-plugin": "5.22.1",
+              "@eslint-react/eslint-plugin": "5.23.1",
               "@typescript-eslint/parser": "8.71.0",
               "typescript": "6.0.3",
               "@typescript-eslint/utils": "8.71.0"
@@ -1644,7 +1644,7 @@
             "npm": "10.9.8",
             "deps": {
               "eslint": "10.11.0",
-              "@eslint-react/eslint-plugin": "5.22.1",
+              "@eslint-react/eslint-plugin": "5.23.1",
               "@typescript-eslint/parser": "8.71.0",
               "typescript": "6.0.3",
               "@typescript-eslint/utils": "8.71.0"
