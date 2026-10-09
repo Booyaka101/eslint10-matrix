@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-10-08T03:37:04.287Z",
+  "generatedAt": "2026-10-09T03:38:24.294Z",
   "eslintVersions": {
     "v9": "9.39.5",
     "v10": "10.12.0"
@@ -808,7 +808,7 @@
     },
     {
       "name": "eslint-plugin-jsdoc",
-      "version": "65.2.0",
+      "version": "65.2.1",
       "declaredPeerRange": "^7.0.0 || ^8.0.0 || ^9.0.0 || ^10.0.0",
       "weeklyDownloads": 5288500,
       "results": {
@@ -821,7 +821,7 @@
             "npm": "10.9.9",
             "deps": {
               "eslint": "9.39.5",
-              "eslint-plugin-jsdoc": "65.2.0"
+              "eslint-plugin-jsdoc": "65.2.1"
             }
           }
         },
@@ -834,7 +834,7 @@
             "npm": "10.9.9",
             "deps": {
               "eslint": "10.12.0",
-              "eslint-plugin-jsdoc": "65.2.0"
+              "eslint-plugin-jsdoc": "65.2.1"
             }
           }
         }
@@ -1611,7 +1611,7 @@
     },
     {
       "name": "@eslint-react/eslint-plugin",
-      "version": "5.24.8",
+      "version": "5.24.10",
       "declaredPeerRange": "*",
       "weeklyDownloads": 1502554,
       "results": {
@@ -1626,7 +1626,7 @@
             "npm": "10.9.9",
             "deps": {
               "eslint": "9.39.5",
-              "@eslint-react/eslint-plugin": "5.24.8",
+              "@eslint-react/eslint-plugin": "5.24.10",
               "@typescript-eslint/parser": "8.71.1",
               "typescript": "6.0.3",
               "@typescript-eslint/utils": "8.71.1"
@@ -1644,7 +1644,7 @@
             "npm": "10.9.9",
             "deps": {
               "eslint": "10.12.0",
-              "@eslint-react/eslint-plugin": "5.24.8",
+              "@eslint-react/eslint-plugin": "5.24.10",
               "@typescript-eslint/parser": "8.71.1",
               "typescript": "6.0.3",
               "@typescript-eslint/utils": "8.71.1"
@@ -1817,7 +1817,7 @@
             "deps": {
               "eslint": "9.39.5",
               "eslint-plugin-svelte": "3.23.0",
-              "svelte-eslint-parser": "1.8.1",
+              "svelte-eslint-parser": "1.9.0",
               "svelte": "5.57.2"
             }
           }
@@ -1836,7 +1836,7 @@
             "deps": {
               "eslint": "10.12.0",
               "eslint-plugin-svelte": "3.23.0",
-              "svelte-eslint-parser": "1.8.1",
+              "svelte-eslint-parser": "1.9.0",
               "svelte": "5.57.2"
             }
           }
@@ -1981,7 +1981,7 @@
     },
     {
       "name": "eslint-plugin-yml",
-      "version": "3.8.1",
+      "version": "3.9.0",
       "declaredPeerRange": ">=9.38.0",
       "weeklyDownloads": 1016794,
       "results": {
@@ -1994,7 +1994,7 @@
             "npm": "10.9.9",
             "deps": {
               "eslint": "9.39.5",
-              "eslint-plugin-yml": "3.8.1"
+              "eslint-plugin-yml": "3.9.0"
             }
           }
         },
@@ -2007,7 +2007,7 @@
             "npm": "10.9.9",
             "deps": {
               "eslint": "10.12.0",
-              "eslint-plugin-yml": "3.8.1"
+              "eslint-plugin-yml": "3.9.0"
             }
           }
         }
