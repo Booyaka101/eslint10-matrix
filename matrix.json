@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-10-12T03:45:44.871Z",
+  "generatedAt": "2026-10-13T03:40:41.162Z",
   "eslintVersions": {
     "v9": "9.39.5",
     "v10": "10.12.0"
@@ -8,7 +8,7 @@
   "plugins": [
     {
       "name": "@typescript-eslint/eslint-plugin",
-      "version": "8.71.1",
+      "version": "8.71.2",
       "declaredPeerRange": "^8.57.0 || ^9.0.0 || ^10.0.0",
       "weeklyDownloads": 114433858,
       "results": {
@@ -23,10 +23,10 @@
             "npm": "10.9.9",
             "deps": {
               "eslint": "9.39.5",
-              "@typescript-eslint/eslint-plugin": "8.71.1",
-              "@typescript-eslint/parser": "8.71.1",
+              "@typescript-eslint/eslint-plugin": "8.71.2",
+              "@typescript-eslint/parser": "8.71.2",
               "typescript": "6.0.3",
-              "@typescript-eslint/utils": "8.71.1"
+              "@typescript-eslint/utils": "8.71.2"
             }
           }
         },
@@ -41,10 +41,10 @@
             "npm": "10.9.9",
             "deps": {
               "eslint": "10.12.0",
-              "@typescript-eslint/eslint-plugin": "8.71.1",
-              "@typescript-eslint/parser": "8.71.1",
+              "@typescript-eslint/eslint-plugin": "8.71.2",
+              "@typescript-eslint/parser": "8.71.2",
               "typescript": "6.0.3",
-              "@typescript-eslint/utils": "8.71.1"
+              "@typescript-eslint/utils": "8.71.2"
             }
           }
         }
@@ -478,7 +478,7 @@
     },
     {
       "name": "eslint-plugin-jest",
-      "version": "29.16.11",
+      "version": "29.17.0",
       "declaredPeerRange": "^8.57.0 || ^9.0.0 || ^10.0.0",
       "weeklyDownloads": 12463399,
       "results": {
@@ -491,7 +491,7 @@
             "npm": "10.9.9",
             "deps": {
               "eslint": "9.39.5",
-              "eslint-plugin-jest": "29.16.11",
+              "eslint-plugin-jest": "29.17.0",
               "jest": "30.5.2"
             }
           }
@@ -505,7 +505,7 @@
             "npm": "10.9.9",
             "deps": {
               "eslint": "10.12.0",
-              "eslint-plugin-jest": "29.16.11",
+              "eslint-plugin-jest": "29.17.0",
               "jest": "30.5.2"
             }
           }
@@ -514,7 +514,7 @@
     },
     {
       "name": "eslint-plugin-storybook",
-      "version": "10.6.1",
+      "version": "10.6.2",
       "declaredPeerRange": ">=8",
       "weeklyDownloads": 7567976,
       "results": {
@@ -529,10 +529,10 @@
             "npm": "10.9.9",
             "deps": {
               "eslint": "9.39.5",
-              "eslint-plugin-storybook": "10.6.1",
-              "@typescript-eslint/parser": "8.71.1",
+              "eslint-plugin-storybook": "10.6.2",
+              "@typescript-eslint/parser": "8.71.2",
               "typescript": "6.0.3",
-              "@typescript-eslint/utils": "8.71.1"
+              "@typescript-eslint/utils": "8.71.2"
             }
           }
         },
@@ -547,10 +547,10 @@
             "npm": "10.9.9",
             "deps": {
               "eslint": "10.12.0",
-              "eslint-plugin-storybook": "10.6.1",
-              "@typescript-eslint/parser": "8.71.1",
+              "eslint-plugin-storybook": "10.6.2",
+              "@typescript-eslint/parser": "8.71.2",
               "typescript": "6.0.3",
-              "@typescript-eslint/utils": "8.71.1"
+              "@typescript-eslint/utils": "8.71.2"
             }
           }
         }
@@ -626,33 +626,33 @@
     },
     {
       "name": "eslint-plugin-unicorn",
-      "version": "77.0.0",
+      "version": "78.0.0",
       "declaredPeerRange": ">=10.4",
       "weeklyDownloads": 5908364,
       "results": {
         "9.39.5": {
           "status": "clean",
           "crashingRules": [],
-          "totalRules": 367,
+          "totalRules": 369,
           "measuredWith": {
             "node": "22.23.3",
             "npm": "10.9.9",
             "deps": {
               "eslint": "9.39.5",
-              "eslint-plugin-unicorn": "77.0.0"
+              "eslint-plugin-unicorn": "78.0.0"
             }
           }
         },
         "10.12.0": {
           "status": "clean",
           "crashingRules": [],
-          "totalRules": 367,
+          "totalRules": 369,
           "measuredWith": {
             "node": "22.23.3",
             "npm": "10.9.9",
             "deps": {
               "eslint": "10.12.0",
-              "eslint-plugin-unicorn": "77.0.0"
+              "eslint-plugin-unicorn": "78.0.0"
             }
           }
         }
@@ -660,33 +660,33 @@
     },
     {
       "name": "eslint-plugin-es-x",
-      "version": "10.0.1",
+      "version": "10.1.0",
       "declaredPeerRange": ">=10.6.0",
       "weeklyDownloads": 5645290,
       "results": {
         "9.39.5": {
           "status": "clean",
           "crashingRules": [],
-          "totalRules": 369,
+          "totalRules": 373,
           "measuredWith": {
             "node": "22.23.3",
             "npm": "10.9.9",
             "deps": {
               "eslint": "9.39.5",
-              "eslint-plugin-es-x": "10.0.1"
+              "eslint-plugin-es-x": "10.1.0"
             }
           }
         },
         "10.12.0": {
           "status": "clean",
           "crashingRules": [],
-          "totalRules": 369,
+          "totalRules": 373,
           "measuredWith": {
             "node": "22.23.3",
             "npm": "10.9.9",
             "deps": {
               "eslint": "10.12.0",
-              "eslint-plugin-es-x": "10.0.1"
+              "eslint-plugin-es-x": "10.1.0"
             }
           }
         }
@@ -808,7 +808,7 @@
     },
     {
       "name": "eslint-plugin-jsdoc",
-      "version": "65.3.0",
+      "version": "65.3.1",
       "declaredPeerRange": "^7.0.0 || ^8.0.0 || ^9.0.0 || ^10.0.0",
       "weeklyDownloads": 5288500,
       "results": {
@@ -821,7 +821,7 @@
             "npm": "10.9.9",
             "deps": {
               "eslint": "9.39.5",
-              "eslint-plugin-jsdoc": "65.3.0"
+              "eslint-plugin-jsdoc": "65.3.1"
             }
           }
         },
@@ -834,7 +834,7 @@
             "npm": "10.9.9",
             "deps": {
               "eslint": "10.12.0",
-              "eslint-plugin-jsdoc": "65.3.0"
+              "eslint-plugin-jsdoc": "65.3.1"
             }
           }
         }
@@ -1345,9 +1345,9 @@
             "deps": {
               "eslint": "9.39.5",
               "@angular-eslint/eslint-plugin": "22.6.0",
-              "@typescript-eslint/parser": "8.71.1",
+              "@typescript-eslint/parser": "8.71.2",
               "typescript": "6.0.3",
-              "@typescript-eslint/utils": "8.71.1"
+              "@typescript-eslint/utils": "8.71.2"
             }
           }
         },
@@ -1363,9 +1363,9 @@
             "deps": {
               "eslint": "10.12.0",
               "@angular-eslint/eslint-plugin": "22.6.0",
-              "@typescript-eslint/parser": "8.71.1",
+              "@typescript-eslint/parser": "8.71.2",
               "typescript": "6.0.3",
-              "@typescript-eslint/utils": "8.71.1"
+              "@typescript-eslint/utils": "8.71.2"
             }
           }
         }
@@ -1611,7 +1611,7 @@
     },
     {
       "name": "@eslint-react/eslint-plugin",
-      "version": "5.26.1",
+      "version": "5.26.4",
       "declaredPeerRange": "*",
       "weeklyDownloads": 1502554,
       "results": {
@@ -1626,10 +1626,10 @@
             "npm": "10.9.9",
             "deps": {
               "eslint": "9.39.5",
-              "@eslint-react/eslint-plugin": "5.26.1",
-              "@typescript-eslint/parser": "8.71.1",
+              "@eslint-react/eslint-plugin": "5.26.4",
+              "@typescript-eslint/parser": "8.71.2",
               "typescript": "6.0.3",
-              "@typescript-eslint/utils": "8.71.1"
+              "@typescript-eslint/utils": "8.71.2"
             }
           }
         },
@@ -1644,10 +1644,10 @@
             "npm": "10.9.9",
             "deps": {
               "eslint": "10.12.0",
-              "@eslint-react/eslint-plugin": "5.26.1",
-              "@typescript-eslint/parser": "8.71.1",
+              "@eslint-react/eslint-plugin": "5.26.4",
+              "@typescript-eslint/parser": "8.71.2",
               "typescript": "6.0.3",
-              "@typescript-eslint/utils": "8.71.1"
+              "@typescript-eslint/utils": "8.71.2"
             }
           }
         }
@@ -2121,9 +2121,9 @@
             "deps": {
               "eslint": "9.39.5",
               "eslint-plugin-deprecation": "3.0.0",
-              "@typescript-eslint/parser": "8.71.1",
+              "@typescript-eslint/parser": "8.71.2",
               "typescript": "6.0.3",
-              "@typescript-eslint/utils": "8.71.1"
+              "@typescript-eslint/utils": "8.71.2"
             }
           }
         },
@@ -2139,9 +2139,9 @@
             "deps": {
               "eslint": "10.12.0",
               "eslint-plugin-deprecation": "3.0.0",
-              "@typescript-eslint/parser": "8.71.1",
+              "@typescript-eslint/parser": "8.71.2",
               "typescript": "6.0.3",
-              "@typescript-eslint/utils": "8.71.1"
+              "@typescript-eslint/utils": "8.71.2"
             }
           }
         }
