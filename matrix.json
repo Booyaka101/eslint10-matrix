@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-10-14T03:31:53.530Z",
+  "generatedAt": "2026-10-15T03:31:46.860Z",
   "eslintVersions": {
     "v9": "9.39.5",
     "v10": "10.12.0"
@@ -100,7 +100,7 @@
             "deps": {
               "eslint": "9.39.5",
               "eslint-plugin-react": "7.37.5",
-              "react": "19.3.0"
+              "react": "19.3.1"
             }
           }
         },
@@ -267,7 +267,7 @@
             "deps": {
               "eslint": "10.12.0",
               "eslint-plugin-react": "7.37.5",
-              "react": "19.3.0"
+              "react": "19.3.1"
             }
           }
         }
@@ -444,7 +444,7 @@
     },
     {
       "name": "@next/eslint-plugin-next",
-      "version": "16.4.0",
+      "version": "16.4.1",
       "declaredPeerRange": null,
       "weeklyDownloads": 29073121,
       "results": {
@@ -457,7 +457,7 @@
             "npm": "10.9.9",
             "deps": {
               "eslint": "9.39.5",
-              "@next/eslint-plugin-next": "16.4.0"
+              "@next/eslint-plugin-next": "16.4.1"
             }
           }
         },
@@ -470,7 +470,7 @@
             "npm": "10.9.9",
             "deps": {
               "eslint": "10.12.0",
-              "@next/eslint-plugin-next": "16.4.0"
+              "@next/eslint-plugin-next": "16.4.1"
             }
           }
         }
@@ -808,7 +808,7 @@
     },
     {
       "name": "eslint-plugin-jsdoc",
-      "version": "65.3.2",
+      "version": "65.3.4",
       "declaredPeerRange": "^7.0.0 || ^8.0.0 || ^9.0.0 || ^10.0.0",
       "weeklyDownloads": 5288500,
       "results": {
@@ -821,7 +821,7 @@
             "npm": "10.9.9",
             "deps": {
               "eslint": "9.39.5",
-              "eslint-plugin-jsdoc": "65.3.2"
+              "eslint-plugin-jsdoc": "65.3.4"
             }
           }
         },
@@ -834,7 +834,7 @@
             "npm": "10.9.9",
             "deps": {
               "eslint": "10.12.0",
-              "eslint-plugin-jsdoc": "65.3.2"
+              "eslint-plugin-jsdoc": "65.3.4"
             }
           }
         }
@@ -1611,7 +1611,7 @@
     },
     {
       "name": "@eslint-react/eslint-plugin",
-      "version": "5.26.5",
+      "version": "5.27.1",
       "declaredPeerRange": "*",
       "weeklyDownloads": 1502554,
       "results": {
@@ -1626,7 +1626,7 @@
             "npm": "10.9.9",
             "deps": {
               "eslint": "9.39.5",
-              "@eslint-react/eslint-plugin": "5.26.5",
+              "@eslint-react/eslint-plugin": "5.27.1",
               "@typescript-eslint/parser": "8.71.2",
               "typescript": "6.0.3",
               "@typescript-eslint/utils": "8.71.2"
@@ -1644,7 +1644,7 @@
             "npm": "10.9.9",
             "deps": {
               "eslint": "10.12.0",
-              "@eslint-react/eslint-plugin": "5.26.5",
+              "@eslint-react/eslint-plugin": "5.27.1",
               "@typescript-eslint/parser": "8.71.2",
               "typescript": "6.0.3",
               "@typescript-eslint/utils": "8.71.2"
@@ -2258,7 +2258,7 @@
     },
     {
       "name": "@html-eslint/eslint-plugin",
-      "version": "0.66.1",
+      "version": "0.67.0",
       "declaredPeerRange": ">=8.0.0 || ^10.0.0-0",
       "weeklyDownloads": 251828,
       "results": {
@@ -2271,7 +2271,7 @@
             "npm": "10.9.9",
             "deps": {
               "eslint": "9.39.5",
-              "@html-eslint/eslint-plugin": "0.66.1"
+              "@html-eslint/eslint-plugin": "0.67.0"
             }
           }
         },
@@ -2284,7 +2284,7 @@
             "npm": "10.9.9",
             "deps": {
               "eslint": "10.12.0",
-              "@html-eslint/eslint-plugin": "0.66.1"
+              "@html-eslint/eslint-plugin": "0.67.0"
             }
           }
         }
@@ -2340,7 +2340,7 @@
             "deps": {
               "eslint": "9.39.5",
               "@ternaus/eslint-plugin-react": "9.0.0",
-              "react": "19.3.0"
+              "react": "19.3.1"
             }
           }
         },
@@ -2354,7 +2354,7 @@
             "deps": {
               "eslint": "10.12.0",
               "@ternaus/eslint-plugin-react": "9.0.0",
-              "react": "19.3.0"
+              "react": "19.3.1"
             }
           }
         }
