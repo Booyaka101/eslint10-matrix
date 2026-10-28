@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-10-27T03:34:01.539Z",
+  "generatedAt": "2026-10-28T03:25:11.976Z",
   "eslintVersions": {
     "v9": "9.39.5",
     "v10": "10.13.0"
@@ -95,7 +95,7 @@
           "crashingRules": [],
           "totalRules": 101,
           "measuredWith": {
-            "node": "22.23.3",
+            "node": "22.23.4",
             "npm": "10.9.9",
             "deps": {
               "eslint": "9.39.5",
@@ -262,7 +262,7 @@
           ],
           "totalRules": 101,
           "measuredWith": {
-            "node": "22.23.3",
+            "node": "22.23.4",
             "npm": "10.9.9",
             "deps": {
               "eslint": "10.13.0",
@@ -419,7 +419,7 @@
           "crashingRules": [],
           "totalRules": 1,
           "measuredWith": {
-            "node": "22.23.3",
+            "node": "22.23.4",
             "npm": "10.9.9",
             "deps": {
               "eslint": "9.39.5",
@@ -432,7 +432,7 @@
           "crashingRules": [],
           "totalRules": 1,
           "measuredWith": {
-            "node": "22.23.3",
+            "node": "22.23.4",
             "npm": "10.9.9",
             "deps": {
               "eslint": "10.13.0",
@@ -514,7 +514,7 @@
     },
     {
       "name": "eslint-plugin-storybook",
-      "version": "10.6.4",
+      "version": "10.6.5",
       "declaredPeerRange": ">=8",
       "weeklyDownloads": 7567976,
       "results": {
@@ -529,7 +529,7 @@
             "npm": "10.9.9",
             "deps": {
               "eslint": "9.39.5",
-              "eslint-plugin-storybook": "10.6.4",
+              "eslint-plugin-storybook": "10.6.5",
               "@typescript-eslint/parser": "8.72.1",
               "typescript": "6.0.3",
               "@typescript-eslint/utils": "8.72.1"
@@ -547,7 +547,7 @@
             "npm": "10.9.9",
             "deps": {
               "eslint": "10.13.0",
-              "eslint-plugin-storybook": "10.6.4",
+              "eslint-plugin-storybook": "10.6.5",
               "@typescript-eslint/parser": "8.72.1",
               "typescript": "6.0.3",
               "@typescript-eslint/utils": "8.72.1"
@@ -567,7 +567,7 @@
           "crashingRules": [],
           "totalRules": 29,
           "measuredWith": {
-            "node": "22.23.3",
+            "node": "22.23.4",
             "npm": "10.9.9",
             "deps": {
               "eslint": "9.39.5",
@@ -580,7 +580,7 @@
           "crashingRules": [],
           "totalRules": 29,
           "measuredWith": {
-            "node": "22.23.3",
+            "node": "22.23.4",
             "npm": "10.9.9",
             "deps": {
               "eslint": "10.13.0",
@@ -703,7 +703,7 @@
           "crashingRules": [],
           "totalRules": 17,
           "measuredWith": {
-            "node": "22.23.3",
+            "node": "22.23.4",
             "npm": "10.9.9",
             "deps": {
               "eslint": "9.39.5",
@@ -716,7 +716,7 @@
           "crashingRules": [],
           "totalRules": 17,
           "measuredWith": {
-            "node": "22.23.3",
+            "node": "22.23.4",
             "npm": "10.9.9",
             "deps": {
               "eslint": "10.13.0",
@@ -851,7 +851,7 @@
           "crashingRules": [],
           "totalRules": 47,
           "measuredWith": {
-            "node": "22.23.3",
+            "node": "22.23.4",
             "npm": "10.9.9",
             "deps": {
               "eslint": "9.39.5",
@@ -864,7 +864,7 @@
           "crashingRules": [],
           "totalRules": 47,
           "measuredWith": {
-            "node": "22.23.3",
+            "node": "22.23.4",
             "npm": "10.9.9",
             "deps": {
               "eslint": "10.13.0",
@@ -987,7 +987,7 @@
           "crashingRules": [],
           "totalRules": 295,
           "measuredWith": {
-            "node": "22.23.3",
+            "node": "22.23.4",
             "npm": "10.9.9",
             "deps": {
               "eslint": "9.39.5",
@@ -1000,7 +1000,7 @@
           "crashingRules": [],
           "totalRules": 295,
           "measuredWith": {
-            "node": "22.23.3",
+            "node": "22.23.4",
             "npm": "10.9.9",
             "deps": {
               "eslint": "10.13.0",
@@ -1262,7 +1262,7 @@
           "crashingRules": [],
           "totalRules": 9,
           "measuredWith": {
-            "node": "22.23.3",
+            "node": "22.23.4",
             "npm": "10.9.9",
             "deps": {
               "eslint": "9.39.5",
@@ -1308,7 +1308,7 @@
           ],
           "totalRules": 9,
           "measuredWith": {
-            "node": "22.23.3",
+            "node": "22.23.4",
             "npm": "10.9.9",
             "deps": {
               "eslint": "10.13.0",
@@ -1450,7 +1450,7 @@
           "crashingRules": [],
           "totalRules": 1,
           "measuredWith": {
-            "node": "22.23.3",
+            "node": "22.23.4",
             "npm": "10.9.9",
             "deps": {
               "eslint": "9.39.5",
@@ -1463,7 +1463,7 @@
           "crashingRules": [],
           "totalRules": 1,
           "measuredWith": {
-            "node": "22.23.3",
+            "node": "22.23.4",
             "npm": "10.9.9",
             "deps": {
               "eslint": "10.13.0",
@@ -1586,7 +1586,7 @@
           "crashingRules": [],
           "totalRules": 12,
           "measuredWith": {
-            "node": "22.23.3",
+            "node": "22.23.4",
             "npm": "10.9.9",
             "deps": {
               "eslint": "9.39.5",
@@ -1599,7 +1599,7 @@
           "crashingRules": [],
           "totalRules": 12,
           "measuredWith": {
-            "node": "22.23.3",
+            "node": "22.23.4",
             "npm": "10.9.9",
             "deps": {
               "eslint": "10.13.0",
@@ -1765,7 +1765,7 @@
     },
     {
       "name": "eslint-plugin-boundaries",
-      "version": "7.3.0",
+      "version": "7.4.0",
       "declaredPeerRange": ">=6.0.0",
       "weeklyDownloads": 1356459,
       "results": {
@@ -1774,11 +1774,11 @@
           "crashingRules": [],
           "totalRules": 10,
           "measuredWith": {
-            "node": "22.23.3",
+            "node": "22.23.4",
             "npm": "10.9.9",
             "deps": {
               "eslint": "9.39.5",
-              "eslint-plugin-boundaries": "7.3.0"
+              "eslint-plugin-boundaries": "7.4.0"
             }
           }
         },
@@ -1787,11 +1787,11 @@
           "crashingRules": [],
           "totalRules": 10,
           "measuredWith": {
-            "node": "22.23.3",
+            "node": "22.23.4",
             "npm": "10.9.9",
             "deps": {
               "eslint": "10.13.0",
-              "eslint-plugin-boundaries": "7.3.0"
+              "eslint-plugin-boundaries": "7.4.0"
             }
           }
         }
@@ -1922,7 +1922,7 @@
           "crashingRules": [],
           "totalRules": 1,
           "measuredWith": {
-            "node": "22.23.3",
+            "node": "22.23.4",
             "npm": "10.9.9",
             "deps": {
               "eslint": "9.39.5",
@@ -1935,7 +1935,7 @@
           "crashingRules": [],
           "totalRules": 1,
           "measuredWith": {
-            "node": "22.23.3",
+            "node": "22.23.4",
             "npm": "10.9.9",
             "deps": {
               "eslint": "10.13.0",
@@ -2072,7 +2072,7 @@
           "crashingRules": [],
           "totalRules": 44,
           "measuredWith": {
-            "node": "22.23.3",
+            "node": "22.23.4",
             "npm": "10.9.9",
             "deps": {
               "eslint": "9.39.5",
@@ -2086,7 +2086,7 @@
           "totalRules": 0,
           "detail": "Class extends value undefined is not a constructor or null",
           "measuredWith": {
-            "node": "22.23.3",
+            "node": "22.23.4",
             "npm": "10.9.9",
             "deps": {
               "eslint": "10.13.0",
@@ -2233,7 +2233,7 @@
           "crashingRules": [],
           "totalRules": 38,
           "measuredWith": {
-            "node": "22.23.3",
+            "node": "22.23.4",
             "npm": "10.9.9",
             "deps": {
               "eslint": "9.39.5",
@@ -2246,7 +2246,7 @@
           "crashingRules": [],
           "totalRules": 38,
           "measuredWith": {
-            "node": "22.23.3",
+            "node": "22.23.4",
             "npm": "10.9.9",
             "deps": {
               "eslint": "10.13.0",
