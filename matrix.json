@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-10-29T03:25:25.425Z",
+  "generatedAt": "2026-10-30T03:25:16.609Z",
   "eslintVersions": {
     "v9": "9.39.5",
     "v10": "10.13.0"
@@ -1543,7 +1543,7 @@
     },
     {
       "name": "eslint-plugin-regexp",
-      "version": "3.3.1",
+      "version": "3.3.2",
       "declaredPeerRange": ">=9.38.0",
       "weeklyDownloads": 1622145,
       "results": {
@@ -1556,7 +1556,7 @@
             "npm": "10.9.9",
             "deps": {
               "eslint": "9.39.5",
-              "eslint-plugin-regexp": "3.3.1"
+              "eslint-plugin-regexp": "3.3.2"
             }
           }
         },
@@ -1569,7 +1569,7 @@
             "npm": "10.9.9",
             "deps": {
               "eslint": "10.13.0",
-              "eslint-plugin-regexp": "3.3.1"
+              "eslint-plugin-regexp": "3.3.2"
             }
           }
         }
