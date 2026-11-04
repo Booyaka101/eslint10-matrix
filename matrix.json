@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-11-03T03:22:14.283Z",
+  "generatedAt": "2026-11-04T03:22:50.527Z",
   "eslintVersions": {
     "v9": "9.39.5",
     "v10": "10.14.0"
@@ -444,7 +444,7 @@
     },
     {
       "name": "@next/eslint-plugin-next",
-      "version": "16.4.4",
+      "version": "16.4.5",
       "declaredPeerRange": null,
       "weeklyDownloads": 29073121,
       "results": {
@@ -457,7 +457,7 @@
             "npm": "10.9.9",
             "deps": {
               "eslint": "9.39.5",
-              "@next/eslint-plugin-next": "16.4.4"
+              "@next/eslint-plugin-next": "16.4.5"
             }
           }
         },
@@ -470,7 +470,7 @@
             "npm": "10.9.9",
             "deps": {
               "eslint": "10.14.0",
-              "@next/eslint-plugin-next": "16.4.4"
+              "@next/eslint-plugin-next": "16.4.5"
             }
           }
         }
@@ -808,7 +808,7 @@
     },
     {
       "name": "eslint-plugin-jsdoc",
-      "version": "65.4.2",
+      "version": "65.4.3",
       "declaredPeerRange": "^7.0.0 || ^8.0.0 || ^9.0.0 || ^10.0.0",
       "weeklyDownloads": 5288500,
       "results": {
@@ -821,7 +821,7 @@
             "npm": "10.9.9",
             "deps": {
               "eslint": "9.39.5",
-              "eslint-plugin-jsdoc": "65.4.2"
+              "eslint-plugin-jsdoc": "65.4.3"
             }
           }
         },
@@ -834,7 +834,7 @@
             "npm": "10.9.9",
             "deps": {
               "eslint": "10.14.0",
-              "eslint-plugin-jsdoc": "65.4.2"
+              "eslint-plugin-jsdoc": "65.4.3"
             }
           }
         }
@@ -1799,7 +1799,7 @@
     },
     {
       "name": "eslint-plugin-svelte",
-      "version": "3.23.1",
+      "version": "3.24.0",
       "declaredPeerRange": "^8.57.1 || ^9.0.0 || ^10.0.0",
       "weeklyDownloads": 1293709,
       "results": {
@@ -1816,8 +1816,8 @@
             "npm": "10.9.9",
             "deps": {
               "eslint": "9.39.5",
-              "eslint-plugin-svelte": "3.23.1",
-              "svelte-eslint-parser": "1.10.0",
+              "eslint-plugin-svelte": "3.24.0",
+              "svelte-eslint-parser": "1.10.1",
               "svelte": "5.57.3"
             }
           }
@@ -1835,8 +1835,8 @@
             "npm": "10.9.9",
             "deps": {
               "eslint": "10.14.0",
-              "eslint-plugin-svelte": "3.23.1",
-              "svelte-eslint-parser": "1.10.0",
+              "eslint-plugin-svelte": "3.24.0",
+              "svelte-eslint-parser": "1.10.1",
               "svelte": "5.57.3"
             }
           }
