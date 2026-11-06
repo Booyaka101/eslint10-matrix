@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-11-05T03:23:18.799Z",
+  "generatedAt": "2026-11-06T03:22:32.758Z",
   "eslintVersions": {
     "v9": "9.39.5",
     "v10": "10.14.0"
@@ -514,7 +514,7 @@
     },
     {
       "name": "eslint-plugin-storybook",
-      "version": "10.6.5",
+      "version": "10.6.6",
       "declaredPeerRange": ">=8",
       "weeklyDownloads": 7567976,
       "results": {
@@ -529,7 +529,7 @@
             "npm": "10.9.9",
             "deps": {
               "eslint": "9.39.5",
-              "eslint-plugin-storybook": "10.6.5",
+              "eslint-plugin-storybook": "10.6.6",
               "@typescript-eslint/parser": "8.72.1",
               "typescript": "6.0.3",
               "@typescript-eslint/utils": "8.72.1"
@@ -547,7 +547,7 @@
             "npm": "10.9.9",
             "deps": {
               "eslint": "10.14.0",
-              "eslint-plugin-storybook": "10.6.5",
+              "eslint-plugin-storybook": "10.6.6",
               "@typescript-eslint/parser": "8.72.1",
               "typescript": "6.0.3",
               "@typescript-eslint/utils": "8.72.1"
@@ -747,7 +747,7 @@
               "eslint": "9.39.5",
               "eslint-plugin-vue": "10.12.0",
               "vue-eslint-parser": "10.4.1",
-              "vue": "3.5.44"
+              "vue": "3.5.45"
             }
           }
         },
@@ -766,7 +766,7 @@
               "eslint": "10.14.0",
               "eslint-plugin-vue": "10.12.0",
               "vue-eslint-parser": "10.4.1",
-              "vue": "3.5.44"
+              "vue": "3.5.45"
             }
           }
         }
@@ -808,7 +808,7 @@
     },
     {
       "name": "eslint-plugin-jsdoc",
-      "version": "65.4.3",
+      "version": "65.4.4",
       "declaredPeerRange": "^7.0.0 || ^8.0.0 || ^9.0.0 || ^10.0.0",
       "weeklyDownloads": 5288500,
       "results": {
@@ -821,7 +821,7 @@
             "npm": "10.9.9",
             "deps": {
               "eslint": "9.39.5",
-              "eslint-plugin-jsdoc": "65.4.3"
+              "eslint-plugin-jsdoc": "65.4.4"
             }
           }
         },
@@ -834,7 +834,7 @@
             "npm": "10.9.9",
             "deps": {
               "eslint": "10.14.0",
-              "eslint-plugin-jsdoc": "65.4.3"
+              "eslint-plugin-jsdoc": "65.4.4"
             }
           }
         }
@@ -1373,7 +1373,7 @@
     },
     {
       "name": "@tanstack/eslint-plugin-query",
-      "version": "5.106.0",
+      "version": "5.106.1",
       "declaredPeerRange": "^8.57.0 || ^9.0.0 || ^10.0.0",
       "weeklyDownloads": 2571766,
       "results": {
@@ -1386,7 +1386,7 @@
             "npm": "10.9.9",
             "deps": {
               "eslint": "9.39.5",
-              "@tanstack/eslint-plugin-query": "5.106.0"
+              "@tanstack/eslint-plugin-query": "5.106.1"
             }
           }
         },
@@ -1399,7 +1399,7 @@
             "npm": "10.9.9",
             "deps": {
               "eslint": "10.14.0",
-              "@tanstack/eslint-plugin-query": "5.106.0"
+              "@tanstack/eslint-plugin-query": "5.106.1"
             }
           }
         }
@@ -1765,7 +1765,7 @@
     },
     {
       "name": "eslint-plugin-boundaries",
-      "version": "7.4.1",
+      "version": "7.4.2",
       "declaredPeerRange": ">=6.0.0",
       "weeklyDownloads": 1356459,
       "results": {
@@ -1778,7 +1778,7 @@
             "npm": "10.9.9",
             "deps": {
               "eslint": "9.39.5",
-              "eslint-plugin-boundaries": "7.4.1"
+              "eslint-plugin-boundaries": "7.4.2"
             }
           }
         },
@@ -1791,7 +1791,7 @@
             "npm": "10.9.9",
             "deps": {
               "eslint": "10.14.0",
-              "eslint-plugin-boundaries": "7.4.1"
+              "eslint-plugin-boundaries": "7.4.2"
             }
           }
         }
