@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-11-06T03:22:32.758Z",
+  "generatedAt": "2026-11-07T03:21:29.979Z",
   "eslintVersions": {
     "v9": "9.39.5",
     "v10": "10.14.0"
@@ -746,7 +746,7 @@
             "deps": {
               "eslint": "9.39.5",
               "eslint-plugin-vue": "10.12.0",
-              "vue-eslint-parser": "10.4.1",
+              "vue-eslint-parser": "10.4.2",
               "vue": "3.5.45"
             }
           }
@@ -765,7 +765,7 @@
             "deps": {
               "eslint": "10.14.0",
               "eslint-plugin-vue": "10.12.0",
-              "vue-eslint-parser": "10.4.1",
+              "vue-eslint-parser": "10.4.2",
               "vue": "3.5.45"
             }
           }
@@ -808,7 +808,7 @@
     },
     {
       "name": "eslint-plugin-jsdoc",
-      "version": "65.4.4",
+      "version": "65.4.5",
       "declaredPeerRange": "^7.0.0 || ^8.0.0 || ^9.0.0 || ^10.0.0",
       "weeklyDownloads": 5288500,
       "results": {
@@ -821,7 +821,7 @@
             "npm": "10.9.9",
             "deps": {
               "eslint": "9.39.5",
-              "eslint-plugin-jsdoc": "65.4.4"
+              "eslint-plugin-jsdoc": "65.4.5"
             }
           }
         },
@@ -834,7 +834,7 @@
             "npm": "10.9.9",
             "deps": {
               "eslint": "10.14.0",
-              "eslint-plugin-jsdoc": "65.4.4"
+              "eslint-plugin-jsdoc": "65.4.5"
             }
           }
         }
@@ -842,33 +842,35 @@
     },
     {
       "name": "eslint-plugin-import-x",
-      "version": "4.17.1",
+      "version": "4.18.0",
       "declaredPeerRange": "^8.57.0 || ^9.0.0 || ^10.0.0",
       "weeklyDownloads": 5280102,
       "results": {
         "9.39.5": {
-          "status": "clean",
+          "status": "load-fail",
           "crashingRules": [],
-          "totalRules": 47,
+          "totalRules": 0,
+          "detail": "Cannot find package '@typescript-eslint/utils' imported from /tmp/e10m-p6o3oX/node_modules/eslint-plugin-import-x/lib/core/ast-module.js",
           "measuredWith": {
             "node": "22.23.4",
             "npm": "10.9.9",
             "deps": {
               "eslint": "9.39.5",
-              "eslint-plugin-import-x": "4.17.1"
+              "eslint-plugin-import-x": "4.18.0"
             }
           }
         },
         "10.14.0": {
-          "status": "clean",
+          "status": "load-fail",
           "crashingRules": [],
-          "totalRules": 47,
+          "totalRules": 0,
+          "detail": "Cannot find package '@typescript-eslint/utils' imported from /tmp/e10m-IKnLTy/node_modules/eslint-plugin-import-x/lib/core/ast-module.js",
           "measuredWith": {
             "node": "22.23.4",
             "npm": "10.9.9",
             "deps": {
               "eslint": "10.14.0",
-              "eslint-plugin-import-x": "4.17.1"
+              "eslint-plugin-import-x": "4.18.0"
             }
           }
         }
@@ -1373,7 +1375,7 @@
     },
     {
       "name": "@tanstack/eslint-plugin-query",
-      "version": "5.106.1",
+      "version": "5.107.1",
       "declaredPeerRange": "^8.57.0 || ^9.0.0 || ^10.0.0",
       "weeklyDownloads": 2571766,
       "results": {
@@ -1386,7 +1388,7 @@
             "npm": "10.9.9",
             "deps": {
               "eslint": "9.39.5",
-              "@tanstack/eslint-plugin-query": "5.106.1"
+              "@tanstack/eslint-plugin-query": "5.107.1"
             }
           }
         },
@@ -1399,7 +1401,7 @@
             "npm": "10.9.9",
             "deps": {
               "eslint": "10.14.0",
-              "@tanstack/eslint-plugin-query": "5.106.1"
+              "@tanstack/eslint-plugin-query": "5.107.1"
             }
           }
         }
