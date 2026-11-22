@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-11-21T03:22:24.413Z",
+  "generatedAt": "2026-11-22T03:23:11.618Z",
   "eslintVersions": {
     "v9": "9.39.5",
     "v10": "10.15.0"
@@ -61,7 +61,7 @@
           "crashingRules": [],
           "totalRules": 29,
           "measuredWith": {
-            "node": "22.23.4",
+            "node": "22.23.5",
             "npm": "10.9.9",
             "deps": {
               "eslint": "9.39.5",
@@ -74,7 +74,7 @@
           "crashingRules": [],
           "totalRules": 29,
           "measuredWith": {
-            "node": "22.23.4",
+            "node": "22.23.5",
             "npm": "10.9.9",
             "deps": {
               "eslint": "10.15.0",
@@ -383,7 +383,7 @@
           "crashingRules": [],
           "totalRules": 1,
           "measuredWith": {
-            "node": "22.23.4",
+            "node": "22.23.5",
             "npm": "10.9.9",
             "deps": {
               "eslint": "9.39.5",
@@ -397,7 +397,7 @@
           "crashingRules": [],
           "totalRules": 1,
           "measuredWith": {
-            "node": "22.23.4",
+            "node": "22.23.5",
             "npm": "10.9.9",
             "deps": {
               "eslint": "10.15.0",
@@ -525,7 +525,7 @@
           "parserRequested": true,
           "parserLoaded": true,
           "measuredWith": {
-            "node": "22.23.4",
+            "node": "22.23.5",
             "npm": "10.9.9",
             "deps": {
               "eslint": "9.39.5",
@@ -543,7 +543,7 @@
           "parserRequested": true,
           "parserLoaded": true,
           "measuredWith": {
-            "node": "22.23.4",
+            "node": "22.23.5",
             "npm": "10.9.9",
             "deps": {
               "eslint": "10.15.0",
@@ -669,7 +669,7 @@
           "crashingRules": [],
           "totalRules": 373,
           "measuredWith": {
-            "node": "22.23.4",
+            "node": "22.23.5",
             "npm": "10.9.9",
             "deps": {
               "eslint": "9.39.5",
@@ -682,7 +682,7 @@
           "crashingRules": [],
           "totalRules": 373,
           "measuredWith": {
-            "node": "22.23.4",
+            "node": "22.23.5",
             "npm": "10.9.9",
             "deps": {
               "eslint": "10.15.0",
@@ -808,7 +808,7 @@
     },
     {
       "name": "eslint-plugin-jsdoc",
-      "version": "65.5.0",
+      "version": "65.5.1",
       "declaredPeerRange": "^7.0.0 || ^8.0.0 || ^9.0.0 || ^10.0.0",
       "weeklyDownloads": 5288500,
       "results": {
@@ -817,11 +817,11 @@
           "crashingRules": [],
           "totalRules": 78,
           "measuredWith": {
-            "node": "22.23.4",
+            "node": "22.23.5",
             "npm": "10.9.9",
             "deps": {
               "eslint": "9.39.5",
-              "eslint-plugin-jsdoc": "65.5.0"
+              "eslint-plugin-jsdoc": "65.5.1"
             }
           }
         },
@@ -830,11 +830,11 @@
           "crashingRules": [],
           "totalRules": 78,
           "measuredWith": {
-            "node": "22.23.4",
+            "node": "22.23.5",
             "npm": "10.9.9",
             "deps": {
               "eslint": "10.15.0",
-              "eslint-plugin-jsdoc": "65.5.0"
+              "eslint-plugin-jsdoc": "65.5.1"
             }
           }
         }
@@ -953,7 +953,7 @@
           "crashingRules": [],
           "totalRules": 15,
           "measuredWith": {
-            "node": "22.23.4",
+            "node": "22.23.5",
             "npm": "10.9.9",
             "deps": {
               "eslint": "9.39.5",
@@ -966,7 +966,7 @@
           "crashingRules": [],
           "totalRules": 15,
           "measuredWith": {
-            "node": "22.23.4",
+            "node": "22.23.5",
             "npm": "10.9.9",
             "deps": {
               "eslint": "10.15.0",
@@ -1138,7 +1138,7 @@
           ],
           "totalRules": 27,
           "measuredWith": {
-            "node": "22.23.4",
+            "node": "22.23.5",
             "npm": "10.9.9",
             "deps": {
               "eslint": "9.39.5",
@@ -1232,7 +1232,7 @@
           ],
           "totalRules": 27,
           "measuredWith": {
-            "node": "22.23.4",
+            "node": "22.23.5",
             "npm": "10.9.9",
             "deps": {
               "eslint": "10.15.0",
@@ -1416,7 +1416,7 @@
           "crashingRules": [],
           "totalRules": 24,
           "measuredWith": {
-            "node": "22.23.4",
+            "node": "22.23.5",
             "npm": "10.9.9",
             "deps": {
               "eslint": "9.39.5",
@@ -1429,7 +1429,7 @@
           "crashingRules": [],
           "totalRules": 24,
           "measuredWith": {
-            "node": "22.23.4",
+            "node": "22.23.5",
             "npm": "10.9.9",
             "deps": {
               "eslint": "10.15.0",
@@ -1552,7 +1552,7 @@
           "crashingRules": [],
           "totalRules": 82,
           "measuredWith": {
-            "node": "22.23.4",
+            "node": "22.23.5",
             "npm": "10.9.9",
             "deps": {
               "eslint": "9.39.5",
@@ -1565,7 +1565,7 @@
           "crashingRules": [],
           "totalRules": 82,
           "measuredWith": {
-            "node": "22.23.4",
+            "node": "22.23.5",
             "npm": "10.9.9",
             "deps": {
               "eslint": "10.15.0",
@@ -1719,7 +1719,7 @@
           ],
           "totalRules": 9,
           "measuredWith": {
-            "node": "22.23.4",
+            "node": "22.23.5",
             "npm": "10.9.9",
             "deps": {
               "eslint": "9.39.5",
@@ -1753,7 +1753,7 @@
           ],
           "totalRules": 9,
           "measuredWith": {
-            "node": "22.23.4",
+            "node": "22.23.5",
             "npm": "10.9.9",
             "deps": {
               "eslint": "10.15.0",
@@ -1888,7 +1888,7 @@
           "crashingRules": [],
           "totalRules": 42,
           "measuredWith": {
-            "node": "22.23.4",
+            "node": "22.23.5",
             "npm": "10.9.9",
             "deps": {
               "eslint": "9.39.5",
@@ -1901,7 +1901,7 @@
           "crashingRules": [],
           "totalRules": 42,
           "measuredWith": {
-            "node": "22.23.4",
+            "node": "22.23.5",
             "npm": "10.9.9",
             "deps": {
               "eslint": "10.15.0",
@@ -2024,7 +2024,7 @@
           "crashingRules": [],
           "totalRules": 42,
           "measuredWith": {
-            "node": "22.23.4",
+            "node": "22.23.5",
             "npm": "10.9.9",
             "deps": {
               "eslint": "9.39.5",
@@ -2042,7 +2042,7 @@
           ],
           "totalRules": 42,
           "measuredWith": {
-            "node": "22.23.4",
+            "node": "22.23.5",
             "npm": "10.9.9",
             "deps": {
               "eslint": "10.15.0",
@@ -2199,7 +2199,7 @@
           "crashingRules": [],
           "totalRules": 22,
           "measuredWith": {
-            "node": "22.23.4",
+            "node": "22.23.5",
             "npm": "10.9.9",
             "deps": {
               "eslint": "9.39.5",
@@ -2212,7 +2212,7 @@
           "crashingRules": [],
           "totalRules": 22,
           "measuredWith": {
-            "node": "22.23.4",
+            "node": "22.23.5",
             "npm": "10.9.9",
             "deps": {
               "eslint": "10.15.0",
@@ -2335,7 +2335,7 @@
           "crashingRules": [],
           "totalRules": 20,
           "measuredWith": {
-            "node": "22.23.4",
+            "node": "22.23.5",
             "npm": "10.9.9",
             "deps": {
               "eslint": "9.39.5",
@@ -2349,7 +2349,7 @@
           "crashingRules": [],
           "totalRules": 20,
           "measuredWith": {
-            "node": "22.23.4",
+            "node": "22.23.5",
             "npm": "10.9.9",
             "deps": {
               "eslint": "10.15.0",
